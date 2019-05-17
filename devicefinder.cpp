@@ -106,7 +106,7 @@ void DeviceFinder::addDevice(const QBluetoothDeviceInfo &device)
     if (device.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
         m_devices.append(new DeviceInfo(device));
         setInfo(tr("Low Energy device found. Scanning more..."));
-        qDebug()<<"BLE DEV FOUND KEEP SCANNING";
+        qDebug()<<"BLE DEV FOUND KEEP SCANNING"<<device.address().toString();
 //! [devicediscovery-3]
         emit devicesChanged();
 //! [devicediscovery-4]
@@ -137,8 +137,17 @@ void DeviceFinder::scanFinished()
     emit devicesChanged();
 
     qDebug()<<"devices_size:"<<m_devices.size();
+    /*
     if (m_devices.size())
         connectToService( ((DeviceInfo*)m_devices.at(0))->getAddress());
+    */
+    // INEFFICIENT TESTCODE
+    for (int i = 0; i < m_devices.size(); i++) {
+        if (((DeviceInfo*)m_devices.at(i))->getAddress() == "FF:FF:FF:FF:FF:FF" ) {
+            connectToService( ((DeviceInfo*)m_devices.at(i))->getAddress());
+            break;
+        }
+    }
 }
 
 void DeviceFinder::connectToService(const QString &address)

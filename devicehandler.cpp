@@ -67,12 +67,13 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     m_control(0),
     m_service(0),
     m_currentDevice(0),
-    m_foundHeartRateService(false),
+    m_found_BLE_UART_Service(false),
     m_measuring(false),
     m_currentValue(0),
     m_min(0), m_max(0), m_sum(0), m_avg(0), m_calories(0)
 {
-    QBluetoothUuid* tmp_BLE_UUID;
+
+    m_test_timer = NULL;
     //tmp_BLE_UUID = new QBluetoothUuid( (quint128)0x4118949815645498456151684);
     //m_UUIDs_to_use.append(tmp_BLE_UUID);
 }
@@ -97,6 +98,7 @@ DeviceHandler::AddressType DeviceHandler::addressType() const
     return DeviceHandler::AddressType::PublicAddress;
 }
 
+//setDevice -> serviceDiscovered, serviceScanDone
 void DeviceHandler::setDevice(DeviceInfo *device)
 {
     clearMessages();
@@ -116,25 +118,15 @@ void DeviceHandler::setDevice(DeviceInfo *device)
         //! [Connect-Signals-1]
         m_control = new QLowEnergyController(m_currentDevice->getDevice(), this);
         //! [Connect-Signals-1]
-        m_control->setRemoteAddressType(m_addressType);
+        //m_control->setRemoteAddressType(m_addressType); // MAYBBE=! QLowEnergyController::PublicAddress
+        m_control->setRemoteAddressType(QLowEnergyController::PublicAddress);
         //! [Connect-Signals-2]
-        connect(m_control, &QLowEnergyController::serviceDiscovered,
-                this, &DeviceHandler::serviceDiscovered);
-        connect(m_control, &QLowEnergyController::discoveryFinished,
-                this, &DeviceHandler::serviceScanDone);
+        connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceHandler::serviceDiscovered);
+        connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceHandler::serviceScanDone);
 
-        connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error),
-                this, [this](QLowEnergyController::Error error) {
-            Q_UNUSED(error);
-            setError("Cannot connect to remote device.");
-        });
-        connect(m_control, &QLowEnergyController::connected, this, [this]() {
-            setInfo("Controller connected. Search services...");
-            m_control->discoverServices();
-        });
-        connect(m_control, &QLowEnergyController::disconnected, this, [this]() {
-            setError("LowEnergy controller disconnected");
-        });
+        connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error), this, [this](QLowEnergyController::Error error) {Q_UNUSED(error);setError("Cannot connect to remote device.");});
+        connect(m_control, &QLowEnergyController::connected, this, [this]() { setInfo("Controller connected. Search services..."); m_control->discoverServices();});
+        connect(m_control, &QLowEnergyController::disconnected, this, [this]() { setError("LowEnergy controller disconnected");});
 
         // Connect
         m_control->connectToDevice();
@@ -163,67 +155,60 @@ void DeviceHandler::stopMeasurement()
     emit measuringChanged();
 }
 
-
 //! [Filter HeartRate service 1]
 void DeviceHandler::serviceDiscovered(const QBluetoothUuid &gatt)
 {
-    if (gatt == QBluetoothUuid(QBluetoothUuid::HeartRate)) {
-        setInfo("Heart Rate service discovered. Waiting for service scan to be done...");
-        m_foundHeartRateService = true;
+    if (gatt == QBluetoothUuid(BLE_UART_SERVICE)) {
+        setInfo("BLE UART Service discovered...");
+        qDebug()<<"BLE UART Service discovered...";
+        m_found_BLE_UART_Service = true;
     }
 
-    qDebug()<<gatt.toString();
+    qDebug()<<"Discovered Service: "<<gatt.toString();
 }
-//! [Filter HeartRate service 1]
+
 
 void DeviceHandler::serviceScanDone()
 {
     setInfo("Service scan done.");
+    qDebug("Service scan done.");
 
     // Delete old service if available
     if (m_service) {
         delete m_service;
         m_service = 0;
     }
-
-//! [Filter HeartRate service 2]
-    // If heartRateService found, create new service
-    if (m_foundHeartRateService)
-        m_service = m_control->createServiceObject(QBluetoothUuid(QBluetoothUuid::HeartRate), this);
+    //! [CREATE SERVICE OBJECT]
+    // If BLE UART Service found, create new service
+    if (m_found_BLE_UART_Service)
+        m_service = m_control->createServiceObject(QBluetoothUuid(BLE_UART_SERVICE), this);
 
     if (m_service) {
-        connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceHandler::serviceStateChanged);
-        connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceHandler::updateHeartRateValue);
-        connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceHandler::confirmedDescriptorWrite);
-        m_service->discoverDetails();
+
+        update_currentService();
+
+        qDebug("SERVICE CREATED, SIGNALS Connected");
     } else {
-        setError("Heart Rate Service not found.");
+        setError("BLE UART NOT FOUND");
+        qDebug("BLE UART NOT FOUND");
     }
-//! [Filter HeartRate service 2]
+
+    //! [Filter HeartRate service 2]
 }
 
 // Service functions
-//! [Find HRM characteristic]
+//! [Find BLE UART characteristic]
 void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
 {
+    qDebug()<<"Service State changed...";
     switch (s) {
     case QLowEnergyService::DiscoveringServices:
+        qDebug("Discovering services...");
         setInfo(tr("Discovering services..."));
         break;
     case QLowEnergyService::ServiceDiscovered:
     {
-        setInfo(tr("Service discovered."));
-
-        const QLowEnergyCharacteristic hrChar = m_service->characteristic(QBluetoothUuid(QBluetoothUuid::HeartRateMeasurement));
-        if (!hrChar.isValid()) {
-            setError("HR Data not found.");
-            break;
-        }
-
-        m_notificationDesc = hrChar.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
-        if (m_notificationDesc.isValid())
-            m_service->writeDescriptor(m_notificationDesc, QByteArray::fromHex("0100"));
-
+        searchCharacteristic();
         break;
     }
     default:
@@ -236,29 +221,31 @@ void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
 //! [Find HRM characteristic]
 
 //! [Reading value]
-void DeviceHandler::updateHeartRateValue(const QLowEnergyCharacteristic &c, const QByteArray &value)
+void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
+    qDebug()<<"<rx_sig_called";
     // ignore any other characteristic change -> shouldn't really happen though
-    if (c.uuid() != QBluetoothUuid(QBluetoothUuid::HeartRateMeasurement))
+    if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR))
         return;
 
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     quint8 flags = data[0];
+    qDebug()<<"SOME DATA?!"<<data[0];
 
     //Heart Rate
-    int hrvalue = 0;
-    if (flags & 0x1) // HR 16 bit? otherwise 8 bit
-        hrvalue = (int)qFromLittleEndian<quint16>(data[1]);
-    else
-        hrvalue = (int)data[1];
+    //    int hrvalue = 0;
+    //    if (flags & 0x1) // HR 16 bit? otherwise 8 bit
+    //        hrvalue = (int)qFromLittleEndian<quint16>(data[1]);
+    //    else
+    //        hrvalue = (int)data[1];
 
-    addMeasurement(hrvalue);
+    //addMeasurement(hrvalue);
 }
 //! [Reading value]
 
 void DeviceHandler::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value)
 {
-    if (d.isValid() && d == m_notificationDesc && value == QByteArray::fromHex("0000")) {
+    if (d.isValid() && d == m_notificationDescriptor && value == QByteArray::fromHex("0000")) {
         //disabled notifications -> assume disconnect intent
         m_control->disconnectFromDevice();
         delete m_service;
@@ -268,12 +255,12 @@ void DeviceHandler::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, cons
 
 void DeviceHandler::disconnectService()
 {
-    m_foundHeartRateService = false;
+    m_found_BLE_UART_Service = false;
 
     //disable notifications
-    if (m_notificationDesc.isValid() && m_service
-            && m_notificationDesc.value() == QByteArray::fromHex("0100")) {
-        m_service->writeDescriptor(m_notificationDesc, QByteArray::fromHex("0000"));
+    if (m_notificationDescriptor.isValid() && m_service
+            && m_notificationDescriptor.value() == QByteArray::fromHex("0100")) {
+        m_service->writeDescriptor(m_notificationDescriptor, QByteArray::fromHex("0000"));
     } else {
         if (m_control)
             m_control->disconnectFromDevice();
@@ -281,6 +268,77 @@ void DeviceHandler::disconnectService()
         delete m_service;
         m_service = 0;
     }
+}
+
+void DeviceHandler::onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value)
+{
+    Q_UNUSED(c)
+    qDebug() << "Characteristic Changed: " << value;
+}
+
+void DeviceHandler::onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value)
+{
+    Q_UNUSED(c)
+    qDebug() << "Characteristic Read Value: " << value << " UUID: "<< c.uuid();
+
+}
+
+void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
+{
+    Q_UNUSED(c)
+    qDebug() << "Characteristic Written: " << value;
+}
+
+void DeviceHandler::onTimerTriggered()
+{
+
+    QByteArray data;
+    data.resize(5);
+    data[0] = 0x55;
+    data[1] = 0x11;
+    data[2] = 0x55;
+    data[3] = 0x11;
+    data[4] = 0x55;
+
+#define CHUNK_SIZE 16
+    qDebug() << "onTimerTriggered::writeTest.. ";
+    if(m_service && m_writeCharacteristic.isValid()){
+        if(data.length() > CHUNK_SIZE){
+            int sentBytes = 0;
+            while (sentBytes < data.length()) {
+                m_service->writeCharacteristic( m_writeCharacteristic, data.mid(sentBytes, CHUNK_SIZE), m_writeMode);
+                sentBytes += CHUNK_SIZE;
+                if(m_writeMode == QLowEnergyService::WriteWithResponse){
+                    //waitForWrite();
+                    qDebug()<<"waitForWrite() commented out";
+                    if(m_service->error() != QLowEnergyService::NoError)
+                        return;
+                }
+            }
+
+        }
+        else
+        {
+            m_service->writeCharacteristic(m_writeCharacteristic, data, m_writeMode);
+            qDebug()<<"written a small chunk";
+        }
+    }
+}
+
+void DeviceHandler::update_currentService()
+{
+    connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceHandler::serviceStateChanged);
+    connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceHandler::ble_uart_rx);
+    connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceHandler::confirmedDescriptorWrite);
+    connect(m_service, SIGNAL(characteristicRead(QLowEnergyCharacteristic,QByteArray)), this, SLOT(onCharacteristicRead(QLowEnergyCharacteristic,QByteArray)));
+    connect(m_service, SIGNAL(characteristicWritten(QLowEnergyCharacteristic,QByteArray)),this, SLOT(onCharacteristicWritten(QLowEnergyCharacteristic,QByteArray)));
+
+    if(m_service->state() == QLowEnergyService::DiscoveryRequired) {
+        qDebug("BCOMMENT: Additional Discovery Required! Continue in StateChanged");
+        m_service->discoverDetails();
+    }
+    else
+        searchCharacteristic();
 }
 
 bool DeviceHandler::measuring() const
@@ -328,6 +386,7 @@ float DeviceHandler::calories() const
 
 void DeviceHandler::addMeasurement(int value)
 {
+    // ADDS MEAS TO QML STAT AND EMITS A SIGNAL TO ACT ON IT
     m_currentValue = value;
 
     // If measuring and value is appropriate
@@ -344,4 +403,69 @@ void DeviceHandler::addMeasurement(int value)
     }
 
     emit statsChanged();
+}
+
+void DeviceHandler::searchCharacteristic()
+{
+    if(m_service){
+        foreach (QLowEnergyCharacteristic c, m_service->characteristics())
+        {
+            if( c.isValid() )
+            {
+                qDebug()<<"Characteristic UUID:"<<c.uuid();
+                printProperties(c.properties());
+                if ( c.uuid() == QBluetoothUuid( BLE_UART_RX_CHAR) && ( c.properties() & QLowEnergyCharacteristic::WriteNoResponse || c.properties() & QLowEnergyCharacteristic::Write) )
+                {
+                    qDebug()<<"Write Characteristic Registered";
+                    m_writeCharacteristic = c;
+                    if(c.properties() & QLowEnergyCharacteristic::WriteNoResponse)
+                    {
+                        m_writeMode = QLowEnergyService::WriteWithoutResponse;
+                    }
+                    else
+                    {
+                        m_writeMode = QLowEnergyService::WriteWithResponse;
+                    }
+                }
+                else if ( c.uuid() == QBluetoothUuid( BLE_UART_TX_CHAR ) )
+                {
+                    qDebug()<<"Read (Notify) Characteristic Registered";
+                    m_readCharacteristic = c;
+                    m_notificationDescriptor = c.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
+
+                    if (m_notificationDescriptor.isValid()) {
+                        qDebug()<<"Characteristic Descriptor: ClientCharacteristicConfiguration";
+                        m_service->writeDescriptor(m_notificationDescriptor, QByteArray::fromHex("0100"));
+                    }
+                    else
+                    {
+                        qDebug()<<"Could not attach notification service to Read Characteristic.";
+                    }
+                }
+            }
+        }
+
+        if(!m_test_timer && m_readCharacteristic.isValid() && m_writeCharacteristic.isValid())
+        {
+            qDebug()<<"Starting Test Timer";
+            this->m_test_timer = new QTimer(this);
+            connect(m_test_timer, &QTimer::timeout, this, &DeviceHandler::onTimerTriggered);
+            #define INTERVAL_MS 500
+            m_test_timer->start(INTERVAL_MS);
+        }
+    }
+
+}
+
+void DeviceHandler::printProperties(QLowEnergyCharacteristic::PropertyTypes props)
+{
+    if (props.testFlag(QLowEnergyCharacteristic::Unknown)) qDebug()<<"Property unknown";
+    if (props.testFlag(QLowEnergyCharacteristic::Broadcasting)) qDebug()<<"Property: Broadcasting";
+    if (props.testFlag(QLowEnergyCharacteristic::Read)) qDebug()<<"Property: Read";
+    if (props.testFlag(QLowEnergyCharacteristic::WriteNoResponse)) qDebug()<<"Property: Write (no response)";
+    if (props.testFlag(QLowEnergyCharacteristic::Write)) qDebug()<<"Property: Write";
+    if (props.testFlag(QLowEnergyCharacteristic::Notify)) qDebug()<<"Property: Notify";
+    if (props.testFlag(QLowEnergyCharacteristic::Indicate)) qDebug()<<"Property: Indicate";
+    if (props.testFlag(QLowEnergyCharacteristic::WriteSigned)) qDebug()<<"Property: Write (signed)";
+    if (props.testFlag(QLowEnergyCharacteristic::ExtendedProperty)) qDebug()<<"Property: Extended Property";
 }

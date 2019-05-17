@@ -36,3 +36,6 @@ HEADERS += \
     bluetoothbaseclass.h \
     devicehandler.h \
     deviceinfo.h
+
+DISTFILES += \
+    pre_trash

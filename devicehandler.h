@@ -109,6 +109,13 @@ public slots:
     void stopMeasurement();
     void disconnectService();
 
+private slots:
+    void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
+    void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
+    void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
+    void onTimerTriggered(void);
+
+
 private:
     //QLowEnergyController
     void serviceDiscovered(const QBluetoothUuid &);
@@ -116,24 +123,41 @@ private:
 
     //QLowEnergyService
     void serviceStateChanged(QLowEnergyService::ServiceState s);
-    void updateHeartRateValue(const QLowEnergyCharacteristic &c,
+    void ble_uart_rx(const QLowEnergyCharacteristic &c,
                               const QByteArray &value);
     void confirmedDescriptorWrite(const QLowEnergyDescriptor &d,
                               const QByteArray &value);
+    void update_currentService();
 
 private:
     void addMeasurement(int value);
+    void searchCharacteristic();
+    void printProperties(QLowEnergyCharacteristic::PropertyTypes);
 
     QLowEnergyController *m_control;
     QLowEnergyService *m_service;
-    QLowEnergyDescriptor m_notificationDesc;
-    DeviceInfo *m_currentDevice;
-    QList<QBluetoothUuid*> m_UUIDs_to_use; //QBluetoothUuid(quint128 uuid)
 
-    bool m_foundHeartRateService;
+    DeviceInfo *m_currentDevice;
+
+    QLowEnergyDescriptor m_notificationDescriptor;
+
+    const QString BLE_UART_RX_CHAR = "{d973f2e2-b19e-11e2-9e96-0800200c9a66}";
+    const QString BLE_UART_TX_CHAR = "{d973f2e1-b19e-11e2-9e96-0800200c9a66}";
+    const QString BLE_UART_SERVICE = "{d973f2e0-b19e-11e2-9e96-0800200c9a66}";
+
+    bool m_found_BLE_UART_Service;
+    QLowEnergyCharacteristic m_writeCharacteristic;
+    QLowEnergyService::WriteMode m_writeMode;
+    QLowEnergyCharacteristic m_readCharacteristic;
+
+    QTimer* m_test_timer;
+
     bool m_measuring;
     int m_currentValue, m_min, m_max, m_sum;
     float m_avg, m_calories;
+
+
+
 
     // Statistics
     QDateTime m_start;
