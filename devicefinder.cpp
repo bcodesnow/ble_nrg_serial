@@ -165,7 +165,7 @@ void DeviceFinder::connectToService(const QString &address)
 
     if (currentDevice)
     {
-        qDebug()<<"Handling over Device to Device Handler";
+        qInfo()<<"Handling over Device to Device Handler";
         m_deviceHandler->setDevice(currentDevice);
     }
     clearMessages();

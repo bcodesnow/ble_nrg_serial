@@ -53,13 +53,13 @@
 #include <QtEndian>
 #include <QRandomGenerator>
 #include <QDebug>
+#include <QtGlobal>
 
 /*
  *  This is the real deal, it creates a BLE Controller
  *  setDevice connects the device
  *  void DeviceHandler::serviceDiscovered(const QBluetoothUuid &gatt) - this slot is called during service discovery, here is the place to filter for uuid.
- *
- *
+ *  setDevice -> serviceDiscovered -> serviceScanDone
  */
 
 DeviceHandler::DeviceHandler(QObject *parent) :
@@ -74,8 +74,6 @@ DeviceHandler::DeviceHandler(QObject *parent) :
 {
 
     m_test_timer = NULL;
-    //tmp_BLE_UUID = new QBluetoothUuid( (quint128)0x4118949815645498456151684);
-    //m_UUIDs_to_use.append(tmp_BLE_UUID);
 }
 
 void DeviceHandler::setAddressType(AddressType type)
@@ -98,7 +96,7 @@ DeviceHandler::AddressType DeviceHandler::addressType() const
     return DeviceHandler::AddressType::PublicAddress;
 }
 
-//setDevice -> serviceDiscovered, serviceScanDone
+
 void DeviceHandler::setDevice(DeviceInfo *device)
 {
     clearMessages();
@@ -117,12 +115,10 @@ void DeviceHandler::setDevice(DeviceInfo *device)
         m_addressType = QLowEnergyController::RandomAddress;
 
         // Make connections
-        //! [Connect-Signals-1]
         m_control = new QLowEnergyController(m_currentDevice->getDevice(), this);
-        //! [Connect-Signals-1]
-        //m_control->setRemoteAddressType(m_addressType); // MAYBBE=! QLowEnergyController::PublicAddress
-        m_control->setRemoteAddressType(QLowEnergyController::RandomAddress); //changed to random
-        //! [Connect-Signals-2]
+
+        m_control->setRemoteAddressType(QLowEnergyController::RandomAddress); //changed to Random Address
+
         connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceHandler::serviceDiscovered);
         connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceHandler::serviceScanDone);
 
@@ -132,7 +128,6 @@ void DeviceHandler::setDevice(DeviceInfo *device)
 
         // Connect
         m_control->connectToDevice();
-        //! [Connect-Signals-2]
     }
 }
 
@@ -157,7 +152,6 @@ void DeviceHandler::stopMeasurement()
     emit measuringChanged();
 }
 
-//! [Filter HeartRate service 1]
 void DeviceHandler::serviceDiscovered(const QBluetoothUuid &gatt)
 {
     if (gatt == QBluetoothUuid(BLE_UART_SERVICE)) {
@@ -165,7 +159,6 @@ void DeviceHandler::serviceDiscovered(const QBluetoothUuid &gatt)
         qDebug()<<"BLE UART Service discovered...";
         m_found_BLE_UART_Service = true;
     }
-
     qDebug()<<"Discovered Service: "<<gatt.toString();
 }
 
@@ -180,7 +173,7 @@ void DeviceHandler::serviceScanDone()
         delete m_service;
         m_service = 0;
     }
-    //! [CREATE SERVICE OBJECT]
+
     // If BLE UART Service found, create new service
     if (m_found_BLE_UART_Service)
         m_service = m_control->createServiceObject(QBluetoothUuid(BLE_UART_SERVICE), this);
@@ -192,7 +185,7 @@ void DeviceHandler::serviceScanDone()
         qDebug("SERVICE CREATED, SIGNALS Connected");
     } else {
         setError("BLE UART NOT FOUND");
-        qDebug("BLE UART NOT FOUND");
+        qCritical()<<"BLE UART NOT FOUND";
     }
 
     //! [Filter HeartRate service 2]
@@ -232,9 +225,9 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     quint8 flags = data[0];
-    qDebug()<<"SOME DATA?!";
-    for (int i=0; i< value.size(); i++)
-        qDebug()<<"SOME DATA?!"<<data[i];
+    qInfo()<<"Data[0]"<<flags;
+
+    qInfo()<<"Data:"<<value.toHex();
 
     //Heart Rate
     //    int hrvalue = 0;

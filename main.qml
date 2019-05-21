@@ -56,18 +56,18 @@ import QtQuick 2.9
 import QtQuick.Controls 2.2
 import "."
 
+// Orientation 1 Portrait, Orientation 2 Landscape
+
 ApplicationWindow {
+    id: rootWindow
     visible: true
-    width: 640
-    height: 480
-    title: qsTr("Test")
-    onAfterRendering:    {
-        terminalToQml.isActive = true;
-    }
+    width: Screen.width //640
+    height: Screen.height //480
+    title: qsTr("BLE UART Terminal")
 
     Switch {
-        anchors.top: parent.top
-        anchors.left: terminalBackground.right
+        anchors.top: ( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
+        anchors.left: ( Screen.orientation === Qt.PortraitOrientation  ) ? parent.left : terminalBackground.right
         anchors.margins: 5
         height: 32
         width: 64
@@ -83,28 +83,36 @@ ApplicationWindow {
         target: terminalToQml
         onMessageArrived:
         {
-            terminalModel.append({ "str": str, "clr": "white", "fmt": 0});
+            terminalModel.append({ "str": str, "clr": clr, "fmt": fmt});
         }
     }
 
     ListModel {
         id: terminalModel
+        Component.onCompleted:
+        {
+            terminalToQml.isActive = true;
+        }
     }
 
     Rectangle
     {
         id: terminalBackground
-        anchors.verticalCenter: parent.verticalCenter
+        property int marginsLeftRight: 32
         anchors.left: parent.left
-        anchors.leftMargin: 32
-        width: parent.width / 2
-        height: parent.height * 0.95
+        anchors.leftMargin: marginsLeftRight
+        anchors.top: parent.top
+        anchors.topMargin: marginsLeftRight
+        width: ( Screen.orientation === Qt.PortraitOrientation  ) ? ( parent.width - marginsLeftRight*2 ) : ( ( parent.width / 2 ) - marginsLeftRight*2 )
+        height: ( Screen.orientation === Qt.PortraitOrientation  ) ? ( parent.height / 2 ) * 0.95 :  parent.height * 0.95
         radius: parent.height / 32
         color: "gray"
         gradient: Gradient {
             GradientStop { position: 0.0; color: "gray" }
             GradientStop { position: 1.0; color: "black" }
         }
+
+
         Rectangle
         {
             width: parent.width * 0.90
@@ -116,12 +124,14 @@ ApplicationWindow {
                 id: terminalListView
                 property bool autoScrollEnabled: true
                 flickableDirection: Flickable.VerticalFlick
+                flickDeceleration: 50
                 boundsBehavior: Flickable.StopAtBounds
                 width: parent.width
-                height: parent.height * 0.9
+                height: parent.height * 0.7
                 anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: parent.top
                 spacing: parent.height / 64
+                cacheBuffer: 200
                 model: terminalModel
                 delegate:
                     Text {
@@ -140,6 +150,39 @@ ApplicationWindow {
                 ScrollBar.vertical: ScrollBar {}
             }
 
+            Rectangle
+            {
+                id: terminalInputBlock
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                color: "whitesmoke"
+                height: parent.height * 0.2
+                width: parent.width
+                radius: height / 16
+
+                TextEdit
+                {
+                    id: txtInput
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    width: parent.width * 0.75
+                    height: parent.height
+                }
+                RoundButton
+                {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    width: parent.width * 0.2
+                    height: parent.height
+                    radius: terminalInputBlock.radius
+                    text: "Send"
+                    onClicked:
+                    {
+                        terminalToQml.messageFromQml(txtInput.text, "yellow", 1);
+                        txtInput.clear();
+                    }
+                }
+            }
         }
     }
 }

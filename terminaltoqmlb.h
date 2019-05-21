@@ -5,7 +5,6 @@
 #include <QList>
 #include <QString>
 #include <QColor>
-#include "terminaldataobject.h"
 
 #define MAX_MSG_IN_BUFF 50
 
@@ -14,20 +13,23 @@ class TerminalToQmlB : public QObject {
     Q_PROPERTY(bool isActive MEMBER m_isActive NOTIFY isActiveChanged)
 private:
     static TerminalToQmlB* handleToThis;
+    bool m_isActive;
+    QStringList m_ioBuff;
 
 signals:
-    void messageArrived(const QString &str);
+    void messageArrived(QString str, QString clr, qint8 fmt);
     void isActiveChanged(bool);
-private:
 
 public:
     TerminalToQmlB()
     {
         handleToThis = this;
         qInstallMessageHandler(fakeHandler);
-        m_dataList.append(new TerminalDataObject(nullptr,QString("THIS IS A STRING"), QColor("red")));
-                m_dataList.append(new TerminalDataObject(nullptr,QString("THIS IS A STRING"), QColor("red")));
-                        m_dataList.append(new TerminalDataObject(nullptr,QString("THIS IS A STRING"), QColor("red")));
+    }
+
+    Q_INVOKABLE void messageFromQml(const QString &str, const QString &clr, const qint8 &fmt)
+    {
+
     }
 
     static void fakeHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -35,6 +37,7 @@ public:
         if (handleToThis)
             handleToThis->redirectCallback(type, context, msg);
     }
+
     void redirectCallback (QtMsgType type, const QMessageLogContext &context, const QString &msg)
     {
         if(m_isActive)
@@ -44,15 +47,38 @@ public:
             if (m_ioBuff.size() > MAX_MSG_IN_BUFF)
                 m_ioBuff.removeLast();
 
-            emit messageArrived(m_ioBuff.at(0));
+            QString tmp_color;
+            qint8 tmp_format;
 
-            m_dataList.append(new TerminalDataObject(nullptr, msg, QColor("red")));
+            switch (type) {
+            case QtDebugMsg:
+                tmp_color = "white";
+                tmp_format = 0;
+            break;
+            case QtWarningMsg:
+                tmp_color = "yellow";
+                tmp_format = 1;
+                break;
+            case QtCriticalMsg:
+                tmp_color = "red";
+                tmp_format = 0;
+                break;
+            case QtFatalMsg:
+                tmp_color = "red";
+                tmp_format = 1;
+                abort();
+            case QtInfoMsg:
+                tmp_color = "green";
+                tmp_format = 0;
+                break;
+            }
+            emit messageArrived(m_ioBuff.at(0), tmp_color, tmp_format);
         }
         else
         {
             QByteArray localMsg = msg.toLocal8Bit();
-    //            const char *file = context.file ? context.file : "";
-    //            const char *function = context.function ? context.function : "";
+            //const char *file = context.file ? context.file : "";
+            //const char *function = context.function ? context.function : "";
             switch (type) {
             case QtDebugMsg:
                 fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
@@ -69,25 +95,11 @@ public:
             case QtInfoMsg:
                 fprintf(stderr, "QtInfoMsg: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
                 break;
-
             }
         }
     }
 
-    void messageAddedToBuff(void)
-    {
-        emit messageArrived(m_ioBuff.at(0));
-    }
-
-    ~TerminalToQmlB() {};
-
-    bool m_isActive;
-
-    QList<QObject*> m_dataList;
-    QStringList m_ioBuff;
-
-//    enum SomeType { A, B, C, D };
-//    Q_ENUM(SomeType);
+    ~TerminalToQmlB() {}
 };
 
 

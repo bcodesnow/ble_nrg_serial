@@ -17,8 +17,7 @@ SOURCES += main.cpp \
     bluetoothbaseclass.cpp \
     devicehandler.cpp \
     deviceinfo.cpp \
-    terminaltoqmlb.cpp \
-    terminaldataobject.cpp
+    terminaltoqmlb.cpp
 
 RESOURCES += qml.qrc
 
@@ -38,8 +37,7 @@ HEADERS += \
     bluetoothbaseclass.h \
     devicehandler.h \
     deviceinfo.h \
-    terminaltoqmlb.h \
-    terminaldataobject.h
+    terminaltoqmlb.h
 
 DISTFILES += \
     pre_trash

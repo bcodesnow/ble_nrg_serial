@@ -1,3 +1,27 @@
+//    enum SomeType { A, B, C, D };
+//    Q_ENUM(SomeType);
+
+class TerminalDataObject : public QObject
+{
+    Q_OBJECT
+
+    Q_PROPERTY(QString str MEMBER m_string NOTIFY strChanged)
+    Q_PROPERTY(QColor clr MEMBER m_color NOTIFY clrChanged)
+signals:
+    void strChanged();
+    void clrChanged();
+
+private:
+    QString m_string;
+    QColor m_color;
+public:
+    TerminalDataObject(QObject *parent = nullptr, QString t_str = nullptr, QColor t_clr = nullptr): m_string(t_str), m_color(t_clr)
+    {
+
+    }
+
+};
+
 //        connect(m_service, SIGNAL(error(QLowEnergyService::ServiceError)),
 //                this, SLOT(serviceError(QLowEnergyService::ServiceError)));
 

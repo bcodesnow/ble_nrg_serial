@@ -5,7 +5,7 @@
 #include <QQmlContext>
 #include <QtMessageHandler>
 #include <QtGlobal>
-
+#include <QScreen>
 #include "terminaltoqmlb.h"
 
 int main(int argc, char *argv[])
@@ -24,9 +24,9 @@ int main(int argc, char *argv[])
     //qmlRegisterUncreatableType<DeviceHandler>("Shared", 1, 0, "AddressType", "Enum is not a type");
 
     engine.rootContext()->setContextProperty("terminalToQml", &term);
-    QQmlContext *ctxt = engine.rootContext();
-//    ctxt->setContextProperty("termModel", QVariant::fromValue(term.m_ioBuff));
-//    ctxt->setContextProperty("abstrModel", QVariant::fromValue(term.m_dataList));
+    //QQmlContext *ctxt = engine.rootContext();
+    //ctxt->setContextProperty("termModel", QVariant::fromValue(term.m_ioBuff));
+    //qDebug() << qApp->primaryScreen()->size();
 
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 
