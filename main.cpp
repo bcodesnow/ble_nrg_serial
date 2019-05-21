@@ -2,23 +2,36 @@
 #include <QQmlApplicationEngine>
 #include "devicefinder.h"
 #include "devicehandler.h"
+#include <QQmlContext>
+#include <QtMessageHandler>
+#include <QtGlobal>
 
-
+#include "terminaltoqmlb.h"
 
 int main(int argc, char *argv[])
 {
-    //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    TerminalToQmlB term;
+
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
+    //QApplication app(argc, argv);
+    // can be changed to QGuiApplication for QML only
 
     DeviceHandler device_handler;
     DeviceFinder device_finder(&device_handler);
-    qDebug()<<"Starting Search";
-    device_finder.startSearch();
 
     QQmlApplicationEngine engine;
+    //qmlRegisterUncreatableType<DeviceHandler>("Shared", 1, 0, "AddressType", "Enum is not a type");
+
+    engine.rootContext()->setContextProperty("terminalToQml", &term);
+    QQmlContext *ctxt = engine.rootContext();
+//    ctxt->setContextProperty("termModel", QVariant::fromValue(term.m_ioBuff));
+//    ctxt->setContextProperty("abstrModel", QVariant::fromValue(term.m_dataList));
+
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
-    if (engine.rootObjects().isEmpty())
-        return -1;
+
+    qDebug()<<"Starting Search";
+    device_finder.startSearch();
 
     return app.exec();
 }

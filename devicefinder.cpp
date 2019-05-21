@@ -143,7 +143,8 @@ void DeviceFinder::scanFinished()
     */
     // INEFFICIENT TESTCODE
     for (int i = 0; i < m_devices.size(); i++) {
-        if (((DeviceInfo*)m_devices.at(i))->getAddress() == "FF:FF:FF:FF:FF:FF" ) {
+        if (((DeviceInfo*)m_devices.at(i))->getAddress() == "CE:D4:6E:7C:0E:44" ) {
+            qDebug()<<"Connecting to Service";
             connectToService( ((DeviceInfo*)m_devices.at(i))->getAddress());
             break;
         }

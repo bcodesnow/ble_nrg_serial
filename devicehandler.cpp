@@ -113,13 +113,15 @@ void DeviceHandler::setDevice(DeviceInfo *device)
 
     // Create new controller and connect it if device available
     if (m_currentDevice) {
+        // SOME TRIAL AND ERROR)
+        m_addressType = QLowEnergyController::RandomAddress;
 
         // Make connections
         //! [Connect-Signals-1]
         m_control = new QLowEnergyController(m_currentDevice->getDevice(), this);
         //! [Connect-Signals-1]
         //m_control->setRemoteAddressType(m_addressType); // MAYBBE=! QLowEnergyController::PublicAddress
-        m_control->setRemoteAddressType(QLowEnergyController::PublicAddress);
+        m_control->setRemoteAddressType(QLowEnergyController::RandomAddress); //changed to random
         //! [Connect-Signals-2]
         connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceHandler::serviceDiscovered);
         connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceHandler::serviceScanDone);
@@ -230,7 +232,9 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     quint8 flags = data[0];
-    qDebug()<<"SOME DATA?!"<<data[0];
+    qDebug()<<"SOME DATA?!";
+    for (int i=0; i< value.size(); i++)
+        qDebug()<<"SOME DATA?!"<<data[i];
 
     //Heart Rate
     //    int hrvalue = 0;
@@ -273,20 +277,20 @@ void DeviceHandler::disconnectService()
 void DeviceHandler::onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
     Q_UNUSED(c)
-    qDebug() << "Characteristic Changed: " << value;
+    qDebug() << "SIGNAL: Characteristic Changed! " << value;
 }
 
 void DeviceHandler::onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
     Q_UNUSED(c)
-    qDebug() << "Characteristic Read Value: " << value << " UUID: "<< c.uuid();
+    qDebug() << "SIGNAL: Characteristic Read Value! " << value << " UUID: "<< c.uuid();
 
 }
 
 void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
     Q_UNUSED(c)
-    qDebug() << "Characteristic Written: " << value;
+    qDebug() << "SIGNAL: Characteristic Written!" << value;
 }
 
 void DeviceHandler::onTimerTriggered()
@@ -302,10 +306,18 @@ void DeviceHandler::onTimerTriggered()
 
 #define CHUNK_SIZE 16
     qDebug() << "onTimerTriggered::writeTest.. ";
-    if(m_service && m_writeCharacteristic.isValid()){
-        if(data.length() > CHUNK_SIZE){
+    if (m_service->state() == QLowEnergyService::ServiceDiscovered)
+        qDebug()<<"Service is in Discovered State";
+    else
+        qDebug()<<"Service state is shitty, still trying to send";
+
+    if(m_service && m_writeCharacteristic.isValid())
+    {
+        if(data.length() > CHUNK_SIZE)
+        {
             int sentBytes = 0;
-            while (sentBytes < data.length()) {
+            while (sentBytes < data.length())
+            {
                 m_service->writeCharacteristic( m_writeCharacteristic, data.mid(sentBytes, CHUNK_SIZE), m_writeMode);
                 sentBytes += CHUNK_SIZE;
                 if(m_writeMode == QLowEnergyService::WriteWithResponse){
@@ -319,10 +331,14 @@ void DeviceHandler::onTimerTriggered()
         }
         else
         {
-            m_service->writeCharacteristic(m_writeCharacteristic, data, m_writeMode);
-            qDebug()<<"written a small chunk";
+            m_service->writeCharacteristic(m_writeCharacteristic, data, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+            qDebug()<<"writecall";
         }
     }
+
+//    qDebug()<<"Trying to Read";
+//    if(m_service && m_readCharacteristic.isValid())
+//        m_service->readCharacteristic(m_readCharacteristic);
 }
 
 void DeviceHandler::update_currentService()
@@ -330,6 +346,8 @@ void DeviceHandler::update_currentService()
     connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceHandler::serviceStateChanged);
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceHandler::ble_uart_rx);
     connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceHandler::confirmedDescriptorWrite);
+    connect(m_service, QOverload<QLowEnergyService::ServiceError>::of(&QLowEnergyService::error),
+        [=](QLowEnergyService::ServiceError newError){ qDebug()<<"ERR - QlowEnergyServiceError!"; });
     connect(m_service, SIGNAL(characteristicRead(QLowEnergyCharacteristic,QByteArray)), this, SLOT(onCharacteristicRead(QLowEnergyCharacteristic,QByteArray)));
     connect(m_service, SIGNAL(characteristicWritten(QLowEnergyCharacteristic,QByteArray)),this, SLOT(onCharacteristicWritten(QLowEnergyCharacteristic,QByteArray)));
 
@@ -434,7 +452,7 @@ void DeviceHandler::searchCharacteristic()
                     m_notificationDescriptor = c.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
 
                     if (m_notificationDescriptor.isValid()) {
-                        qDebug()<<"Characteristic Descriptor: ClientCharacteristicConfiguration";
+                        qDebug()<<"Characteristic Descriptor: ClientCharacteristicConfiguration, writing 0100 to descriptor";
                         m_service->writeDescriptor(m_notificationDescriptor, QByteArray::fromHex("0100"));
                     }
                     else
