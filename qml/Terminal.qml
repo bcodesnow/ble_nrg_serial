@@ -58,12 +58,14 @@ import "."
 
 // Orientation 1 Portrait, Orientation 2 Landscape
 
-ApplicationWindow {
-    id: rootWindow
-    visible: true
-    width: Screen.width //640
-    height: Screen.height //480
-    title: qsTr("BLE UART Terminal")
+//ApplicationWindow {
+//    id: rootWindow
+//    visible: true
+//    width: Screen.width //640
+//    height: Screen.height //480
+//    title: qsTr("BLE UART Terminal")
+Item
+{
 
     Switch {
         anchors.top: ( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
