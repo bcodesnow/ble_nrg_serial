@@ -55,11 +55,15 @@
 #include <QObject>
 #include <QBluetoothDeviceInfo>
 
+#define DEVICE_SELECTED 0x01
+
 class DeviceInfo: public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString deviceName READ getName NOTIFY deviceChanged)
     Q_PROPERTY(QString deviceAddress READ getAddress NOTIFY deviceChanged)
+    Q_PROPERTY(qint64 deviceFlags READ getDeviceFlags NOTIFY deviceChanged)
+
 
 public:
     DeviceInfo(const QBluetoothDeviceInfo &device);
@@ -67,13 +71,16 @@ public:
     void setDevice(const QBluetoothDeviceInfo &device);
     QString getName() const;
     QString getAddress() const;
+    qint64 getDeviceFlags() const;
     QBluetoothDeviceInfo getDevice() const;
+    void setDeviceFlags(const qint64 &flags);
 
 signals:
     void deviceChanged();
 
 private:
     QBluetoothDeviceInfo m_device;
+    qint64 m_deviceFlags;
 };
 
 #endif // DEVICEINFO_H

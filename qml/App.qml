@@ -77,16 +77,30 @@ Item {
     {
         lastPages.push(name)
         pageLoader.setSource(name)
-        __currentIndex = lastPages.length-1;
+       // __currentIndex = lastPages.length-1;
     }
 
     TitleBar {
         id: titleBar
         currentIndex: __currentIndex
 
-        onTitleClicked: {
-            if (index < __currentIndex)
-                pageLoader.item.close()
+        onTitleClicked:
+        {
+//            if (index < __currentIndex)
+//                pageLoader.item.close()
+            __currentIndex = index
+            switch( index)
+            {
+            case 0:
+                showPage("Connect.qml")
+                break;
+            case 1:
+                showPage("Terminal.qml")
+                break;
+            default:
+                break;
+            }
+
         }
     }
 
@@ -109,15 +123,17 @@ Item {
     Keys.onReleased: {
         switch (event.key) {
         case Qt.Key_Escape:
-        case Qt.Key_Back: {
-            if (__currentIndex > 0) {
+        case Qt.Key_Back:
+            if (__currentIndex > 0)
+            {
                 pageLoader.item.close()
                 event.accepted = true
-            } else {
+            }
+            else
+            {
                 Qt.quit()
             }
-            break;
-        }
+            break;     
         default: break;
         }
     }

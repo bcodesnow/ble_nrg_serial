@@ -125,6 +125,16 @@ private:
     void serviceStateChanged(QLowEnergyService::ServiceState s);
     void ble_uart_rx(const QLowEnergyCharacteristic &c,
                               const QByteArray &value);
+    void ble_uart_tx(const QLowEnergyCharacteristic &c,
+                     const QByteArray &value);
+
+    // PayloadLength Max 1 CHAR_MAX_LEN-1= 19
+    void sendCMDwaitforReply(quint8 cmd, quint8* payload, payloadLength)
+    {
+        replyDelayTimer->setSingleShot();
+
+    }
+
     void confirmedDescriptorWrite(const QLowEnergyDescriptor &d,
                               const QByteArray &value);
     void update_currentService();
@@ -137,7 +147,7 @@ private:
     QLowEnergyController *m_control;
     QLowEnergyService *m_service;
 
-    DeviceInfo *m_currentDevice;
+    DeviceInfo *m_currentDevice; /* UNUSED (Was for the single device version) */
 
     QLowEnergyDescriptor m_notificationDescriptor;
 
@@ -151,6 +161,8 @@ private:
     QLowEnergyCharacteristic m_readCharacteristic;
 
     QTimer* m_test_timer;
+    QTimer* replyDelayTimer;
+
 
     bool m_measuring;
     int m_currentValue, m_min, m_max, m_sum;

@@ -48,44 +48,54 @@
 **
 ****************************************************************************/
 
-#include "connectionhandler.h"
-#include <QtBluetooth/qtbluetooth-config.h>
+import QtQuick 2.5
 
-ConnectionHandler::ConnectionHandler(QObject *parent) : QObject(parent)
-{
-    connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged,
-            this, &ConnectionHandler::hostModeChanged);
-}
+Rectangle    {
+    id: titleBar
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: AppConstants.fieldHeight
+    color: AppConstants.viewColor
 
-bool ConnectionHandler::alive() const
-{
-#ifdef SIMULATOR
-    return true;
-#else
-    return m_localDevice.isValid() && m_localDevice.hostMode() != QBluetoothLocalDevice::HostPoweredOff;
-#endif
-}
+    property var __titles: ["CONNECT", "CATCH", "TERMINAL"]
+    property int currentIndex: 0
 
-bool ConnectionHandler::requiresAddressType() const
-{
-#if QT_CONFIG(bluez)
-    return true;
-#else
-    return false;
-#endif
-}
+    signal titleClicked(int index)
 
-QString ConnectionHandler::name() const
-{
-    return m_localDevice.name();
-}
+    Repeater {
+        model: 3
+        Text {
+            width: titleBar.width / 3
+            height: titleBar.height
+            x: index * width
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            text: __titles[index]
+            font.pixelSize: AppConstants.tinyFontSize
+            color: titleBar.currentIndex === index ? AppConstants.textColor : AppConstants.disabledTextColor
 
-QString ConnectionHandler::address() const
-{
-    return m_localDevice.address().toString();
-}
+            MouseArea {
+                anchors.fill: parent
+                onClicked:
+                {
+                    console.log("index: "+index)
+                    titleClicked(index)
+                }
+            }
+        }
+    }
 
-void ConnectionHandler::hostModeChanged(QBluetoothLocalDevice::HostMode /*mode*/)
-{
-    emit deviceChanged();
+
+    Item {
+        anchors.bottom: parent.bottom
+        width: parent.width / 3
+        height: parent.height
+        x: currentIndex * width
+
+        BottomLine{}
+
+        Behavior on x { NumberAnimation { duration: 200 } }
+    }
+
 }

@@ -76,7 +76,7 @@ Item {
     Image {
         anchors.centerIn: parent
         width: Math.min(parent.height, parent.width)*0.6
-        height: GameSettings.heightForWidth(width, sourceSize)
+        height: AppConstants.heightForWidth(width, sourceSize)
         source: "images/splash.png"
         antialiasing: true
         RotationAnimator {

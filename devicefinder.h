@@ -69,15 +69,18 @@ class DeviceFinder: public BluetoothBaseClass
     Q_PROPERTY(QVariant devices READ devices NOTIFY devicesChanged)
 
 public:
-    DeviceFinder(DeviceHandler *handler, QObject *parent = 0);
+    DeviceFinder(DeviceHandler* handler, QObject *parent = 0);
     ~DeviceFinder();
 
     bool scanning() const;
     QVariant devices();
+    Q_INVOKABLE void addDeviceToSelection(const quint8 &idx);
+    Q_INVOKABLE void removeDeviceFromSelection(const quint8 &idx);
 
 public slots:
     void startSearch();
     void connectToService(const QString &address);
+    void connectToMultipleServices();
 
 private slots:
     void addDevice(const QBluetoothDeviceInfo&);
@@ -89,9 +92,11 @@ signals:
     void devicesChanged();
 
 private:
-    DeviceHandler *m_deviceHandler;
+    DeviceHandler* m_deviceHandler;
     QBluetoothDeviceDiscoveryAgent *m_deviceDiscoveryAgent;
     QList<QObject*> m_devices;
+    quint8 m_selectedDevicesCount;
+
 
 };
 

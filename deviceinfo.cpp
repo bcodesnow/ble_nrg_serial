@@ -55,11 +55,17 @@
 DeviceInfo::DeviceInfo(const QBluetoothDeviceInfo &info):
     QObject(), m_device(info)
 {
+    m_deviceFlags = 0;
 }
 
 QBluetoothDeviceInfo DeviceInfo::getDevice() const
 {
     return m_device;
+}
+
+void DeviceInfo::setDeviceFlags(const qint64 &flags)
+{
+    m_deviceFlags = flags;
 }
 
 QString DeviceInfo::getName() const
@@ -70,6 +76,11 @@ QString DeviceInfo::getName() const
 QString DeviceInfo::getAddress() const
 {
     return m_device.address().toString();
+}
+
+qint64 DeviceInfo::getDeviceFlags() const
+{
+    return m_deviceFlags;
 }
 
 void DeviceInfo::setDevice(const QBluetoothDeviceInfo &device)

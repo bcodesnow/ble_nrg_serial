@@ -60,10 +60,11 @@
 #include "devicehandler.h"
 #include "deviceinfo.h"
 
-DeviceFinder::DeviceFinder(DeviceHandler *handler, QObject *parent):
+DeviceFinder::DeviceFinder(DeviceHandler* handler, QObject *parent):
     BluetoothBaseClass(parent),
     m_deviceHandler(handler)
 {
+    m_selectedDevicesCount = 0;
     //! [devicediscovery-1]
     m_deviceDiscoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
     m_deviceDiscoveryAgent->setLowEnergyDiscoveryTimeout(5000);
@@ -86,7 +87,9 @@ DeviceFinder::~DeviceFinder()
 void DeviceFinder::startSearch()
 {
     clearMessages();
-    m_deviceHandler->setDevice(0);
+    m_deviceHandler[0].setDevice(0);
+    m_deviceHandler[1].setDevice(0);
+
     qDeleteAll(m_devices);
     m_devices.clear();
 
@@ -136,19 +139,19 @@ void DeviceFinder::scanFinished()
     emit scanningChanged();
     emit devicesChanged();
 
-    qDebug()<<"devices_size:"<<m_devices.size();
+    qDebug()<<"Found BLE Devices Count:"<<m_devices.size();
     /*
     if (m_devices.size())
         connectToService( ((DeviceInfo*)m_devices.at(0))->getAddress());
     */
-    // INEFFICIENT TESTCODE
-    for (int i = 0; i < m_devices.size(); i++) {
-        if (((DeviceInfo*)m_devices.at(i))->getAddress() == "CE:D4:6E:7C:0E:44" ) {
-            qDebug()<<"Connecting to Service";
-            connectToService( ((DeviceInfo*)m_devices.at(i))->getAddress());
-            break;
-        }
-    }
+//    //TESTCODE
+//    for (int i = 0; i < m_devices.size(); i++) {
+//        if (((DeviceInfo*)m_devices.at(i))->getAddress() == "CE:D4:6E:7C:0E:44" ) {
+//            qDebug()<<"Connecting to Service";
+//            connectToService( ((DeviceInfo*)m_devices.at(i))->getAddress());
+//            break;
+//        }
+//    }
 }
 
 void DeviceFinder::connectToService(const QString &address)
@@ -166,9 +169,40 @@ void DeviceFinder::connectToService(const QString &address)
     if (currentDevice)
     {
         qInfo()<<"Handling over Device to Device Handler";
-        m_deviceHandler->setDevice(currentDevice);
+        m_deviceHandler[0].setDevice(currentDevice);
     }
     clearMessages();
+}
+
+void DeviceFinder::connectToMultipleServices()
+{
+    if (m_selectedDevicesCount)
+    {
+        if (m_selectedDevicesCount == 1)
+        {
+            qDebug()<<"Connecting to a Single SensorTile...";
+            for (int i = 0; i < m_devices.size(); i++)
+            {
+                if  (((DeviceInfo*)m_devices.at(i))->getDeviceFlags() & DEVICE_SELECTED )
+                    m_deviceHandler[0].setDevice((DeviceInfo*) m_devices.at(i));
+            }
+        }
+        else
+        {
+            int k = 0;
+            for (int i = 0; i < m_devices.size(); i++)
+            {
+                if  (((DeviceInfo*)m_devices.at(i))->getDeviceFlags() & DEVICE_SELECTED )
+                {
+                    qDebug()<<"Connecting to 2 SensorTiles...";
+                    m_deviceHandler[k].setDevice((DeviceInfo*) m_devices.at(i));
+                    k++;
+                }
+            }
+        }
+
+    }
+
 }
 
 bool DeviceFinder::scanning() const
@@ -179,4 +213,24 @@ bool DeviceFinder::scanning() const
 QVariant DeviceFinder::devices()
 {
     return QVariant::fromValue(m_devices);
+}
+
+void DeviceFinder::addDeviceToSelection(const quint8 &idx)
+{
+    if ( m_selectedDevicesCount < 2 )
+    {
+        ((DeviceInfo*) m_devices.at(idx) )->setDeviceFlags( ( (DeviceInfo*) m_devices.at(idx) )->getDeviceFlags() | DEVICE_SELECTED);
+        m_selectedDevicesCount++;
+        emit ((DeviceInfo*) m_devices.at(idx) )->deviceChanged();
+    }
+}
+
+void DeviceFinder::removeDeviceFromSelection(const quint8 &idx)
+{
+    if ( idx < m_devices.size() )
+    {
+        ((DeviceInfo*) m_devices.at(idx) )->setDeviceFlags( DEVICE_SELECTED );
+        m_selectedDevicesCount--;
+        emit ((DeviceInfo*) m_devices.at(idx) )->deviceChanged();
+    }
 }

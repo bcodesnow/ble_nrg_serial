@@ -111,7 +111,7 @@ void DeviceHandler::setDevice(DeviceInfo *device)
 
     // Create new controller and connect it if device available
     if (m_currentDevice) {
-        // SOME TRIAL AND ERROR)
+        // We are using fixed RandomADdressType)
         m_addressType = QLowEnergyController::RandomAddress;
 
         // Make connections
@@ -181,7 +181,6 @@ void DeviceHandler::serviceScanDone()
     if (m_service) {
 
         update_currentService();
-
         qDebug("SERVICE CREATED, SIGNALS Connected");
     } else {
         setError("BLE UART NOT FOUND");
@@ -340,17 +339,19 @@ void DeviceHandler::update_currentService()
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceHandler::ble_uart_rx);
     connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceHandler::confirmedDescriptorWrite);
     connect(m_service, QOverload<QLowEnergyService::ServiceError>::of(&QLowEnergyService::error),
-        [=](QLowEnergyService::ServiceError newError){ qDebug()<<"ERR - QlowEnergyServiceError!"; });
+        [=](QLowEnergyService::ServiceError newError){ qCritical()<<"ERR - QlowEnergyServiceError!"; });
     connect(m_service, SIGNAL(characteristicRead(QLowEnergyCharacteristic,QByteArray)), this, SLOT(onCharacteristicRead(QLowEnergyCharacteristic,QByteArray)));
     connect(m_service, SIGNAL(characteristicWritten(QLowEnergyCharacteristic,QByteArray)),this, SLOT(onCharacteristicWritten(QLowEnergyCharacteristic,QByteArray)));
 
     if(m_service->state() == QLowEnergyService::DiscoveryRequired) {
-        qDebug("BCOMMENT: Additional Discovery Required! Continue in StateChanged");
+        qWarning("Additional Discovery Required! Continue in StateChanged...");
         m_service->discoverDetails();
     }
     else
         searchCharacteristic();
 }
+
+
 
 bool DeviceHandler::measuring() const
 {

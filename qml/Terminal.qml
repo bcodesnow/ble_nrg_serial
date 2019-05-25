@@ -64,7 +64,7 @@ import "."
 //    width: Screen.width //640
 //    height: Screen.height //480
 //    title: qsTr("BLE UART Terminal")
-Item
+AppPage
 {
 
     Switch {
@@ -105,8 +105,8 @@ Item
         anchors.leftMargin: marginsLeftRight
         anchors.top: parent.top
         anchors.topMargin: marginsLeftRight
-        width: ( Screen.orientation === Qt.PortraitOrientation  ) ? ( parent.width - marginsLeftRight*2 ) : ( ( parent.width / 2 ) - marginsLeftRight*2 )
-        height: ( Screen.orientation === Qt.PortraitOrientation  ) ? ( parent.height / 2 ) * 0.95 :  parent.height * 0.95
+        width:  parent.width - marginsLeftRight*2// ) ( Screen.orientation === Qt.PortraitOrientation  ) ? ( parent.width - marginsLeftRight*2 ) : ( ( parent.width / 2 ) - marginsLeftRight*2 )
+        height: parent.height / 2  // ( Screen.orientation === Qt.PortraitOrientation  ) ? ( parent.height / 2 ) * 0.95 :  parent.height * 0.95
         radius: parent.height / 32
         color: "gray"
         gradient: Gradient {
@@ -119,7 +119,7 @@ Item
         {
             width: parent.width * 0.90
             height: parent.height * 0.90
-            color: "gray"
+            color: AppConstants.backgroundColor //"gray"
             anchors.centerIn: parent
 
             ListView {

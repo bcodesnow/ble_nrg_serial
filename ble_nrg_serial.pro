@@ -1,4 +1,4 @@
-QT += quick qml bluetooth
+QT += quick qml bluetooth serialbus
 CONFIG += c++11
 
 # The following define makes your compiler emit warnings if you use
@@ -17,9 +17,12 @@ SOURCES += main.cpp \
     bluetoothbaseclass.cpp \
     devicehandler.cpp \
     deviceinfo.cpp \
-    terminaltoqmlb.cpp
+    terminaltoqmlb.cpp \
+    connectionhandler.cpp \
+    timestampler.cpp
 
-RESOURCES += qml.qrc
+RESOURCES += qml.qrc \
+    images.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -37,7 +40,9 @@ HEADERS += \
     bluetoothbaseclass.h \
     devicehandler.h \
     deviceinfo.h \
-    terminaltoqmlb.h
+    terminaltoqmlb.h \
+    connectionhandler.h \
+    timestampler.h
 
 DISTFILES += \
     pre_trash

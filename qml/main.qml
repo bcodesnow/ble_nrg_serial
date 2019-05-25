@@ -48,44 +48,58 @@
 **
 ****************************************************************************/
 
-#include "connectionhandler.h"
-#include <QtBluetooth/qtbluetooth-config.h>
+import QtQuick 2.7
+import QtQuick.Window 2.2
+import "."
 
-ConnectionHandler::ConnectionHandler(QObject *parent) : QObject(parent)
-{
-    connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged,
-            this, &ConnectionHandler::hostModeChanged);
-}
+Window {
+    id: wroot
+    visible: true
+    width: 720 * .7
+    height: 1240 * .7
+    title: qsTr("Catch Detection")
+    color: AppConstants.backgroundColor
 
-bool ConnectionHandler::alive() const
-{
-#ifdef SIMULATOR
-    return true;
-#else
-    return m_localDevice.isValid() && m_localDevice.hostMode() != QBluetoothLocalDevice::HostPoweredOff;
-#endif
-}
+    Component.onCompleted: {
+        AppConstants.wWidth = Qt.binding(function() {return width})
+        AppConstants.wHeight = Qt.binding(function() {return height})
+    }
 
-bool ConnectionHandler::requiresAddressType() const
-{
-#if QT_CONFIG(bluez)
-    return true;
-#else
-    return false;
-#endif
-}
+    Loader {
+        id: splashLoader
+        anchors.fill: parent
+        source: "SplashScreen.qml"
+        asynchronous: false
+        visible: true
 
-QString ConnectionHandler::name() const
-{
-    return m_localDevice.name();
-}
+        onStatusChanged: {
+            if (status === Loader.Ready) {
+                appLoader.setSource("App.qml");
+            }
+        }
+    }
 
-QString ConnectionHandler::address() const
-{
-    return m_localDevice.address().toString();
-}
+    Connections {
+        target: splashLoader.item
+        onReadyToGo: {
+            appLoader.visible = true
+            appLoader.item.init()
+            splashLoader.visible = false
+            splashLoader.setSource("")
+            appLoader.item.forceActiveFocus();
+        }
+    }
 
-void ConnectionHandler::hostModeChanged(QBluetoothLocalDevice::HostMode /*mode*/)
-{
-    emit deviceChanged();
+    Loader {
+        id: appLoader
+        anchors.fill: parent
+        visible: false
+        asynchronous: true
+        onStatusChanged: {
+            if (status === Loader.Ready)
+                splashLoader.item.appReady()
+            if (status === Loader.Error)
+                splashLoader.item.errorInLoadingApp();
+        }
+    }
 }

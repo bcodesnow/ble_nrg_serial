@@ -51,7 +51,7 @@
 import QtQuick 2.5
 import Shared 1.0
 
-GamePage {
+AppPage {
 
     errorMessage: deviceFinder.error
     infoMessage: deviceFinder.info
@@ -59,25 +59,25 @@ GamePage {
     Rectangle {
         id: viewContainer
         anchors.top: parent.top
-        anchors.bottom:
-            // only BlueZ platform has address type selection
-            connectionHandler.requiresAddressType ? addressTypeButton.top : searchButton.top
-        anchors.topMargin: GameSettings.fieldMargin + messageHeight
-        anchors.bottomMargin: GameSettings.fieldMargin
+        anchors.bottom: connectButton.top
+        // only BlueZ platform has address type selection
+        // connectionHandler.requiresAddressType ? addressTypeButton.top : searchButton.top
+        anchors.topMargin: AppConstants.fieldMargin + messageHeight
+        anchors.bottomMargin: AppConstants.fieldMargin
         anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width - GameSettings.fieldMargin*2
-        color: GameSettings.viewColor
-        radius: GameSettings.buttonRadius
+        width: parent.width - AppConstants.fieldMargin*2
+        color: AppConstants.viewColor
+        radius: AppConstants.buttonRadius
 
 
         Text {
             id: title
             width: parent.width
-            height: GameSettings.fieldHeight
+            height: AppConstants.fieldHeight
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            color: GameSettings.textColor
-            font.pixelSize: GameSettings.mediumFontSize
+            color: AppConstants.textColor
+            font.pixelSize: AppConstants.mediumFontSize
             text: qsTr("FOUND DEVICES")
 
             BottomLine {
@@ -96,93 +96,125 @@ GamePage {
             anchors.top: title.bottom
             model: deviceFinder.devices
             clip: true
+            spacing: 3
+
 
             delegate: Rectangle {
                 id: box
-                height:GameSettings.fieldHeight * 1.2
+                height:AppConstants.fieldHeight * 1.2
                 width: parent.width
-                color: index % 2 === 0 ? GameSettings.delegate1Color : GameSettings.delegate2Color
-
+                color: {
+                    if (modelData.deviceFlags & 0x01)
+                    {
+                        AppConstants.infoColor
+                    }
+                    else
+                    {
+                        index % 2 === 0 ? AppConstants.delegate1Color : AppConstants.delegate2Color
+                    }
+                }
                 MouseArea {
-                anchors.fill: parent
+                    anchors.fill: parent
                     onClicked: {
-                        deviceFinder.connectToService(modelData.deviceAddress);
-                        app.showPage("Measure.qml")
+                        if (modelData.deviceFlags & 0x01)
+                        {
+                            deviceFinder.removeDeviceFromSelection(index);
+                            console.log("Device deSelected");
+                        }
+                        else
+                        {
+                            deviceFinder.addDeviceToSelection(index);
+                            console.log("Device Selected");
+                        }
+                        //deviceFinder.connectToService(modelData.deviceAddress);
                     }
                 }
 
                 Text {
                     id: device
-                    font.pixelSize: GameSettings.smallFontSize
+                    font.pixelSize: AppConstants.smallFontSize
                     text: modelData.deviceName
                     anchors.top: parent.top
                     anchors.topMargin: parent.height * 0.1
                     anchors.leftMargin: parent.height * 0.1
                     anchors.left: parent.left
-                    color: GameSettings.textColor
+                    color: AppConstants.textColor
                 }
 
                 Text {
                     id: deviceAddress
-                    font.pixelSize: GameSettings.smallFontSize
+                    font.pixelSize: AppConstants.smallFontSize
                     text: modelData.deviceAddress
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: parent.height * 0.1
                     anchors.rightMargin: parent.height * 0.1
                     anchors.right: parent.right
-                    color: Qt.darker(GameSettings.textColor)
+                    color: Qt.darker(AppConstants.textColor)
                 }
             }
         }
     }
 
-    GameButton {
-        id: addressTypeButton
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: searchButton.top
-        anchors.bottomMargin: GameSettings.fieldMargin*0.5
-        width: viewContainer.width
-        height: GameSettings.fieldHeight
-        visible: connectionHandler.requiresAddressType // only required on BlueZ
-        state: "public"
-        onClicked: state == "public" ? state = "random" : state = "public"
-
-        states: [
-            State {
-                name: "public"
-                PropertyChanges { target: addressTypeText; text: qsTr("Public Address") }
-                PropertyChanges { target: deviceHandler; addressType: AddressType.PublicAddress }
-            },
-            State {
-                name: "random"
-                PropertyChanges { target: addressTypeText; text: qsTr("Random Address") }
-                PropertyChanges { target: deviceHandler; addressType: AddressType.RandomAddress }
+        AppButton {
+            id: connectButton
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: searchButton.top
+            anchors.bottomMargin: AppConstants.fieldMargin*0.5
+            width: viewContainer.width
+            height: AppConstants.fieldHeight
+            visible: true //connectionHandler.requiresAddressType // only required on BlueZ
+            state: "disconnected"
+            onClicked:
+            {
+                //state == "disconnected" ? state = "disconnected" : state = "connected"
+                if (state === "disconnected")
+                {
+                    state = "connected"
+                    deviceFinder.connectToMultipleServices();
+                    app.showPage("Terminal.qml")
+                }
+                else
+                {
+                    state = "disconnected"
+                    // handle termination gracefully
+                }
             }
-        ]
+            states: [
+                State {
+                    name: "disconnected"
+                    PropertyChanges { target: addressTypeText; text: qsTr("CONNECT") }
+                    //PropertyChanges { target: deviceHandler; addressType: AddressType.PublicAddress }
+                },
+                State {
+                    name: "connected"
+                    PropertyChanges { target: addressTypeText; text: qsTr("TERMINATE") }
+                    //PropertyChanges { target: deviceHandler; addressType: AddressType.RandomAddress }
+                }
+            ]
 
-        Text {
-            id: addressTypeText
-            anchors.centerIn: parent
-            font.pixelSize: GameSettings.tinyFontSize
-            color: GameSettings.textColor
+            Text {
+                id: addressTypeText
+                anchors.centerIn: parent
+                font.pixelSize: AppConstants.tinyFontSize
+                color: AppConstants.textColor
+            }
         }
-    }
 
-    GameButton {
+    AppButton {
         id: searchButton
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: GameSettings.fieldMargin
+        anchors.bottomMargin: AppConstants.fieldMargin
         width: viewContainer.width
-        height: GameSettings.fieldHeight
+        height: AppConstants.fieldHeight
         enabled: !deviceFinder.scanning
         onClicked: deviceFinder.startSearch()
 
         Text {
             anchors.centerIn: parent
-            font.pixelSize: GameSettings.tinyFontSize
+            font.pixelSize: AppConstants.tinyFontSize
             text: qsTr("START SEARCH")
-            color: searchButton.enabled ? GameSettings.textColor : GameSettings.disabledTextColor
+            color: searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
     }
 }

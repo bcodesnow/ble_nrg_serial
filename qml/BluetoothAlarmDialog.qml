@@ -71,7 +71,7 @@ Item {
         width: parent.width * 0.8
         height: parent.height * 0.6
         border.color: "#454545"
-        color: GameSettings.backgroundColor
+        color: AppConstants.backgroundColor
         radius: width * 0.05
 
         Item {
@@ -84,7 +84,7 @@ Item {
                 anchors.left: quitButton.left
                 anchors.right: quitButton.right
                 anchors.top: parent.top
-                height: GameSettings.heightForWidth(width, sourceSize)
+                height: AppConstants.heightForWidth(width, sourceSize)
                 source: "images/bt_off_to_on.png"
             }
 
@@ -96,23 +96,23 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.WordWrap
-                font.pixelSize: GameSettings.mediumFontSize
-                color: GameSettings.textColor
+                font.pixelSize: AppConstants.mediumFontSize
+                color: AppConstants.textColor
                 text: qsTr("This application cannot be used without Bluetooth. Please switch Bluetooth ON to continue.")
             }
 
-            GameButton {
+            AppButton {
                 id: quitButton
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: dialogContainer.width * 0.6
-                height: GameSettings.buttonHeight
+                height: AppConstants.buttonHeight
                 onClicked: Qt.quit()
 
                 Text {
                     anchors.centerIn: parent
-                    color: GameSettings.textColor
-                    font.pixelSize: GameSettings.bigFontSize
+                    color: AppConstants.textColor
+                    font.pixelSize: AppConstants.bigFontSize
                     text: qsTr("Quit")
                 }
             }

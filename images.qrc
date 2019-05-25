@@ -1,2 +1,6 @@
-<!DOCTYPE RCC>
-<RCC version="1.0"/>
+<RCC>
+    <qresource prefix="/">
+        <file>qml/images/bt_off_to_on.png</file>
+        <file>qml/images/splash.png</file>
+    </qresource>
+</RCC>
