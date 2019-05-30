@@ -129,9 +129,9 @@ private:
                      const QByteArray &value);
 
     // PayloadLength Max 1 CHAR_MAX_LEN-1= 19
-    void sendCMDwaitforReply(quint8 cmd, quint8* payload, payloadLength)
+    void sendCMDwaitforReply(quint8 cmd, quint8* payload, int payloadLength)
     {
-        replyDelayTimer->setSingleShot();
+        replyDelayTimer->setSingleShot(true);
 
     }
 
