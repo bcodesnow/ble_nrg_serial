@@ -95,6 +95,9 @@ Item {
                 showPage("Connect.qml")
                 break;
             case 1:
+                showPage("Catch.qml")
+                break;
+            case 2:
                 showPage("Terminal.qml")
                 break;
             default:

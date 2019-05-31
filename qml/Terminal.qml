@@ -73,7 +73,11 @@ AppPage
         anchors.margins: 5
         height: 32
         width: 64
-        text: "AutoScroll OFF"
+        contentItem: Text {
+            text: "Turn OFF Autoscroll"
+            color: AppConstants.textColor
+            anchors.left: parent.right
+        }
         onCheckedChanged:
         {
             terminalListView.autoScrollEnabled = !terminalListView.autoScrollEnabled
@@ -180,7 +184,8 @@ AppPage
                     text: "Send"
                     onClicked:
                     {
-                        terminalToQml.messageFromQml(txtInput.text, "yellow", 1);
+                        //terminalToQml.messageFromQml(txtInput.text, "yellow", 1);
+                        deviceHandler_0.sendCMDStringFromTerminal(txtInput.text);
                         txtInput.clear();
                     }
                 }

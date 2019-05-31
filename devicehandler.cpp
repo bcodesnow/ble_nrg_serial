@@ -62,15 +62,58 @@
  *  setDevice -> serviceDiscovered -> serviceScanDone
  */
 
+void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
+{
+    QByteArray tba;
+    if ( str == QString("get_state()"))
+    {
+        tba.resize(1);
+        tba[0] = GET_STATE;
+        qInfo()<<"Fetching State";
+    }
+    else if ( str == QString("start()"))
+    {
+        tba.resize(1);
+        tba[0] = START;
+        qInfo()<<"Sending Start";
+    }
+    else if ( str == QString("stop()"))
+    {
+        tba.resize(1);
+        tba[0] = STOP;
+        qInfo()<<"Sending Stop";
+    }
+
+    else if (str == "confirm(1)" )
+    {
+        tba.resize(2);
+        tba[0] = WRITE_CATCH_SUCCESS;
+        tba[1] = 1;
+        qInfo()<<"Sending Catch Confrim";
+    }
+
+    else if (str == "confirm(0)" )
+    {
+        tba.resize(0);
+        tba[0] = WRITE_CATCH_SUCCESS;
+        tba[1] = 0;
+        qInfo()<<"Sending Catch Confrim";
+    }
+    else
+    {
+        qCritical()<<"Unknown Command!";
+    }
+
+    if (tba.size())
+        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+}
+
 DeviceHandler::DeviceHandler(QObject *parent) :
     BluetoothBaseClass(parent),
     m_control(0),
     m_service(0),
     m_currentDevice(0),
-    m_found_BLE_UART_Service(false),
-    m_measuring(false),
-    m_currentValue(0),
-    m_min(0), m_max(0), m_sum(0), m_avg(0), m_calories(0)
+    m_found_BLE_UART_Service(false)
 {
 
     m_test_timer = NULL;
@@ -101,6 +144,8 @@ void DeviceHandler::setDevice(DeviceInfo *device)
 {
     clearMessages();
     m_currentDevice = device;
+    if (device != NULL)
+        m_deviceAddress = device->getAddress();
 
     // Disconnect and delete old connection
     if (m_control) {
@@ -129,27 +174,6 @@ void DeviceHandler::setDevice(DeviceInfo *device)
         // Connect
         m_control->connectToDevice();
     }
-}
-
-void DeviceHandler::startMeasurement()
-{
-    if (alive()) {
-        m_start = QDateTime::currentDateTime();
-        m_min = 0;
-        m_max = 0;
-        m_avg = 0;
-        m_sum = 0;
-        m_calories = 0;
-        m_measuring = true;
-        m_measurements.clear();
-        emit measuringChanged();
-    }
-}
-
-void DeviceHandler::stopMeasurement()
-{
-    m_measuring = false;
-    emit measuringChanged();
 }
 
 void DeviceHandler::serviceDiscovered(const QBluetoothUuid &gatt)
@@ -212,32 +236,19 @@ void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
 
     emit aliveChanged();
 }
-//! [Find HRM characteristic]
 
-//! [Reading value]
 void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
-    qDebug()<<"<rx_sig_called";
+    qDebug()<<"<Data Received:";
     // ignore any other characteristic change -> shouldn't really happen though
     if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR))
         return;
 
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
-    quint8 flags = data[0];
-    qInfo()<<"Data[0]"<<flags;
-
+    quint8 flags = data[1];
+    qInfo()<<"Data[1]"<<flags;
     qInfo()<<"Data:"<<value.toHex();
-
-    //Heart Rate
-    //    int hrvalue = 0;
-    //    if (flags & 0x1) // HR 16 bit? otherwise 8 bit
-    //        hrvalue = (int)qFromLittleEndian<quint16>(data[1]);
-    //    else
-    //        hrvalue = (int)data[1];
-
-    //addMeasurement(hrvalue);
 }
-//! [Reading value]
 
 void DeviceHandler::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value)
 {
@@ -352,69 +363,12 @@ void DeviceHandler::update_currentService()
 }
 
 
-
-bool DeviceHandler::measuring() const
-{
-    return m_measuring;
-}
-
 bool DeviceHandler::alive() const
 {
     if (m_service)
         return m_service->state() == QLowEnergyService::ServiceDiscovered;
 
     return false;
-}
-
-int DeviceHandler::hr() const
-{
-    return m_currentValue;
-}
-
-int DeviceHandler::time() const
-{
-    return m_start.secsTo(m_stop);
-}
-
-int DeviceHandler::maxHR() const
-{
-    return m_max;
-}
-
-int DeviceHandler::minHR() const
-{
-    return m_min;
-}
-
-float DeviceHandler::average() const
-{
-    return m_avg;
-}
-
-float DeviceHandler::calories() const
-{
-    return m_calories;
-}
-
-void DeviceHandler::addMeasurement(int value)
-{
-    // ADDS MEAS TO QML STAT AND EMITS A SIGNAL TO ACT ON IT
-    m_currentValue = value;
-
-    // If measuring and value is appropriate
-    if (m_measuring && value > 30 && value < 250) {
-
-        m_stop = QDateTime::currentDateTime();
-        m_measurements << value;
-
-        m_min = m_min == 0 ? value : qMin(value, m_min);
-        m_max = qMax(value, m_max);
-        m_sum += value;
-        m_avg = (double)m_sum / m_measurements.size();
-        m_calories = ((-55.0969 + (0.6309 * m_avg) + (0.1988 * 94) + (0.2017 * 24)) / 4.184) * 60 * time()/3600;
-    }
-
-    emit statsChanged();
 }
 
 void DeviceHandler::searchCharacteristic()
@@ -457,14 +411,14 @@ void DeviceHandler::searchCharacteristic()
             }
         }
 
-        if(!m_test_timer && m_readCharacteristic.isValid() && m_writeCharacteristic.isValid())
-        {
-            qDebug()<<"Starting Test Timer";
-            this->m_test_timer = new QTimer(this);
-            connect(m_test_timer, &QTimer::timeout, this, &DeviceHandler::onTimerTriggered);
-            #define INTERVAL_MS 500
-            m_test_timer->start(INTERVAL_MS);
-        }
+//        if(!m_test_timer && m_readCharacteristic.isValid() && m_writeCharacteristic.isValid())
+//        {
+//            qDebug()<<"Starting Test Timer";
+//            this->m_test_timer = new QTimer(this);
+//            connect(m_test_timer, &QTimer::timeout, this, &DeviceHandler::onTimerTriggered);
+//            #define INTERVAL_MS 500
+//            m_test_timer->start(INTERVAL_MS);
+//        }
     }
 
 }

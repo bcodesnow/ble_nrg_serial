@@ -200,9 +200,7 @@ void DeviceFinder::connectToMultipleServices()
                 }
             }
         }
-
     }
-
 }
 
 bool DeviceFinder::scanning() const

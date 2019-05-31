@@ -171,7 +171,8 @@ AppPage {
                 {
                     state = "connected"
                     deviceFinder.connectToMultipleServices();
-                    app.showPage("Terminal.qml")
+                    app.__currentIndex = 1;
+                    app.showPage("Catch.qml");
                 }
                 else
                 {
