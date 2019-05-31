@@ -113,10 +113,10 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     m_control(0),
     m_service(0),
     m_currentDevice(0),
+    m_refToOtherDevice(0),
     m_found_BLE_UART_Service(false)
 {
 
-    m_test_timer = NULL;
 }
 
 void DeviceHandler::setAddressType(AddressType type)
@@ -137,6 +137,11 @@ DeviceHandler::AddressType DeviceHandler::addressType() const
         return DeviceHandler::AddressType::RandomAddress;
 
     return DeviceHandler::AddressType::PublicAddress;
+}
+
+void DeviceHandler::setRefToOtherDevice(DeviceHandler *t_dev_handler)
+{
+    m_refToOtherDevice = t_dev_handler;
 }
 
 
@@ -237,17 +242,76 @@ void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
     emit aliveChanged();
 }
 
+QString DeviceHandler::state_to_string(uint8_t tmp)
+{
+    switch (tmp)
+    {
+    case CDSM_STATE_INIT:
+        return QString("Initializing");
+    case CDSM_STATE_RUNNING:
+        return QString("Running");
+    case CDSM_STATE_READY_TO_BE_TRIGGERED:
+        return QString("Ready to Trigger");
+    case CDSM_STATE_TRIGGERED:
+        return QString("Triggered");
+    case CDSM_STATE_STOPPING:
+        return QString("Stopping");
+    case CDSM_STATE_STOPPED:
+        return QString("Stopped");
+    case CDSM_STATE_RESTARTING:
+        return QString("Restarting");
+    case CDSM_STATE_ERROR:
+        return QString("Error");
+    default:
+        return QString("Unknown");
+    }
+}
+
 void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
-    qDebug()<<"<Data Received:";
-    // ignore any other characteristic change -> shouldn't really happen though
-    if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR))
+    if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
         return;
 
+    qDebug()<<"<Data Received:";
+    // ignore any other characteristic change -> shouldn't really happen though
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     quint8 flags = data[1];
     qInfo()<<"Data[1]"<<flags;
     qInfo()<<"Data:"<<value.toHex();
+
+    switch(data[0])
+    {
+    case TRIGGERED:
+        //inform the other device
+        if (m_refToOtherDevice != NULL)
+        {
+            QByteArray tba;
+            tba.resize(2);
+            tba[0] = TRIGGERED;
+            tba[1] = 0xFF; //just a second char, not needed
+            m_refToOtherDevice->ble_uart_tx(tba);
+        }
+        break;
+
+    case DATA_COLLECTED:
+        //confirm if it was a catch or drop -> we should give it to a class above iE devFinder
+        setInfo("Waiting for Confirmation!");
+        break;
+
+    case ALIVE:
+        //show current state and file index.. here we should start a timer, and if no more msg arrives to alive for 3secs we know we lsot the sensor.
+        m_deviceState = state_to_string(data[1]);
+        m_fileIndexOnDevice = data[2];
+        emit fileIndexOnDeviceChanged();
+        emit deviceStateChanged();
+        break;
+    }
+}
+
+void DeviceHandler::ble_uart_tx(const QByteArray &value)
+{
+    if (value.size())
+        m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
 void DeviceHandler::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value)
@@ -339,9 +403,9 @@ void DeviceHandler::onTimerTriggered()
         }
     }
 
-//    qDebug()<<"Trying to Read";
-//    if(m_service && m_readCharacteristic.isValid())
-//        m_service->readCharacteristic(m_readCharacteristic);
+    //    qDebug()<<"Trying to Read";
+    //    if(m_service && m_readCharacteristic.isValid())
+    //        m_service->readCharacteristic(m_readCharacteristic);
 }
 
 void DeviceHandler::update_currentService()
@@ -350,7 +414,7 @@ void DeviceHandler::update_currentService()
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceHandler::ble_uart_rx);
     connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceHandler::confirmedDescriptorWrite);
     connect(m_service, QOverload<QLowEnergyService::ServiceError>::of(&QLowEnergyService::error),
-        [=](QLowEnergyService::ServiceError newError){ qCritical()<<"ERR - QlowEnergyServiceError!"; });
+            [=](QLowEnergyService::ServiceError newError){ qCritical()<<"ERR - QlowEnergyServiceError!"; });
     connect(m_service, SIGNAL(characteristicRead(QLowEnergyCharacteristic,QByteArray)), this, SLOT(onCharacteristicRead(QLowEnergyCharacteristic,QByteArray)));
     connect(m_service, SIGNAL(characteristicWritten(QLowEnergyCharacteristic,QByteArray)),this, SLOT(onCharacteristicWritten(QLowEnergyCharacteristic,QByteArray)));
 
@@ -411,14 +475,14 @@ void DeviceHandler::searchCharacteristic()
             }
         }
 
-//        if(!m_test_timer && m_readCharacteristic.isValid() && m_writeCharacteristic.isValid())
-//        {
-//            qDebug()<<"Starting Test Timer";
-//            this->m_test_timer = new QTimer(this);
-//            connect(m_test_timer, &QTimer::timeout, this, &DeviceHandler::onTimerTriggered);
-//            #define INTERVAL_MS 500
-//            m_test_timer->start(INTERVAL_MS);
-//        }
+        //        if(!m_test_timer && m_readCharacteristic.isValid() && m_writeCharacteristic.isValid())
+        //        {
+        //            qDebug()<<"Starting Test Timer";
+        //            this->m_test_timer = new QTimer(this);
+        //            connect(m_test_timer, &QTimer::timeout, this, &DeviceHandler::onTimerTriggered);
+        //            #define INTERVAL_MS 500
+        //            m_test_timer->start(INTERVAL_MS);
+        //        }
     }
 
 }

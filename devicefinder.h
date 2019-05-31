@@ -76,11 +76,13 @@ public:
     QVariant devices();
     Q_INVOKABLE void addDeviceToSelection(const quint8 &idx);
     Q_INVOKABLE void removeDeviceFromSelection(const quint8 &idx);
+    void connectSecondDevice();
 
 public slots:
     void startSearch();
     void connectToService(const QString &address);
     void connectToMultipleServices();
+
 
 private slots:
     void addDevice(const QBluetoothDeviceInfo&);

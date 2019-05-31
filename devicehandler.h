@@ -66,6 +66,7 @@
 #define IGNORE_LAST_X                       0x07
 #define DATA_COLLECTED                      0x08
 #define WRITE_CATCH_SUCCESS                 0x09
+#define ALIVE								0x10
 
 #define CDSM_STATE_INIT												( 1u << 0x00 )
 #define CDSM_STATE_RUNNING											( 1u << 0x01 )
@@ -87,6 +88,10 @@ class DeviceHandler : public BluetoothBaseClass
     Q_PROPERTY(bool alive READ alive NOTIFY aliveChanged)
     Q_PROPERTY(AddressType addressType READ addressType WRITE setAddressType)
     Q_PROPERTY(QString deviceAddress MEMBER m_deviceAddress NOTIFY deviceAddressChanged)
+    Q_PROPERTY(QString deviceState MEMBER m_deviceState NOTIFY deviceStateChanged)
+    Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
+
+
 
 public:
     Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str);
@@ -103,11 +108,15 @@ public:
     void setAddressType(AddressType type);
     AddressType addressType() const;
 
+    void setRefToOtherDevice (DeviceHandler* t_dev_handler);
+
     bool alive() const;
 
 signals:
     void aliveChanged();
     void deviceAddressChanged();
+    void deviceStateChanged();
+    void fileIndexOnDeviceChanged();
 
 public slots:
     void disconnectService();
@@ -127,7 +136,9 @@ private:
     //QLowEnergyService
     void serviceStateChanged(QLowEnergyService::ServiceState s);
     void ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value);
-    void ble_uart_tx(const QLowEnergyCharacteristic &c, const QByteArray &value);
+    void ble_uart_tx(const QByteArray &value);
+    QString state_to_string(uint8_t tmp);
+
 
     // PayloadLength Max 1 CHAR_MAX_LEN-1= 19
     void sendCMDwaitforReply(quint8 cmd, quint8* payload, int payloadLength)
@@ -138,15 +149,19 @@ private:
     void confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value);
     void update_currentService();
 
-private:
     void searchCharacteristic();
     void printProperties(QLowEnergyCharacteristic::PropertyTypes);
 
     QLowEnergyController *m_control;
     QLowEnergyService *m_service;
     QString m_deviceAddress;
+    QString m_deviceState;
+    qint16 m_fileIndexOnDevice;
+
     DeviceInfo *m_currentDevice;
     QLowEnergyDescriptor m_notificationDescriptor;
+
+    DeviceHandler* m_refToOtherDevice;
 
     const QString BLE_UART_RX_CHAR = "{d973f2e2-b19e-11e2-9e96-0800200c9a66}";
     const QString BLE_UART_TX_CHAR = "{d973f2e1-b19e-11e2-9e96-0800200c9a66}";

@@ -13,5 +13,6 @@
         <file>qml/AppConstants.qml</file>
         <file>qml/qmldir</file>
         <file>qml/Catch.qml</file>
+        <file>qml/DeviceInfoContainer.qml</file>
     </qresource>
 </RCC>

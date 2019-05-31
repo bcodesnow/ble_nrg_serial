@@ -59,6 +59,7 @@
 #include "devicefinder.h"
 #include "devicehandler.h"
 #include "deviceinfo.h"
+#include "QThread"
 
 DeviceFinder::DeviceFinder(DeviceHandler* handler, QObject *parent):
     BluetoothBaseClass(parent),
@@ -196,12 +197,21 @@ void DeviceFinder::connectToMultipleServices()
                 {
                     qDebug()<<"Connecting to 2 SensorTiles...";
                     m_deviceHandler[k].setDevice((DeviceInfo*) m_devices.at(i));
+
                     k++;
                 }
             }
+            m_deviceHandler[0].setRefToOtherDevice( & m_deviceHandler[1]);
+            m_deviceHandler[1].setRefToOtherDevice( & m_deviceHandler[0]);
         }
     }
 }
+
+void DeviceFinder::connectSecondDevice()
+{
+
+}
+
 
 bool DeviceFinder::scanning() const
 {
@@ -227,8 +237,9 @@ void DeviceFinder::removeDeviceFromSelection(const quint8 &idx)
 {
     if ( idx < m_devices.size() )
     {
-        ((DeviceInfo*) m_devices.at(idx) )->setDeviceFlags( DEVICE_SELECTED );
+        ((DeviceInfo*) m_devices.at(idx) )->setDeviceFlags( 0 );
         m_selectedDevicesCount--;
         emit ((DeviceInfo*) m_devices.at(idx) )->deviceChanged();
     }
 }
+

@@ -5,8 +5,8 @@ import "."
 
 AppPage {
 
-    errorMessage: deviceFinder.error
-    infoMessage: deviceFinder.info
+    errorMessage: deviceHandler_0.error
+    infoMessage: deviceHandler_0.info
 
     Rectangle {
         id: viewContainer
@@ -19,73 +19,26 @@ AppPage {
         color: AppConstants.viewColor
         radius: AppConstants.buttonRadius
 
-
-        Rectangle
-        {
+        DeviceInfoContainer {
             id: leftContainer
-            width: parent.width / 2
-            anchors.top: parent.top
             anchors.left: parent.left
-
-            Text {
-                id: titleLeft
-                width: parent.width
-                height: AppConstants.fieldHeight
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                color: AppConstants.textColor
-                font.pixelSize: AppConstants.mediumFontSize
-                text: qsTr("LEFT")
-
-                BottomLine {
-                    height: 1;
-                    width: parent.width
-                    color: "#898989"
-                }
-            }
-        }
-
-        Rectangle
-        {
-            id: rightContainer
-            width: parent.width / 2
             anchors.top: parent.top
-            anchors.right: parent.right
-
-            Text {
-                id: titleRight
-                width: parent.width
-                height: AppConstants.fieldHeight
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                color: AppConstants.textColor
-                font.pixelSize: AppConstants.mediumFontSize
-                text: qsTr("RIGHT")
-
-                BottomLine {
-                    height: 1;
-                    width: parent.width
-                    color: "#898989"
-                }
-            }
-            Text {
-                id: addresRight
-                width: parent.width
-                height: AppConstants.fieldHeight
-                anchors.top: titleRight.bottom
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                color: AppConstants.textColor
-                font.pixelSize: AppConstants.smallFontSize
-                text: deviceHandler_0.deviceAddress
-
-                BottomLine {
-                    height: 1;
-                    width: parent.width
-                    color: "#898989"
-                }
-            }
+            state: deviceHandler_0.deviceState
+            address: deviceHandler_0.deviceAddress
+            fileIndex: deviceHandler_0.fileIndexOnDevice
+            conatinerName: "LEFT"
         }
+
+        DeviceInfoContainer {
+            id: rightContainer
+            anchors.right: parent.right
+            anchors.top: parent.top
+            state: deviceHandler_1.deviceState
+            address: deviceHandler_1.deviceAddress
+            fileIndex: deviceHandler_1.fileIndexOnDevice
+            conatinerName: "RIGHT"
+        }
+
         Rectangle {
             id: midDecorator
             anchors.horizontalCenter: parent.horizontalCenter
