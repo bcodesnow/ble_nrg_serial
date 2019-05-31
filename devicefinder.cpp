@@ -197,7 +197,6 @@ void DeviceFinder::connectToMultipleServices()
                 {
                     qDebug()<<"Connecting to 2 SensorTiles...";
                     m_deviceHandler[k].setDevice((DeviceInfo*) m_devices.at(i));
-
                     k++;
                 }
             }
@@ -206,12 +205,6 @@ void DeviceFinder::connectToMultipleServices()
         }
     }
 }
-
-void DeviceFinder::connectSecondDevice()
-{
-
-}
-
 
 bool DeviceFinder::scanning() const
 {
@@ -241,5 +234,15 @@ void DeviceFinder::removeDeviceFromSelection(const quint8 &idx)
         m_selectedDevicesCount--;
         emit ((DeviceInfo*) m_devices.at(idx) )->deviceChanged();
     }
+}
+
+void DeviceFinder::sendConfirmationToBothDevices(const quint8 &success)
+{
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = WRITE_CATCH_SUCCESS;
+    tba[1] = success;
+    m_deviceHandler[0].ble_uart_tx(tba);
+    m_deviceHandler[1].ble_uart_tx(tba);
 }
 

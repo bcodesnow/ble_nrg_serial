@@ -8,10 +8,12 @@ AppPage {
     errorMessage: deviceHandler_0.error
     infoMessage: deviceHandler_0.info
 
+    property bool catchConfirmationNeeded: false
+
     Rectangle {
         id: viewContainer
         anchors.top: parent.top
-        anchors.bottom: connectButton.top
+        anchors.bottom: catchButton.top
         anchors.topMargin: AppConstants.fieldMargin + messageHeight
         anchors.bottomMargin: AppConstants.fieldMargin
         anchors.horizontalCenter: parent.horizontalCenter
@@ -50,66 +52,45 @@ AppPage {
         }
     }
 
-        AppButton {
-            id: connectButton
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: searchButton.top
-            anchors.bottomMargin: AppConstants.fieldMargin*0.5
-            width: viewContainer.width
-            height: AppConstants.fieldHeight
-            visible: true //connectionHandler.requiresAddressType // only required on BlueZ
-            state: "disconnected"
-            onClicked:
-            {
-                //state == "disconnected" ? state = "disconnected" : state = "connected"
-                if (state === "disconnected")
-                {
-                    state = "connected"
-                    deviceFinder.connectToMultipleServices();
-                    app.showPage("Terminal.qml")
-                }
-                else
-                {
-                    state = "disconnected"
-                    // handle termination gracefully
-                }
-            }
-            states: [
-                State {
-                    name: "disconnected"
-                    PropertyChanges { target: addressTypeText; text: qsTr("DIESE EINE BUTTON") }
-                    //PropertyChanges { target: deviceHandler; addressType: AddressType.PublicAddress }
-                },
-                State {
-                    name: "connected"
-                    PropertyChanges { target: addressTypeText; text: qsTr("DIESE EINE BUTTON") }
-                    //PropertyChanges { target: deviceHandler; addressType: AddressType.RandomAddress }
-                }
-            ]
-
-            Text {
-                id: addressTypeText
-                anchors.centerIn: parent
-                font.pixelSize: AppConstants.tinyFontSize
-                color: AppConstants.textColor
-            }
+    AppButton {
+        id: catchButton
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: dropButton.top
+        anchors.bottomMargin: AppConstants.fieldMargin*0.5
+        width: viewContainer.width
+        height: AppConstants.fieldHeight
+        enabled: parent.catchConfirmationNeeded
+        onClicked:
+        {
+            deviceFinder.sendConfirmationToBothDevices(1);
         }
 
+        Text {
+            anchors.centerIn: parent
+            font.pixelSize: AppConstants.tinyFontSize
+            color: AppConstants.textColor
+            text: qsTr("CATCH")
+        }
+    }
+
     AppButton {
-        id: searchButton
+        id: dropButton
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: AppConstants.fieldMargin
         width: viewContainer.width
         height: AppConstants.fieldHeight
-        enabled: !deviceFinder.scanning
-        onClicked: deviceFinder.startSearch()
+        enabled: parent.catchConfirmationNeeded
+        onClicked:
+        {
+            deviceFinder.sendConfirmationToBothDevices(0);
+        }
 
         Text {
             anchors.centerIn: parent
             font.pixelSize: AppConstants.tinyFontSize
-            text: qsTr("DIESE ANDERE BUTTON")
-            color: searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+            text: qsTr("DROP")
+            color: dropButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
     }
 }

@@ -111,6 +111,7 @@ public:
     void setRefToOtherDevice (DeviceHandler* t_dev_handler);
 
     bool alive() const;
+    void ble_uart_tx(const QByteArray &value);
 
 signals:
     void aliveChanged();
@@ -136,7 +137,6 @@ private:
     //QLowEnergyService
     void serviceStateChanged(QLowEnergyService::ServiceState s);
     void ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value);
-    void ble_uart_tx(const QByteArray &value);
     QString state_to_string(uint8_t tmp);
 
 

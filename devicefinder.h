@@ -76,7 +76,7 @@ public:
     QVariant devices();
     Q_INVOKABLE void addDeviceToSelection(const quint8 &idx);
     Q_INVOKABLE void removeDeviceFromSelection(const quint8 &idx);
-    void connectSecondDevice();
+    Q_INVOKABLE void sendConfirmationToBothDevices(const quint8 &success);
 
 public slots:
     void startSearch();

@@ -97,7 +97,8 @@ AppPage
         id: terminalModel
         Component.onCompleted:
         {
-            terminalToQml.isActive = true;
+            terminalToQml.isActive = false;
+            //terminalToQml.isActive = true;
         }
     }
 

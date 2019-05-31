@@ -25,6 +25,7 @@ public:
     {
         handleToThis = this;
         qInstallMessageHandler(fakeHandler);
+        m_isActive = false;
     }
 
     Q_INVOKABLE void messageFromQml(const QString &str, const QString &clr, const qint8 &fmt)
