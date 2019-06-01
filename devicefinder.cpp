@@ -88,8 +88,8 @@ DeviceFinder::~DeviceFinder()
 void DeviceFinder::startSearch()
 {
     clearMessages();
-    m_deviceHandler[0].setDevice(0);
-    m_deviceHandler[1].setDevice(0);
+    m_deviceHandler[0].setDevice(nullptr);
+    m_deviceHandler[1].setDevice(nullptr);
 
     qDeleteAll(m_devices);
     m_devices.clear();
@@ -159,7 +159,7 @@ void DeviceFinder::connectToService(const QString &address)
 {
     m_deviceDiscoveryAgent->stop();
 
-    DeviceInfo *currentDevice = 0;
+    DeviceInfo *currentDevice = nullptr;
     for (int i = 0; i < m_devices.size(); i++) {
         if (((DeviceInfo*)m_devices.at(i))->getAddress() == address ) {
             currentDevice = (DeviceInfo*)m_devices.at(i);
@@ -186,6 +186,7 @@ void DeviceFinder::connectToMultipleServices()
             {
                 if  (((DeviceInfo*)m_devices.at(i))->getDeviceFlags() & DEVICE_SELECTED )
                     m_deviceHandler[0].setDevice((DeviceInfo*) m_devices.at(i));
+                    m_initializedDevicesList[0] = true;
             }
         }
         else
@@ -201,7 +202,10 @@ void DeviceFinder::connectToMultipleServices()
                 }
             }
             m_deviceHandler[0].setRefToOtherDevice( & m_deviceHandler[1]);
+            m_initializedDevicesList[0] = true;
             m_deviceHandler[1].setRefToOtherDevice( & m_deviceHandler[0]);
+            m_initializedDevicesList[1] = true;
+
         }
     }
 }
@@ -242,7 +246,9 @@ void DeviceFinder::sendConfirmationToBothDevices(const quint8 &success)
     tba.resize(2);
     tba[0] = WRITE_CATCH_SUCCESS;
     tba[1] = success;
-    m_deviceHandler[0].ble_uart_tx(tba);
-    m_deviceHandler[1].ble_uart_tx(tba);
+    if (m_initializedDevicesList[0] == true)
+        m_deviceHandler[0].ble_uart_tx(tba);
+    if (m_initializedDevicesList[1] == true)
+        m_deviceHandler[1].ble_uart_tx(tba);
 }
 

@@ -98,6 +98,7 @@ private:
     QBluetoothDeviceDiscoveryAgent *m_deviceDiscoveryAgent;
     QList<QObject*> m_devices;
     quint8 m_selectedDevicesCount;
+    quint8 m_initializedDevicesList[2];
 
 
 };

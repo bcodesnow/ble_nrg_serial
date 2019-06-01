@@ -8,7 +8,7 @@ AppPage {
     errorMessage: deviceHandler_0.error
     infoMessage: deviceHandler_0.info
 
-    property bool catchConfirmationNeeded: false
+    property bool catchConfirmationNeeded: true
 
     Rectangle {
         id: viewContainer
