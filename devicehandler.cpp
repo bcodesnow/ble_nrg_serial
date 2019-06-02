@@ -301,6 +301,8 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     case ALIVE:
         //show current state and file index.. here we should start a timer, and if no more msg arrives to alive for 3secs we know we lsot the sensor.
         m_deviceState = state_to_string(data[1]);
+        if (data[1] == CDSM_STATE_ERROR)
+            m_deviceState = m_deviceState + QString(" ") + QString(data[3]);
         m_fileIndexOnDevice = data[2];
         emit fileIndexOnDeviceChanged();
         emit deviceStateChanged();
