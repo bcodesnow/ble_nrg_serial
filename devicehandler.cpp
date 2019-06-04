@@ -271,13 +271,15 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 {
     if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
         return;
-
+    static uint16_t received_pkgs;
     qDebug()<<"<Data Received:";
     // ignore any other characteristic change -> shouldn't really happen though
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     quint8 flags = data[1];
     qInfo()<<"Data[1]"<<flags;
     qInfo()<<"Data:"<<value.toHex();
+    received_pkgs++;
+    qDebug()<<"PKG_CNG!!"<<received_pkgs;
 
     switch(data[0])
     {
@@ -308,6 +310,10 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         emit fileIndexOnDeviceChanged();
         emit deviceStateChanged();
         break;
+
+    default:
+        qDebug()<<"MSG:"<<value;
+        break; //technically not needed
     }
 }
 
