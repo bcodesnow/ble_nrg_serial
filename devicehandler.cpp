@@ -54,6 +54,8 @@
 #include <QRandomGenerator>
 #include <QDebug>
 #include <QtGlobal>
+#include <QStandardPaths>
+#include <QFile>
 
 /*
  *  This is the real deal, it creates a BLE Controller
@@ -267,53 +269,119 @@ QString DeviceHandler::state_to_string(uint8_t tmp)
     }
 }
 
+void write_type_to_file(QByteArray data, uint8_t type)
+{
+    QString homeLocation = QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory);
+
+    switch (type)
+    {
+    case TYPE_AUD:
+        homeLocation.append( QString("AUDIO") );
+        break;
+    case TYPE_GYR:
+        homeLocation.append( QString("GYR") );
+        break;
+    case TYPE_ACC:
+        homeLocation.append( QString("ACC") );
+        break;
+    case TYPE_PRS:
+        homeLocation.append( QString("PRS") );
+        break;
+    case TYPE_MAG:
+        homeLocation.append( QString("GYR") );
+        break;
+    default:
+        homeLocation.append( QString("SOMEFILE") );
+        break;
+    }
+
+    QFile file(homeLocation);
+    file.open(QIODevice::WriteOnly);
+    file.write(data);
+    file.close();
+    qDebug()<<"FILE_WRITTEN";
+}
+
 void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
+#define COMMAND_STATE    0x00
+#define HUGE_CHUNK_STATE 0x01
+
+    static uint8_t state = COMMAND_STATE;
+    static uint16_t incoming_byte_count;
+    static uint8_t incoming_type;
+
+
+    QByteArray huge_chunk;
+
     if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
         return;
-    static uint16_t received_pkgs;
     qDebug()<<"<Data Received:";
     // ignore any other characteristic change -> shouldn't really happen though
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     quint8 flags = data[1];
     qInfo()<<"Data[1]"<<flags;
     qInfo()<<"Data:"<<value.toHex();
-    received_pkgs++;
-    qDebug()<<"PKG_CNG!!"<<received_pkgs;
 
-    switch(data[0])
+
+    if (state == COMMAND_STATE)
     {
-    case TRIGGERED:
-        //inform the other device
-        if (m_refToOtherDevice != NULL)
+        switch ( data[0] )
         {
-            QByteArray tba;
-            tba.resize(2);
-            tba[0] = TRIGGERED;
-            tba[1] = 0xFF; //just a second char, not needed
-            m_refToOtherDevice->ble_uart_tx(tba);
+        case TRIGGERED:
+            //inform the other device
+            if (m_refToOtherDevice != NULL)
+            {
+                QByteArray tba;
+                tba.resize(2);
+                tba[0] = TRIGGERED;
+                tba[1] = 0xFF; //just a second char, not needed
+                m_refToOtherDevice->ble_uart_tx(tba);
+            }
+            break;
+
+        case DATA_COLLECTED:
+            //confirm if it was a catch or drop -> we should give it to a class above iE devFinder
+            setInfo("Waiting for Confirmation!");
+            break;
+
+        case ALIVE:
+            //show current state and file index.. here we should start a timer, and if no more msg arrives to alive for 3secs we know we lsot the sensor.
+            m_deviceState = state_to_string(data[1]);
+            m_fileIndexOnDevice = data[3];
+            m_deviceSubState = data[2];
+            m_deviceLastError = data[4];
+            qDebug()<<"ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
+            emit fileIndexOnDeviceChanged();
+            emit deviceStateChanged();
+            break;
+
+        case HUGE_CHUNK_START:
+            state = HUGE_CHUNK_STATE;
+            huge_chunk.clear();
+            incoming_byte_count = (uint16_t) ( data[1] << 8);
+            incoming_byte_count |=  data[2];
+            qDebug()<<"!!!!!!!!1incoming byte count:"<<incoming_byte_count;
+            incoming_type = data[3];
+            break;
+
+        case HUGE_CHUNK_FINISH:
+            state = COMMAND_STATE;
+            write_type_to_file(huge_chunk, incoming_type);
+            if (huge_chunk.size() == incoming_byte_count)
+                qDebug()<<"!!!!!!!VERY WELL!";
+            else
+                qDebug()<<"!!!!!OHHOHEHOEASFAFE!";
+            break;
+
+        default:
+            qDebug()<<"MSG:"<<value;
+            break; //technically not needed
         }
-        break;
-
-    case DATA_COLLECTED:
-        //confirm if it was a catch or drop -> we should give it to a class above iE devFinder
-        setInfo("Waiting for Confirmation!");
-        break;
-
-    case ALIVE:
-        //show current state and file index.. here we should start a timer, and if no more msg arrives to alive for 3secs we know we lsot the sensor.
-        m_deviceState = state_to_string(data[1]);
-        m_fileIndexOnDevice = data[3];
-        m_deviceSubState = data[2];
-        m_deviceLastError = data[4];
-        qDebug()<<"ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
-        emit fileIndexOnDeviceChanged();
-        emit deviceStateChanged();
-        break;
-
-    default:
-        qDebug()<<"MSG:"<<value;
-        break; //technically not needed
+    }
+    else if (state == HUGE_CHUNK_STATE )
+    {
+        huge_chunk.append(value);
     }
 }
 
