@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtQuick.Extras 1.4
 
 Rectangle
 {
@@ -9,6 +10,8 @@ Rectangle
     property string address: "FF:FF:FF:FF"
     property string state: "Unknown"
     property string conatinerName: "Unknown"
+    property bool indicatorActive: false
+    property color indicatorColor: "red"
 
     //anchors.top: parent.top
     //anchors.right: parent.right
@@ -22,12 +25,22 @@ Rectangle
         color: AppConstants.textColor
         font.pixelSize: AppConstants.mediumFontSize
         text: parent.conatinerName
+        StatusIndicator {
+            width: title.height * 0.66
+            height: width
+            anchors.verticalCenter:  title.verticalCenter
+            anchors.right: title.right
+            anchors.rightMargin: title.width / 16
+            color: indicatorColor
+            active: indicatorActive
+        }
 
         BottomLine {
             height: 1;
             width: parent.width
             color: "#898989"
         }
+
     }
     Text {
         id: address

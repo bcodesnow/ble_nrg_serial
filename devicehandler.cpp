@@ -49,23 +49,40 @@
 ****************************************************************************/
 
 #include "devicehandler.h"
+#include "ble_uart.h"
 #include "deviceinfo.h"
 #include <QtEndian>
 #include <QRandomGenerator>
 #include <QDebug>
 #include <QtGlobal>
-#include <QStandardPaths>
-#include <QFile>
-
 /*
  *  This is the real deal, it creates a BLE Controller
  *  setDevice connects the device
  *  void DeviceHandler::serviceDiscovered(const QBluetoothUuid &gatt) - this slot is called during service discovery, here is the place to filter for uuid.
+ *  sometimes additional discovery is needed!
  *  setDevice -> serviceDiscovered -> serviceScanDone
  */
 
+DeviceHandler::DeviceHandler(QObject *parent) :
+    BluetoothBaseClass(parent),
+    m_control(0),
+    m_service(0),
+    m_currentDevice(0),
+    m_refToOtherDevice(0),
+    m_refToFileHandler(0),
+    m_found_BLE_UART_Service(false)
+{
+
+}
+
 void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
 {
+    if (!alive())
+    {
+        qCritical()<<"Shit is fkd up";
+        return;
+    }
+
     QByteArray tba;
     if ( str == QString("get_state()"))
     {
@@ -110,17 +127,6 @@ void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
         m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
-DeviceHandler::DeviceHandler(QObject *parent) :
-    BluetoothBaseClass(parent),
-    m_control(0),
-    m_service(0),
-    m_currentDevice(0),
-    m_refToOtherDevice(0),
-    m_found_BLE_UART_Service(false)
-{
-
-}
-
 void DeviceHandler::setAddressType(AddressType type)
 {
     switch (type) {
@@ -144,6 +150,16 @@ DeviceHandler::AddressType DeviceHandler::addressType() const
 void DeviceHandler::setRefToOtherDevice(DeviceHandler *t_dev_handler)
 {
     m_refToOtherDevice = t_dev_handler;
+}
+
+void DeviceHandler::setRefToFileHandler(LogFileHandler *t_fil_helper)
+{
+    m_refToFileHandler = t_fil_helper;
+}
+
+void DeviceHandler::setIdentifier(QString str)
+{
+    m_ident_str = str;
 }
 
 
@@ -269,62 +285,29 @@ QString DeviceHandler::state_to_string(uint8_t tmp)
     }
 }
 
-void write_type_to_file(QByteArray data, uint8_t type)
-{
-    QString homeLocation = QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory);
-
-    switch (type)
-    {
-    case TYPE_AUD:
-        homeLocation.append( QString("AUDIO") );
-        break;
-    case TYPE_GYR:
-        homeLocation.append( QString("GYR") );
-        break;
-    case TYPE_ACC:
-        homeLocation.append( QString("ACC") );
-        break;
-    case TYPE_PRS:
-        homeLocation.append( QString("PRS") );
-        break;
-    case TYPE_MAG:
-        homeLocation.append( QString("GYR") );
-        break;
-    default:
-        homeLocation.append( QString("SOMEFILE") );
-        break;
-    }
-
-    QFile file(homeLocation);
-    file.open(QIODevice::WriteOnly);
-    file.write(data);
-    file.close();
-    qDebug()<<"FILE_WRITTEN";
-}
-
 void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
-#define COMMAND_STATE    0x00
+#define CMD_STATE    0x00
 #define HUGE_CHUNK_STATE 0x01
 
-    static uint8_t state = COMMAND_STATE;
+    static uint8_t state = CMD_STATE;
     static uint16_t incoming_byte_count;
     static uint8_t incoming_type;
+    static uint16_t pkgcnt;
+    pkgcnt++;
+    //qDebug()<<"!!! PKG_CNT : "<<pkgcnt;
 
 
-    QByteArray huge_chunk;
+    static QByteArray huge_chunk;
 
     if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
         return;
-    qDebug()<<"<Data Received:";
+
+    //qDebug()<<">>Data Received: <<"<<value.size()<<" BYTES";
     // ignore any other characteristic change -> shouldn't really happen though
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
-    quint8 flags = data[1];
-    qInfo()<<"Data[1]"<<flags;
-    qInfo()<<"Data:"<<value.toHex();
 
-
-    if (state == COMMAND_STATE)
+    if (state == CMD_STATE)
     {
         switch ( data[0] )
         {
@@ -354,20 +337,21 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             qDebug()<<"ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
             emit fileIndexOnDeviceChanged();
             emit deviceStateChanged();
+            emit aliveArrived();
             break;
 
         case HUGE_CHUNK_START:
             state = HUGE_CHUNK_STATE;
-            huge_chunk.clear();
             incoming_byte_count = (uint16_t) ( data[1] << 8);
             incoming_byte_count |=  data[2];
-            qDebug()<<"!!!!!!!!1incoming byte count:"<<incoming_byte_count;
+            huge_chunk.resize(incoming_byte_count);
+            qDebug()<<"!!!!!!!! incoming byte count:"<<incoming_byte_count;
             incoming_type = data[3];
             break;
 
         case HUGE_CHUNK_FINISH:
-            state = COMMAND_STATE;
-            write_type_to_file(huge_chunk, incoming_type);
+            m_refToFileHandler->write_type_to_file(huge_chunk, incoming_type);
+            huge_chunk.clear();
             if (huge_chunk.size() == incoming_byte_count)
                 qDebug()<<"!!!!!!!VERY WELL!";
             else
@@ -382,6 +366,21 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     else if (state == HUGE_CHUNK_STATE )
     {
         huge_chunk.append(value);
+        qDebug()<<"!!! Huge_chunk.size: "<<huge_chunk.size();
+
+        if ( value.length() == SW_REC_MODE_LENGTH )
+        {
+            if ( data[0] == SWITCH_RECEIVE_MODE &&
+                 data[1] == 0x55 &&
+                 data[2] == 0xFF &&
+                 data[3] == 0x55 )
+            {
+                state = CMD_STATE;
+                m_refToFileHandler->write_type_to_file(huge_chunk, incoming_type);
+                qDebug()<<"SWITCH TO CMD STATE";
+            }
+
+        }
     }
 }
 

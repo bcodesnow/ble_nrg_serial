@@ -57,6 +57,7 @@
  */
 
 #include "devicefinder.h"
+#include "ble_uart.h"
 #include "devicehandler.h"
 #include "deviceinfo.h"
 #include "QThread"

@@ -9,6 +9,8 @@
 #include "connectionhandler.h"
 #include "terminaltoqmlb.h"
 #include <QTimer>
+#include "logfilehandler.h"
+#include "ble_uart.h"
 
 int main(int argc, char *argv[])
 {
@@ -21,9 +23,19 @@ int main(int argc, char *argv[])
 
     QTimer timer;
 
+    LogFileHandler log_file_handler;
+    log_file_handler.set_aut_incr(false);
+    //log_file_handler.set_fil_src_cnt(2);
+    //log_file_handler.set_last_type(TYPE_PRS);
     ConnectionHandler connection_handler; //keeps track of local ble interface
     DeviceHandler device_handler[2];
+    device_handler[0].setRefToFileHandler(&log_file_handler);
+    device_handler[0].setIdentifier("LEFT");
+
+
+    device_handler[1].setRefToFileHandler(&log_file_handler);
     DeviceFinder device_finder(&device_handler[0]);
+    device_handler[1].setIdentifier("RIGHT");
 
     QQmlApplicationEngine engine;
     qmlRegisterUncreatableType<DeviceHandler>("Shared", 1, 0, "AddressType", "Enum is not a type");

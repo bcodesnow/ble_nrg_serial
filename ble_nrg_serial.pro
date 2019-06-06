@@ -19,7 +19,9 @@ SOURCES += main.cpp \
     deviceinfo.cpp \
     terminaltoqmlb.cpp \
     connectionhandler.cpp \
-    timestampler.cpp
+    timestampler.cpp \
+    logfilehandler.cpp \
+    catchcontroller.cpp
 
 RESOURCES += qml.qrc \
     images.qrc
@@ -42,7 +44,10 @@ HEADERS += \
     deviceinfo.h \
     terminaltoqmlb.h \
     connectionhandler.h \
-    timestampler.h
+    timestampler.h \
+    ble_uart.h \
+    logfilehandler.h \
+    catchcontroller.h
 
 DISTFILES += \
     pre_trash

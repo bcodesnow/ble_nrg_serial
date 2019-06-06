@@ -52,6 +52,7 @@
 #define DEVICEHANDLER_H
 
 #include "bluetoothbaseclass.h"
+#include "logfilehandler.h"
 
 #include <QDateTime>
 #include <QVector>
@@ -60,45 +61,7 @@
 #include <QLowEnergyService>
 
 
-/* Simple Protocol: */
 
-/*1st byte:
-    CMD BYTE
-**/
-#define TRIGGERED     			0x06
-#define GET_STATE		  			0x03
-#define STOP				  			0x02
-#define START				  			0x01
-#define IGNORE_LAST_X	  		0x07
-#define DATA_COLLECTED  		0x08
-#define WRITE_CATCH_SUCCESS 0x09
-#define ALIVE								0x10
-#define HUGE_CHUNK_START		0x55
-#define	HUGE_CHUNK_FINISH 	0x77
-#define TURN_ON_SD_LOGGING  0x66
-
-/* IGNORE_LAST_X 		-> byte[1] how many to ignore */
-
-/* ALIVE 							-> byte[1] mainState
-                                            -> byte[2] subState
-                                            -> byte[3] fileIndex
-                                            -> byte[4] lastError
-*/
-
-/* HUGE_CHUNK_START		-> byte[1] bytesToSend HBYTE
-                                            -> byte[2] bytesToSend LBYTE
-                                            -> byte[3] TYPE
-                                            -> byte[4] Used Charactertics as Channels (count)
-*/
-#define TYPE_AUD 1u
-#define	TYPE_ACC 2u
-#define TYPE_GYR 3u
-#define TYPE_MAG 4u
-#define TYPE_PRS 5u
-
-/* HUGE_CHUNK_FINISH	-> byte[1] maxRepeatCount */
-
-/* TURN_ON_SD_LOGGING	-> byte[1] ON / OFF */
 
 #define CDSM_STATE_INIT													( 0u )
 #define CDSM_STATE_RUNNING                                              (	1u << 0u )
@@ -132,9 +95,12 @@ class DeviceHandler : public BluetoothBaseClass
     Q_PROPERTY(QString deviceState MEMBER m_deviceState NOTIFY deviceStateChanged)
     Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
 
-
+private:
+    QString m_ident_str;
 
 public:
+    DeviceHandler(QObject *parent = 0);
+
     Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str);
 
     enum class AddressType {
@@ -143,13 +109,14 @@ public:
     };
     Q_ENUM(AddressType)
 
-    DeviceHandler(QObject *parent = 0);
 
     void setDevice(DeviceInfo *device);
     void setAddressType(AddressType type);
     AddressType addressType() const;
 
     void setRefToOtherDevice (DeviceHandler* t_dev_handler);
+    void setRefToFileHandler (LogFileHandler* t_fil_helper);
+    void setIdentifier(QString str);
 
     bool alive() const;
     void ble_uart_tx(const QByteArray &value);
@@ -159,6 +126,7 @@ signals:
     void deviceAddressChanged();
     void deviceStateChanged();
     void fileIndexOnDeviceChanged();
+    void aliveArrived();
 
 public slots:
     void disconnectService();
@@ -180,12 +148,11 @@ private:
     void ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value);
     QString state_to_string(uint8_t tmp);
 
-
     // PayloadLength Max 1 CHAR_MAX_LEN-1= 19
-//    void sendCMDwaitforReply(quint8 cmd, quint8* payload, int payloadLength)
-//    {
-//        replyDelayTimer->setSingleShot(true);
-//    }
+    //    void sendCMDwaitforReply(quint8 cmd, quint8* payload, int payloadLength)
+    //    {
+    //        replyDelayTimer->setSingleShot(true);
+    //    }
 
     void confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value);
     void update_currentService();
@@ -205,6 +172,7 @@ private:
     QLowEnergyDescriptor m_notificationDescriptor;
 
     DeviceHandler* m_refToOtherDevice;
+    LogFileHandler* m_refToFileHandler;
 
     const QString BLE_UART_RX_CHAR = "{d973f2e2-b19e-11e2-9e96-0800200c9a66}";
     const QString BLE_UART_TX_CHAR = "{d973f2e1-b19e-11e2-9e96-0800200c9a66}";

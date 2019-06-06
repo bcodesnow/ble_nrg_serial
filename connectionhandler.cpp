@@ -59,11 +59,7 @@ ConnectionHandler::ConnectionHandler(QObject *parent) : QObject(parent)
 
 bool ConnectionHandler::alive() const
 {
-#ifdef SIMULATOR
-    return true;
-#else
     return m_localDevice.isValid() && m_localDevice.hostMode() != QBluetoothLocalDevice::HostPoweredOff;
-#endif
 }
 
 bool ConnectionHandler::requiresAddressType() const

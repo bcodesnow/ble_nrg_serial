@@ -68,8 +68,8 @@ AppPage
 {
 
     Switch {
-        anchors.top: ( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
-        anchors.left: ( Screen.orientation === Qt.PortraitOrientation  ) ? parent.left : terminalBackground.right
+        anchors.top: terminalBackground.bottom //( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
+        anchors.left: parent.left //( Screen.orientation === Qt.PortraitOrientation  ) ? parent.left : terminalBackground.right
         anchors.margins: 5
         height: 32
         width: 64
@@ -97,8 +97,8 @@ AppPage
         id: terminalModel
         Component.onCompleted:
         {
-            terminalToQml.isActive = false;
-            //terminalToQml.isActive = true;
+            //terminalToQml.isActive = false;
+            terminalToQml.isActive = true;
         }
     }
 
@@ -174,6 +174,27 @@ AppPage
                     anchors.left: parent.left
                     width: parent.width * 0.75
                     height: parent.height
+
+                    property string lastCMD: "get_state()"
+
+                    Keys.onUpPressed:
+                    {
+                        txtInput.text = lastCMD;
+                    }
+                    Keys.onDownPressed:
+                    {
+                        txtInput.clear();
+                    }
+                    Keys.onReturnPressed:
+                    {
+                        sendCMD();
+                    }
+                    function sendCMD()
+                    {
+                        deviceHandler_0.sendCMDStringFromTerminal(txtInput.text);
+                        lastCMD = txtInput.text;
+                        txtInput.clear();
+                    }
                 }
                 RoundButton
                 {
@@ -185,9 +206,7 @@ AppPage
                     text: "Send"
                     onClicked:
                     {
-                        //terminalToQml.messageFromQml(txtInput.text, "yellow", 1);
-                        deviceHandler_0.sendCMDStringFromTerminal(txtInput.text);
-                        txtInput.clear();
+                        txtInput.sendCMD();
                     }
                 }
             }

@@ -21,7 +21,7 @@ public:
     {
 
     }
-    // elapsed redturns ms
+    // elapsed returns ms
 
 
 };

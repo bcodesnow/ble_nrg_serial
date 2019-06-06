@@ -28,7 +28,15 @@ AppPage {
             state: deviceHandler_0.deviceState
             address: deviceHandler_0.deviceAddress
             fileIndex: deviceHandler_0.fileIndexOnDevice
+            indicatorColor: deviceHandler_0.alive ? AppConstants.infoColor : AppConstants.errorColor;
             conatinerName: "LEFT"
+        }
+        Connections {
+            target: deviceHandler_0
+            onAliveArrived:
+            {
+                leftContainer.indicatorActive = !leftContainer.indicatorActive
+            }
         }
 
         DeviceInfoContainer {
