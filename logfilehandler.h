@@ -19,20 +19,22 @@ private:
     QString m_homeLocation;
     bool m_is_aut_incr_en;
 
-public:
-    explicit LogFileHandler(QObject *parent = nullptr);
-    void write_type_to_file(QByteArray data, uint8_t type);
-
 signals:
     void lastPathChanged(void);
     void idxChanged(quint64 tidx);
     void confirmNeeded();
 
 public:
-    void start_new_log_fil();
-    void add_to_log_fil(QString ident, QString key, QString val);
-    void fin_log_fil();
+    explicit LogFileHandler(QObject *parent = nullptr);
+    void write_type_to_file(QString ident, QByteArray data, uint8_t type);
 
+    void start_new_log_fil();
+
+    void add_to_log_fil(QString ident, QString key, QString val);
+
+    void fin_log_fil(QString ident);
+
+    Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
     Q_INVOKABLE void confirm (QString ident, bool bcatch)
     {
         add_to_log_fil(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
@@ -41,6 +43,7 @@ public:
     Q_INVOKABLE void rst_idx()
     {
         m_curr_idx = 0;
+        emit idxChanged(m_curr_idx);
     }
     quint64 get_idx()
     {
@@ -50,7 +53,7 @@ public:
     {
         m_is_aut_incr_en = onoff;
     }
-    void incr_idx()
+    Q_INVOKABLE void incr_idx()
     {
        m_curr_idx++;
        emit idxChanged(m_curr_idx);

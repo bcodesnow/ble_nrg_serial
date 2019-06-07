@@ -36,6 +36,11 @@ DualAppPage {
             indicatorColor: deviceHandler_0.alive ? AppConstants.infoColor : AppConstants.errorColor;
             conatinerName: "LEFT"
             indicatorLeft: true
+            onButtonClicked:
+            {
+                deviceHandler_0.requestBLESensorData();
+            }
+
         }
         Connections {
             target: deviceHandler_0
@@ -63,15 +68,76 @@ DualAppPage {
             }
         }
 
-
         Rectangle {
             id: midDecorator
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
+            anchors.bottom: fileIndexBLE.top//parent.bottom
             anchors.top: parent.top
-            width: parent.width * 0.020
+            width: parent.width * 0.010
             height: parent.height * 0.85
             radius: height*0.5
+        }
+
+        Rectangle {
+            id: fileIndexBLE
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: AppConstants.fieldHeight
+            color: AppConstants.viewColor
+            radius: AppConstants.buttonRadius
+
+            AppButton
+            {
+                width: parent.width / 5
+                height: width * 0.5
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                pressedColor: AppConstants.infoColor
+                baseColor: AppConstants.backgroundColor
+                color: AppConstants.backgroundColor
+                anchors.margins: AppConstants.fieldMargin*0.5
+
+                Text {
+                    anchors.centerIn: parent
+                    font.pixelSize: AppConstants.mediumFontSize
+                    color: AppConstants.textColor
+                    text: qsTr("RST")
+                }
+                onClicked: fileHandler.rst_idx();
+
+            }
+
+            Text {
+                id: filIdxTxt
+                anchors.centerIn: parent
+                text: fileHandler.idx
+                color: AppConstants.textColor
+                font.pixelSize: AppConstants.mediumFontSize
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            AppButton
+            {
+                width: parent.width / 5
+                height: width * 0.5
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                pressedColor: AppConstants.infoColor
+                baseColor: AppConstants.backgroundColor
+                color: AppConstants.backgroundColor
+                anchors.margins: AppConstants.fieldMargin*0.5
+                onClicked: fileHandler.incr_idx();
+
+                Text {
+                    anchors.centerIn: parent
+                    font.pixelSize: AppConstants.mediumFontSize
+                    color: AppConstants.textColor
+                    text: qsTr("+")
+                }
+
+            }
+
         }
     }
 
@@ -88,6 +154,10 @@ DualAppPage {
         {
             if (usingSDonDevice)
                 deviceFinder.sendConfirmationToBothDevices(1);
+            else
+            {
+                fileHandler.sendCatchSuccessFromQML(true);
+            }
         }
 
         Text {
@@ -113,6 +183,10 @@ DualAppPage {
             catchButton.startBlinking();
             if (usingSDonDevice)
                 deviceFinder.sendConfirmationToBothDevices(0);
+            else
+            {
+                fileHandler.sendCatchSuccessFromQML(true);
+            }
         }
 
         Text {

@@ -139,6 +139,12 @@ void DeviceHandler::requestBLESensorData()
             m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
+//void DeviceHandler::sendCatchSuccessFromQML(bool wasItCatched)
+//{
+//    m_refToFileHandler->add_to_log_fil(m_ident_str,"SUCCESS", wasItCatched ? "CATCH" : "DROP");
+//    m_refToFileHandler->fin_log_fil();
+//}
+
 void DeviceHandler::setAddressType(AddressType type)
 {
     switch (type) {
@@ -299,14 +305,13 @@ QString DeviceHandler::state_to_string(uint8_t tmp)
 
 void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
+
 #define CMD_STATE    0x00
 #define HUGE_CHUNK_STATE 0x01
 
     static uint8_t state = CMD_STATE;
     static uint16_t incoming_byte_count;
     static uint8_t incoming_type;
-
-    static QByteArray huge_chunk;
 
     if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
         return;
@@ -341,7 +346,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             m_fileIndexOnDevice = data[3];
             m_deviceSubState = data[2];
             m_deviceLastError = data[4];
-            qDebug()<<ident<<" --- ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
+            qDebug()<<m_ident_str<<" --- ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
             // TODO: if SD
             emit fileIndexOnDeviceChanged();
             emit deviceStateChanged();
@@ -351,28 +356,37 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
         case HUGE_CHUNK_START:
             state = HUGE_CHUNK_STATE;
-            incoming_byte_count = (uint16_t) ( data[1] << 8);
+//            incoming_byte_count = ( (uint16_t) data[1] << 8);
+//            incoming_byte_count |=  data[2];
+            incoming_byte_count =  data[1] << 8;
             incoming_byte_count |=  data[2];
-            huge_chunk.resize(incoming_byte_count);
+
+            qDebug()<<"DATA1"<<data[1];
+            qDebug()<<"DATA2"<<data[2];
+
             qDebug()<<"! -> Incoming byte count: "<<incoming_byte_count;
+            //m_huge_chunk.resize( incoming_byte_count );
+
             setInfo("Incoming!");
             incoming_type = data[3];
             break;
 
         case HUGE_CHUNK_FINISH:
-            m_refToFileHandler->write_type_to_file(huge_chunk, incoming_type);
-            huge_chunk.clear();
+            //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type);
 
-            if (huge_chunk.size() == incoming_byte_count)
+            if (m_huge_chunk.size() == incoming_byte_count)
             {
                 setInfo("All Received!");
                 qDebug()<<"All Received";
             }
             else
             {
-                setInfo("Some got lost!");
+                setError("Some got lost!");
                 qCritical()<<"Some got lost!";
+                qCritical()<<"huge_chunk.size()"<<m_huge_chunk.size()<<"incoming_byte_count"<<incoming_byte_count;
             }
+            m_huge_chunk.clear();
+
             break;
         case SENDING_SENSORDATA_FINISHED:
             // close log file
@@ -389,8 +403,6 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     }
     else if (state == HUGE_CHUNK_STATE )
     {
-        huge_chunk.append(value);
-
         if ( value.length() == SW_REC_MODE_LENGTH )
         {
             if ( data[0] == SWITCH_RECEIVE_MODE &&
@@ -399,10 +411,14 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                  data[3] == 0x55 )
             {
                 state = CMD_STATE;
-                m_refToFileHandler->write_type_to_file(huge_chunk, incoming_type);
+                m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type);
                 qDebug()<<"SWITCH TO CMD STATE";
             }
 
+        }
+        else
+        {
+            m_huge_chunk.append(value);
         }
     }
 }

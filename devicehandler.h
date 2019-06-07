@@ -97,12 +97,15 @@ class DeviceHandler : public BluetoothBaseClass
 
 private:
     QString m_ident_str;
+    QByteArray m_huge_chunk;
+
 
 public:
     DeviceHandler(QObject *parent = 0);
 
     Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str);
     Q_INVOKABLE void requestBLESensorData(void);
+    //Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
 
     enum class AddressType {
         PublicAddress,

@@ -14,12 +14,12 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
 }
 
 
-void LogFileHandler::write_type_to_file(QByteArray data, uint8_t type)
+void LogFileHandler::write_type_to_file(QString ident, QByteArray data, uint8_t type)
 {
     static quint64 counter;
     QString tmpLocation = m_homeLocation;
     qDebug()<<"File Path: "<<tmpLocation;
-    QString idx_str = tr("%1").arg(m_curr_idx);
+    QString idx_str = tr("%1_%2_").arg(m_curr_idx).arg(ident);
     tmpLocation.append( idx_str );
 
     switch (type)
@@ -37,7 +37,7 @@ void LogFileHandler::write_type_to_file(QByteArray data, uint8_t type)
         tmpLocation.append( QString("PRS") );
         break;
     case TYPE_MAG:
-        tmpLocation.append( QString("GYR") );
+        tmpLocation.append( QString("MAG") );
         break;
     case TYPE_LOG:
         tmpLocation.append( QString("LOG") );
@@ -81,7 +81,14 @@ void LogFileHandler::add_to_log_fil(QString ident, QString key, QString val)
     m_log_fil_buf.append(tmpString);
 }
 
-void LogFileHandler::fin_log_fil()
+void LogFileHandler::sendCatchSuccessFromQML(bool wasItCatched)
 {
+    add_to_log_fil("LR","SUCCESS", wasItCatched ? "CATCH" : "DROP");
+    fin_log_fil(QString("LR"));
+}
 
+void LogFileHandler::fin_log_fil(QString ident)
+{
+    write_type_to_file(ident, m_log_fil_buf.toUtf8(), TYPE_LOG);
+    m_log_fil_buf.clear();
 }

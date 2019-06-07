@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Extras 1.4
 
+
 Rectangle
 {
     id: rightLeftContainer
@@ -13,6 +14,8 @@ Rectangle
     property bool indicatorActive: false
     property color indicatorColor: "red"
     property bool indicatorLeft: false
+    signal buttonClicked();
+
 
     //anchors.top: parent.top
     //anchors.right: parent.right
@@ -117,6 +120,8 @@ Rectangle
         height: AppConstants.fieldHeight
         enabled: true
         pressedColor: AppConstants.infoColor
+        baseColor: AppConstants.backgroundColor
+        color: AppConstants.backgroundColor
 
         Text {
             anchors.centerIn: parent
@@ -124,10 +129,9 @@ Rectangle
             text: qsTr("Gather Data!")
             color: gatherDataButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
-        Component.onCompleted:
-        {
-            startBlinking();
-        }
 
+        onClicked: {
+            buttonClicked();
+        }
     }
 }
