@@ -253,3 +253,26 @@ void DeviceFinder::sendConfirmationToBothDevices(const quint8 &success)
         m_deviceHandler[1].ble_uart_tx(tba);
 }
 
+void DeviceFinder::sendRestartToBothDevices()
+{
+    QByteArray tba;
+    tba.resize(1);
+    tba[0] = START;
+    if (m_initializedDevicesList[0] == true)
+        m_deviceHandler[0].ble_uart_tx(tba);
+    if (m_initializedDevicesList[1] == true)
+        m_deviceHandler[1].ble_uart_tx(tba);
+}
+
+void DeviceFinder::sendEnableSDtoBothDevices(bool enable)
+{
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = TURN_ON_SD_LOGGING;
+    tba[1] = enable;
+    if (m_initializedDevicesList[0] == true)
+        m_deviceHandler[0].ble_uart_tx(tba);
+    if (m_initializedDevicesList[1] == true)
+        m_deviceHandler[1].ble_uart_tx(tba);
+}
+

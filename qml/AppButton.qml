@@ -55,7 +55,7 @@ Rectangle {
     {
         blinkActive = true;
         timer.stop();
-        timer.interval = 375;
+        timer.interval = 175;
         timer.start();
     }
 

@@ -1,5 +1,6 @@
 import QtQuick 2.9
 import QtQuick.Controls 2.2
+import QtQuick.Layouts 1.3
 import "."
 
 
@@ -17,8 +18,8 @@ DualAppPage {
     msgBoxWidth: leftContainer.width
     msgBoxOffsetFromSide: AppConstants.fieldMargin
 
-//    property bool dataGatheredfromBoth:
-//    property bool twoDevicesConnected:
+    //    property bool dataGatheredfromBoth:
+    //    property bool twoDevicesConnected:
 
     Rectangle
     {
@@ -43,11 +44,11 @@ DualAppPage {
             indicatorColor: deviceHandler_0.alive ? AppConstants.infoColor : AppConstants.errorColor;
             conatinerName: "LEFT"
             indicatorLeft: true
+            sdEnabled: deviceHandler_0.sdEnabled
             onButtonClicked:
             {
                 deviceHandler_0.requestBLESensorData();
                 leftContainer.gdButtStartFastBlinking();
-
             }
 
         }
@@ -59,12 +60,10 @@ DualAppPage {
             }
             onSensorDataAvailable:
             {
-                console.log("!!!!onSensorDataAvailable!!!")
                 leftContainer.gdButtStartSlowBlinking();
             }
             onSensorDataReceived:
             {
-                console.log("!!!onSensorDataReceived!!!")
                 leftContainer.gdButtStopBlinking();
             }
         }
@@ -78,9 +77,11 @@ DualAppPage {
             fileIndex: usingSDonDevice ? "File Index: " + deviceHandler_0.fileIndexOnDevice : "BLE Mode"
             indicatorColor: deviceHandler_1.alive ? AppConstants.infoColor : AppConstants.errorColor;
             conatinerName: "RIGHT"
+            sdEnabled: deviceHandler_1.sdEnabled
             onButtonClicked:
             {
                 deviceHandler_1.requestBLESensorData();
+                rightContainer.gdButtStartFastBlinking();
             }
         }
         Connections {
@@ -89,12 +90,20 @@ DualAppPage {
             {
                 rightContainer.indicatorActive = !rightContainer.indicatorActive
             }
+            onSensorDataAvailable:
+            {
+                rightContainer.gdButtStartSlowBlinking();
+            }
+            onSensorDataReceived:
+            {
+                rightContainer.gdButtStopBlinking();
+            }
         }
 
         Rectangle {
             id: midDecorator
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: fileIndexBLE.top//parent.bottom
+            anchors.bottom: bottomField.top//parent.bottom
             anchors.top: parent.top
             width: parent.width * 0.010
             height: parent.height * 0.85
@@ -102,63 +111,111 @@ DualAppPage {
         }
 
         Rectangle {
-            id: fileIndexBLE
+            id: bottomField
             anchors.bottom: parent.bottom
             width: parent.width
             height: AppConstants.fieldHeight
             color: AppConstants.viewColor
             radius: AppConstants.buttonRadius
 
-            AppButton
-            {
-                width: parent.width / 5
-                height: width * 0.5
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                pressedColor: AppConstants.infoColor
-                baseColor: AppConstants.backgroundColor
-                color: AppConstants.backgroundColor
-                anchors.margins: AppConstants.fieldMargin*0.5
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: AppConstants.fieldMargin / 2
+                anchors.rightMargin: AppConstants.fieldMargin / 2
 
-                Text {
-                    anchors.centerIn: parent
-                    font.pixelSize: AppConstants.mediumFontSize
-                    color: AppConstants.textColor
-                    text: qsTr("RST")
+                AppButton
+                {
+                    id: restartButton
+                    Layout.preferredWidth: parent.width / 5
+                    height: parent.height*0.85
+                    //                    anchors.right: rstIdxButton.left
+                    //                    anchors.rightMargin: filIdxTxt.anchors.rightMargin
+                    pressedColor: AppConstants.infoColor
+                    baseColor: AppConstants.backgroundColor
+                    color: AppConstants.backgroundColor
+                    //                    anchors.margins: AppConstants.fieldMargin*0.5
+
+//                    Text {
+//                        anchors.centerIn: parent
+//                        font.pixelSize: AppConstants.tinyFontSize
+//                        color: AppConstants.textColor
+//                        text: qsTr("START")
+//                    }
+                    Image {
+                        anchors.centerIn: parent
+                        source: "images/baseline_replay_white_18dp.png"
+                    }
+                    onClicked: deviceFinder.sendRestartToBothDevices();
+
                 }
-                onClicked: fileHandler.rst_idx();
-
-            }
-
-            Text {
-                id: filIdxTxt
-                anchors.centerIn: parent
-                text: fileHandler.idx
-                color: AppConstants.textColor
-                font.pixelSize: AppConstants.mediumFontSize
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            AppButton
-            {
-                width: parent.width / 5
-                height: width * 0.5
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                pressedColor: AppConstants.infoColor
-                baseColor: AppConstants.backgroundColor
-                color: AppConstants.backgroundColor
-                anchors.margins: AppConstants.fieldMargin*0.5
-                onClicked: fileHandler.incr_idx();
-
-                Text {
-                    anchors.centerIn: parent
-                    font.pixelSize: AppConstants.mediumFontSize
-                    color: AppConstants.textColor
-                    text: qsTr("+")
+                Item
+                {
+                    id: spacer
+                    Layout.preferredWidth: parent.width / 6
                 }
 
+                AppButton
+                {
+                    id: rstIdxButton
+                    Layout.preferredWidth: parent.width / 6
+                    height: parent.height*0.85
+                    //anchors.left: parent.left
+                    //                    anchors.right: filIdxTxt.left
+                    //                    anchors.rightMargin: filIdxTxt.anchors.rightMargin
+                    anchors.verticalCenter: parent.verticalCenter
+                    pressedColor: AppConstants.infoColor
+                    baseColor: AppConstants.backgroundColor
+                    color: AppConstants.backgroundColor
+                    //                    anchors.margins: AppConstants.fieldMargin*0.5
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            font.pixelSize: AppConstants.mediumFontSize
+                                            color: AppConstants.textColor
+                                            text: qsTr("RST")
+                                        }
+//                    Image {
+//                        anchors.centerIn: parent
+//                        source: "images/baseline_replay_white_18dp.png"
+//                    }
+
+                    onClicked: fileHandler.rst_idx();
+
+                }
+
+                Text {
+                    id: filIdxTxt
+                    //anchors.centerIn: parent
+                    Layout.preferredWidth: parent.width / 6
+                    height: parent.height*0.85
+                    text: fileHandler.idx
+                    color: AppConstants.textColor
+                    font.pixelSize: AppConstants.mediumFontSize
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                AppButton
+                {
+                    id: pluesButton
+                    Layout.preferredWidth: parent.width / 6
+                    height: parent.height * 0.85
+                    //                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    pressedColor: AppConstants.infoColor
+                    baseColor: AppConstants.backgroundColor
+                    color: AppConstants.backgroundColor
+                    //                    anchors.margins: AppConstants.fieldMargin*0.5
+                    onClicked: fileHandler.incr_idx();
+
+                    Text {
+                        anchors.centerIn: parent
+                        font.pixelSize: AppConstants.mediumFontSize
+                        color: AppConstants.textColor
+                        text: qsTr("+")
+                    }
+
+                }
             }
 
         }
@@ -177,10 +234,8 @@ DualAppPage {
         {
             if (usingSDonDevice)
                 deviceFinder.sendConfirmationToBothDevices(1);
-            else
-            {
-                fileHandler.sendCatchSuccessFromQML(true);
-            }
+
+            fileHandler.sendCatchSuccessFromQML(true);
         }
 
         Text {
@@ -205,10 +260,8 @@ DualAppPage {
         {
             if (usingSDonDevice)
                 deviceFinder.sendConfirmationToBothDevices(0);
-            else
-            {
-                fileHandler.sendCatchSuccessFromQML(true);
-            }
+
+            fileHandler.sendCatchSuccessFromQML(true);
         }
 
         Text {

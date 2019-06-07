@@ -71,7 +71,8 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     m_refToOtherDevice(0),
     m_refToFileHandler(0),
     m_found_BLE_UART_Service(false),
-    m_fileIndexOnDevice(0)
+    m_fileIndexOnDevice(0),
+    m_sdEnabled(0)
 {
 
 }
@@ -355,6 +356,8 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             qDebug()<<m_ident_str<<" --- ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
 
             // TODO: if SD
+            m_sdEnabled = data[5];
+            emit sdEnabledChanged();
             emit fileIndexOnDeviceChanged();
             emit deviceStateChanged();
             emit aliveArrived();
@@ -407,7 +410,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         case SENDING_SENSORDATA_FINISHED:
             emit sensorDataReceived();
             qDebug()<<"SENDING_SENSORDATA_FINISHED";
-            setInfo("Aensordata Received!");
+            setInfo("Sensordata Received!");
             // set state ready to increase, ask the pal if he is ready - if true - increase
             // need the write pointer
             //

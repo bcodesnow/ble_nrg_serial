@@ -5,7 +5,7 @@ import QtQuick.Extras 1.4
 Rectangle
 {
     id: rightLeftContainer
-    width: parent.width * 0.95 / 2
+    width: (parent.width * 0.95) / 2
 
     property string fileIndex: "-"
     property string address: "FF:FF:FF:FF"
@@ -14,6 +14,8 @@ Rectangle
     property bool indicatorActive: false
     property color indicatorColor: "red"
     property bool indicatorLeft: false
+
+    property bool sdEnabled: false
 
     signal buttonClicked();
     function gdButtStartSlowBlinking()
@@ -50,17 +52,28 @@ Rectangle
             color: indicatorColor
             active: indicatorActive
         }
+        Image {
+            id: sdPic
+            anchors.verticalCenter: title.verticalCenter
+            source: "images/baseline_sd_storage_white_18dp.png"
+            visible: sdEnabled
+        }
+
         Component.onCompleted:
         {
             if (indicatorLeft)
             {
                 indicator.anchors.leftMargin = title.width / 16;
                 indicator.anchors.left = title.left;
+                sdPic.anchors.left = title.right;
+                sdPic.anchors.leftMargin =  title.width / 16;
             }
             else
             {
                 indicator.anchors.rightMargin = title.width / 16;
                 indicator.anchors.right = title.right;
+                sdPic.anchors.right = title.left;
+                sdPic.anchors.rightMargin =  title.width / 16;
             }
         }
 

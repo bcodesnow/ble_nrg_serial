@@ -93,11 +93,13 @@ class DeviceHandler : public BluetoothBaseClass
     Q_PROPERTY(AddressType addressType READ addressType WRITE setAddressType)
     Q_PROPERTY(QString deviceAddress MEMBER m_deviceAddress NOTIFY deviceAddressChanged)
     Q_PROPERTY(QString deviceState MEMBER m_deviceState NOTIFY deviceStateChanged)
+    Q_PROPERTY(bool sdEnabled MEMBER m_sdEnabled NOTIFY sdEnabledChanged)
     Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
 
 private:
     QString m_ident_str;
     QByteArray m_huge_chunk;
+    bool m_sdEnabled;
 
 
 public:
@@ -133,6 +135,7 @@ signals:
     void aliveArrived();
     void sensorDataAvailable();
     void sensorDataReceived();
+    void sdEnabledChanged();
 
 public slots:
     void disconnectService();

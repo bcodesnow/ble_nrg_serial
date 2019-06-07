@@ -77,6 +77,10 @@ public:
     Q_INVOKABLE void addDeviceToSelection(const quint8 &idx);
     Q_INVOKABLE void removeDeviceFromSelection(const quint8 &idx);
     Q_INVOKABLE void sendConfirmationToBothDevices(const quint8 &success);
+    Q_INVOKABLE void sendRestartToBothDevices();
+    Q_INVOKABLE void sendEnableSDtoBothDevices(bool enable);
+
+
 
 public slots:
     void startSearch();

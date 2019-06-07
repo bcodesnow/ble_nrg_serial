@@ -68,6 +68,7 @@ AppPage
 {
 
     Switch {
+        id: autoscrollSW
         anchors.top: terminalBackground.bottom //( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
         anchors.left: parent.left //( Screen.orientation === Qt.PortraitOrientation  ) ? parent.left : terminalBackground.right
         anchors.margins: 5
@@ -81,6 +82,27 @@ AppPage
         onCheckedChanged:
         {
             terminalListView.autoScrollEnabled = !terminalListView.autoScrollEnabled
+        }
+    }
+
+    Switch {
+        id: sdEnableSW
+        anchors.top: autoscrollSW.bottom //( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
+        anchors.left: parent.left //( Screen.orientation === Qt.PortraitOrientation  ) ? parent.left : terminalBackground.right
+        anchors.margins: 5
+        height: 32
+        width: 64
+        contentItem: Text {
+            text: "Turn On SD Card Logging"
+            color: AppConstants.textColor
+            anchors.left: parent.right
+        }
+        onCheckedChanged:
+        {
+            if ( checked )
+                deviceFinder.sendEnableSDtoBothDevices(true);
+            else
+                deviceFinder.sendEnableSDtoBothDevices(false)
         }
     }
 
