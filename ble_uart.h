@@ -14,9 +14,19 @@
 #define IGNORE_LAST_X                   0x07
 #define DATA_COLLECTED                  0x08
 #define WRITE_CATCH_SUCCESS             0x09
-#define REQUEST_SENSORDATA              0x0A
-#define SENDING_SENSORDATA_FINISHED     0x0B
+
+
+#define REQUEST_SENSORDATA              0x0A // available when data is in ram
+#define SENDING_SENSORDATA_FINISHED     0x0B // emitted when all the files were sent
+#define SENSORDATA_AVAILABLE            0x0C // emitted wehn data can be requested.
+
+/* REQUEST_SENSOR_DATA  -> byte[1] 0xFF */
+/* SENDING_SENSORDATA_FINISHED   -> byte[1] 0xFF */
+/* SENSORDATA_AVAILABLE					 -> byte[1] 0xFF */
+
+
 #define ALIVE                           0x10
+
 #define HUGE_CHUNK_START                0x77
 #define	HUGE_CHUNK_FINISH               0x88
 #define SWITCH_RECEIVE_MODE             0x99

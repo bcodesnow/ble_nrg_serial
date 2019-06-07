@@ -17,6 +17,9 @@ Item {
     property bool hasErrorR: errorMessageR != ""
     property bool hasInfoR: infoMessageR != ""
 
+    property real msgBoxWidth: (parent.width * 0.95 ) / 2
+    property real msgBoxOffsetFromSide: 5
+
     function init()
     {
     }
@@ -29,13 +32,14 @@ Item {
     Rectangle {
         id: msgl
         anchors.top: parent.top
+        anchors.topMargin: AppConstants.fieldMargin / 2
+        width: msgBoxWidth
         anchors.left: parent.left
-        width: ( parent.width / 2 ) * 0.95
-        anchors.margins: 10
+        anchors.leftMargin: msgBoxOffsetFromSide
         height: AppConstants.fieldHeight
         color: hasErrorL ? AppConstants.errorColor : AppConstants.infoColor
         visible: hasErrorL || hasInfoL
-        radius: height / 8
+        radius: AppConstants.buttonRadius
 
         Text {
             id: errorl
@@ -53,12 +57,14 @@ Item {
     Rectangle {
         id: msgr
         anchors.top: parent.top
-        width: parent.width / 2
+        anchors.topMargin: AppConstants.fieldMargin / 2
+        width: msgBoxWidth
         anchors.right: parent.right
+        anchors.rightMargin: msgBoxOffsetFromSide
         height: AppConstants.fieldHeight
         color: hasErrorR ? AppConstants.errorColor : AppConstants.infoColor
         visible: hasErrorR || hasInfoR
-        radius: height / 8
+        radius: AppConstants.buttonRadius
 
 
         Text {

@@ -131,6 +131,8 @@ signals:
     void deviceStateChanged();
     void fileIndexOnDeviceChanged();
     void aliveArrived();
+    void sensorDataAvailable();
+    void sensorDataReceived();
 
 public slots:
     void disconnectService();

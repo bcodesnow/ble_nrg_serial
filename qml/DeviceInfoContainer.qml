@@ -5,7 +5,7 @@ import QtQuick.Extras 1.4
 Rectangle
 {
     id: rightLeftContainer
-    width: parent.width / 2
+    width: parent.width * 0.95 / 2
 
     property string fileIndex: "-"
     property string address: "FF:FF:FF:FF"
@@ -14,7 +14,20 @@ Rectangle
     property bool indicatorActive: false
     property color indicatorColor: "red"
     property bool indicatorLeft: false
+
     signal buttonClicked();
+    function gdButtStartSlowBlinking()
+    {
+        gatherDataButton.startSlowBlinking();
+    }
+    function gdButtStartFastBlinking()
+    {
+        gatherDataButton.startFastBlinking();
+    }
+    function gdButtStopBlinking()
+    {
+        gatherDataButton.stopBlinking();
+    }
 
 
     //anchors.top: parent.top

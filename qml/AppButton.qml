@@ -33,24 +33,37 @@ Rectangle {
         repeat: true
         onTriggered:
         {
-            if ( button.color == blinkingColor)
-                button.color = baseColor
-            else
-                button.color = blinkingColor
+            if (blinkActive)
+            {
+                if ( button.color == blinkingColor)
+                    button.color = baseColor
+                else
+                    button.color = blinkingColor
+            }
         }
     }
 
-    function startBlinking()
+    function startSlowBlinking()
     {
-        timer.start();
         blinkActive = true;
+        timer.stop();
+        timer.interval = 750;
+        timer.start();
+    }
+
+    function startFastBlinking()
+    {
+        blinkActive = true;
+        timer.stop();
+        timer.interval = 375;
+        timer.start();
     }
 
     function stopBlinking()
     {
+        blinkActive = false;
         timer.stop();
         button.color = baseColor;
-        blinkActive = false;
     }
 
     MouseArea {
@@ -61,8 +74,6 @@ Rectangle {
         onClicked: {
             checkColor()
             button.clicked()
-            if (blinkActive)
-                stopBlinking();
         }
     }
 }

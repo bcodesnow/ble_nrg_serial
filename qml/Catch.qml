@@ -14,6 +14,12 @@ DualAppPage {
     property bool catchConfirmationNeeded: true
     property bool usingSDonDevice : false
 
+    msgBoxWidth: leftContainer.width
+    msgBoxOffsetFromSide: AppConstants.fieldMargin
+
+//    property bool dataGatheredfromBoth:
+//    property bool twoDevicesConnected:
+
     Rectangle
     {
         id: viewContainer
@@ -25,6 +31,7 @@ DualAppPage {
         width: parent.width - AppConstants.fieldMargin*2
         color: AppConstants.viewColor
         radius: AppConstants.buttonRadius
+
 
         DeviceInfoContainer {
             id: leftContainer
@@ -39,6 +46,8 @@ DualAppPage {
             onButtonClicked:
             {
                 deviceHandler_0.requestBLESensorData();
+                leftContainer.gdButtStartFastBlinking();
+
             }
 
         }
@@ -47,6 +56,16 @@ DualAppPage {
             onAliveArrived:
             {
                 leftContainer.indicatorActive = !leftContainer.indicatorActive
+            }
+            onSensorDataAvailable:
+            {
+                console.log("!!!!onSensorDataAvailable!!!")
+                leftContainer.gdButtStartSlowBlinking();
+            }
+            onSensorDataReceived:
+            {
+                console.log("!!!onSensorDataReceived!!!")
+                leftContainer.gdButtStopBlinking();
             }
         }
 
@@ -59,6 +78,10 @@ DualAppPage {
             fileIndex: usingSDonDevice ? "File Index: " + deviceHandler_0.fileIndexOnDevice : "BLE Mode"
             indicatorColor: deviceHandler_1.alive ? AppConstants.infoColor : AppConstants.errorColor;
             conatinerName: "RIGHT"
+            onButtonClicked:
+            {
+                deviceHandler_1.requestBLESensorData();
+            }
         }
         Connections {
             target: deviceHandler_1
@@ -180,7 +203,6 @@ DualAppPage {
         pressedColor: AppConstants.errorColor
         onClicked:
         {
-            catchButton.startBlinking();
             if (usingSDonDevice)
                 deviceFinder.sendConfirmationToBothDevices(0);
             else

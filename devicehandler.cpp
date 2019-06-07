@@ -296,6 +296,8 @@ QString DeviceHandler::state_to_string(uint8_t tmp)
         return QString("Stopped");
     case CDSM_STATE_RESTARTING:
         return QString("Restarting");
+    case CDSM_STATE_POST_TRIGGER_DATA_COLLECTED:
+        return QString("Data Collected");
     case CDSM_STATE_ERROR:
         return QString("Error");
     default:
@@ -346,7 +348,12 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             m_fileIndexOnDevice = data[3];
             m_deviceSubState = data[2];
             m_deviceLastError = data[4];
+
+            if (m_deviceLastError)
+                m_refToFileHandler->add_to_log_fil(m_ident_str,"Last Error", QString(data[4]));
+
             qDebug()<<m_ident_str<<" --- ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
+
             // TODO: if SD
             emit fileIndexOnDeviceChanged();
             emit deviceStateChanged();
@@ -356,19 +363,20 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
         case HUGE_CHUNK_START:
             state = HUGE_CHUNK_STATE;
-//            incoming_byte_count = ( (uint16_t) data[1] << 8);
-//            incoming_byte_count |=  data[2];
             incoming_byte_count =  data[1] << 8;
             incoming_byte_count |=  data[2];
+            incoming_type = data[3];
 
-            qDebug()<<"DATA1"<<data[1];
-            qDebug()<<"DATA2"<<data[2];
+            uint16_t tmp_write_pointer;
+            tmp_write_pointer =  data[4] << 8;
+            tmp_write_pointer |=  data[5];
 
-            qDebug()<<"! -> Incoming byte count: "<<incoming_byte_count;
-            //m_huge_chunk.resize( incoming_byte_count );
+            m_refToFileHandler->add_to_log_fil(m_ident_str, QString("Type"), QString::number(incoming_type));
+            m_refToFileHandler->add_to_log_fil(m_ident_str, QString("ByteCountToReceive"), QString::number(incoming_byte_count));
+            m_refToFileHandler->add_to_log_fil(m_ident_str, QString("WritePointer"), QString::number(tmp_write_pointer));
 
             setInfo("Incoming!");
-            incoming_type = data[3];
+
             break;
 
         case HUGE_CHUNK_FINISH:
@@ -378,24 +386,33 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             {
                 setInfo("All Received!");
                 qDebug()<<"All Received";
+                m_refToFileHandler->add_to_log_fil(m_ident_str, QString("AllArrived"), QString("TRUE"));
             }
             else
             {
                 setError("Some got lost!");
                 qCritical()<<"Some got lost!";
                 qCritical()<<"huge_chunk.size()"<<m_huge_chunk.size()<<"incoming_byte_count"<<incoming_byte_count;
+                m_refToFileHandler->add_to_log_fil(m_ident_str,"AllArrived", QString("FALSE"));
             }
             m_huge_chunk.clear();
-
             break;
-        case SENDING_SENSORDATA_FINISHED:
-            // close log file
             //
+        case SENSORDATA_AVAILABLE:
+            qDebug()<<"SENDING_SENSORDATA_FINISHED";
+            setInfo("Sensordata available!");
+            emit sensorDataAvailable();
+            break;
+            //
+        case SENDING_SENSORDATA_FINISHED:
+            emit sensorDataReceived();
+            qDebug()<<"SENDING_SENSORDATA_FINISHED";
+            setInfo("Aensordata Received!");
             // set state ready to increase, ask the pal if he is ready - if true - increase
             // need the write pointer
             //
             break;
-
+            //)
         default:
             qWarning()<<"Unknown MSG: "<<value;
             break; //technically not needed
@@ -414,7 +431,6 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type);
                 qDebug()<<"SWITCH TO CMD STATE";
             }
-
         }
         else
         {
