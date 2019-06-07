@@ -9,6 +9,7 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
     m_curr_idx(0), m_fil_src_cnt(0), m_is_aut_incr_en(0), m_last_type(0),
     m_last_path("NONE")
 {
+    m_homeLocation = QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory);
 
 }
 
@@ -16,38 +17,38 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
 void LogFileHandler::write_type_to_file(QByteArray data, uint8_t type)
 {
     static quint64 counter;
-    QString homeLocation = QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory);
-    qDebug()<<"File Path: "<<homeLocation;
+    QString tmpLocation = m_homeLocation;
+    qDebug()<<"File Path: "<<tmpLocation;
     QString idx_str = tr("%1").arg(m_curr_idx);
-    homeLocation.append( idx_str );
+    tmpLocation.append( idx_str );
 
     switch (type)
     {
     case TYPE_AUD:
-        homeLocation.append( QString("AUDIO") );
+        tmpLocation.append( QString("AUDIO") );
         break;
     case TYPE_GYR:
-        homeLocation.append( QString("GYR") );
+        tmpLocation.append( QString("GYR") );
         break;
     case TYPE_ACC:
-        homeLocation.append( QString("ACC") );
+        tmpLocation.append( QString("ACC") );
         break;
     case TYPE_PRS:
-        homeLocation.append( QString("PRS") );
+        tmpLocation.append( QString("PRS") );
         break;
     case TYPE_MAG:
-        homeLocation.append( QString("GYR") );
+        tmpLocation.append( QString("GYR") );
         break;
     case TYPE_LOG:
-        homeLocation.append( QString("LOG") );
+        tmpLocation.append( QString("LOG") );
         break;
 
     default:
-        homeLocation.append( QString("SOMEFILE") );
+        tmpLocation.append( QString("SOMEFILE") );
         break; // technically not needed
     }
 
-    QFile file(homeLocation);
+    QFile file(tmpLocation);
     qDebug()<<file.open(QIODevice::WriteOnly);
     qDebug()<<file.write(data);
     file.close();

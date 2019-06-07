@@ -1,0 +1,47 @@
+void DeviceHandler::onTimerTriggered()
+{
+
+    QByteArray data;
+    data.resize(5);
+    data[0] = 0x55;
+    data[1] = 0x11;
+    data[2] = 0x55;
+    data[3] = 0x11;
+    data[4] = 0x55;
+
+#define CHUNK_SIZE 16
+    qDebug() << "onTimerTriggered::writeTest.. ";
+    if (m_service->state() == QLowEnergyService::ServiceDiscovered)
+        qDebug()<<"Service is in Discovered State";
+    else
+        qDebug()<<"Service state is shitty, still trying to send";
+
+    if(m_service && m_writeCharacteristic.isValid())
+    {
+        if(data.length() > CHUNK_SIZE)
+        {
+            int sentBytes = 0;
+            while (sentBytes < data.length())
+            {
+                m_service->writeCharacteristic( m_writeCharacteristic, data.mid(sentBytes, CHUNK_SIZE), m_writeMode);
+                sentBytes += CHUNK_SIZE;
+                if(m_writeMode == QLowEnergyService::WriteWithResponse){
+                    //waitForWrite();
+                    qDebug()<<"waitForWrite() commented out";
+                    if(m_service->error() != QLowEnergyService::NoError)
+                        return;
+                }
+            }
+
+        }
+        else
+        {
+            m_service->writeCharacteristic(m_writeCharacteristic, data, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+            qDebug()<<"writecall";
+        }
+    }
+
+    //    qDebug()<<"Trying to Read";
+    //    if(m_service && m_readCharacteristic.isValid())
+    //        m_service->readCharacteristic(m_readCharacteristic);
+}

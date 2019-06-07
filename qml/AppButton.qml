@@ -10,6 +10,8 @@ Rectangle {
     property color baseColor: AppConstants.buttonColor
     property color pressedColor: AppConstants.buttonPressedColor
     property color disabledColor: AppConstants.disabledButtonColor
+    property color blinkingColor: AppConstants.infoColor
+    property bool blinkActive: false
 
     signal clicked()
 
@@ -25,6 +27,32 @@ Rectangle {
         }
     }
 
+    Timer {
+        id: timer
+        interval: 500
+        repeat: true
+        onTriggered:
+        {
+            if ( button.color == blinkingColor)
+                button.color = baseColor
+            else
+                button.color = blinkingColor
+        }
+    }
+
+    function startBlinking()
+    {
+        timer.start();
+        blinkActive = true;
+    }
+
+    function stopBlinking()
+    {
+        timer.stop();
+        button.color = baseColor;
+        blinkActive = false;
+    }
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -33,6 +61,8 @@ Rectangle {
         onClicked: {
             checkColor()
             button.clicked()
+            if (blinkActive)
+                stopBlinking();
         }
     }
 }

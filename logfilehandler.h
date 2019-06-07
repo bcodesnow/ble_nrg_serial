@@ -16,6 +16,7 @@ private:
     quint32 m_fil_src_cnt; // file source count
     quint8  m_last_type; // and last type make out when it increments.
     QString m_log_fil_buf;
+    QString m_homeLocation;
     bool m_is_aut_incr_en;
 
 public:
@@ -25,7 +26,6 @@ public:
 signals:
     void lastPathChanged(void);
     void idxChanged(quint64 tidx);
-
     void confirmNeeded();
 
 public:

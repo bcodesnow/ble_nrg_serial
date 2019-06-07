@@ -50,4 +50,5 @@ HEADERS += \
     catchcontroller.h
 
 DISTFILES += \
-    pre_trash
+    pre_trash \
+    preTrash

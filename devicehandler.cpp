@@ -70,7 +70,8 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     m_currentDevice(0),
     m_refToOtherDevice(0),
     m_refToFileHandler(0),
-    m_found_BLE_UART_Service(false)
+    m_found_BLE_UART_Service(false),
+    m_fileIndexOnDevice(0)
 {
 
 }
@@ -125,6 +126,17 @@ void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
 
     if (tba.size())
         m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+}
+
+void DeviceHandler::requestBLESensorData()
+{
+        QByteArray tba;
+        tba.resize(2);
+        tba[0] = REQUEST_SENSORDATA;
+        tba[1] = 0xFF;
+
+        if (tba.size())
+            m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
 void DeviceHandler::setAddressType(AddressType type)
@@ -192,7 +204,7 @@ void DeviceHandler::setDevice(DeviceInfo *device)
 
         connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error), this, [this](QLowEnergyController::Error error) {Q_UNUSED(error);setError("Cannot connect to remote device.");});
         connect(m_control, &QLowEnergyController::connected, this, [this]() { setInfo("Controller connected. Search services..."); m_control->discoverServices();});
-        connect(m_control, &QLowEnergyController::disconnected, this, [this]() { setError("LowEnergy controller disconnected");});
+        connect(m_control, &QLowEnergyController::disconnected, this, [this]() { setError("BLE controller disconnected!");});
 
         // Connect
         m_control->connectToDevice();
@@ -293,17 +305,12 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     static uint8_t state = CMD_STATE;
     static uint16_t incoming_byte_count;
     static uint8_t incoming_type;
-    static uint16_t pkgcnt;
-    pkgcnt++;
-    //qDebug()<<"!!! PKG_CNT : "<<pkgcnt;
-
 
     static QByteArray huge_chunk;
 
     if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
         return;
 
-    //qDebug()<<">>Data Received: <<"<<value.size()<<" BYTES";
     // ignore any other characteristic change -> shouldn't really happen though
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
 
@@ -334,10 +341,12 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             m_fileIndexOnDevice = data[3];
             m_deviceSubState = data[2];
             m_deviceLastError = data[4];
-            qDebug()<<"ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
+            qDebug()<<ident<<" --- ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
+            // TODO: if SD
             emit fileIndexOnDeviceChanged();
             emit deviceStateChanged();
             emit aliveArrived();
+            setInfo("Alive!");
             break;
 
         case HUGE_CHUNK_START:
@@ -345,28 +354,42 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             incoming_byte_count = (uint16_t) ( data[1] << 8);
             incoming_byte_count |=  data[2];
             huge_chunk.resize(incoming_byte_count);
-            qDebug()<<"!!!!!!!! incoming byte count:"<<incoming_byte_count;
+            qDebug()<<"! -> Incoming byte count: "<<incoming_byte_count;
+            setInfo("Incoming!");
             incoming_type = data[3];
             break;
 
         case HUGE_CHUNK_FINISH:
             m_refToFileHandler->write_type_to_file(huge_chunk, incoming_type);
             huge_chunk.clear();
+
             if (huge_chunk.size() == incoming_byte_count)
-                qDebug()<<"!!!!!!!VERY WELL!";
+            {
+                setInfo("All Received!");
+                qDebug()<<"All Received";
+            }
             else
-                qDebug()<<"!!!!!OHHOHEHOEASFAFE!";
+            {
+                setInfo("Some got lost!");
+                qCritical()<<"Some got lost!";
+            }
+            break;
+        case SENDING_SENSORDATA_FINISHED:
+            // close log file
+            //
+            // set state ready to increase, ask the pal if he is ready - if true - increase
+            // need the write pointer
+            //
             break;
 
         default:
-            qDebug()<<"MSG:"<<value;
+            qWarning()<<"Unknown MSG: "<<value;
             break; //technically not needed
         }
     }
     else if (state == HUGE_CHUNK_STATE )
     {
         huge_chunk.append(value);
-        qDebug()<<"!!! Huge_chunk.size: "<<huge_chunk.size();
 
         if ( value.length() == SW_REC_MODE_LENGTH )
         {
@@ -436,53 +459,6 @@ void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, c
     qDebug() << "SIGNAL: Characteristic Written!" << value;
 }
 
-void DeviceHandler::onTimerTriggered()
-{
-
-    QByteArray data;
-    data.resize(5);
-    data[0] = 0x55;
-    data[1] = 0x11;
-    data[2] = 0x55;
-    data[3] = 0x11;
-    data[4] = 0x55;
-
-#define CHUNK_SIZE 16
-    qDebug() << "onTimerTriggered::writeTest.. ";
-    if (m_service->state() == QLowEnergyService::ServiceDiscovered)
-        qDebug()<<"Service is in Discovered State";
-    else
-        qDebug()<<"Service state is shitty, still trying to send";
-
-    if(m_service && m_writeCharacteristic.isValid())
-    {
-        if(data.length() > CHUNK_SIZE)
-        {
-            int sentBytes = 0;
-            while (sentBytes < data.length())
-            {
-                m_service->writeCharacteristic( m_writeCharacteristic, data.mid(sentBytes, CHUNK_SIZE), m_writeMode);
-                sentBytes += CHUNK_SIZE;
-                if(m_writeMode == QLowEnergyService::WriteWithResponse){
-                    //waitForWrite();
-                    qDebug()<<"waitForWrite() commented out";
-                    if(m_service->error() != QLowEnergyService::NoError)
-                        return;
-                }
-            }
-
-        }
-        else
-        {
-            m_service->writeCharacteristic(m_writeCharacteristic, data, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
-            qDebug()<<"writecall";
-        }
-    }
-
-    //    qDebug()<<"Trying to Read";
-    //    if(m_service && m_readCharacteristic.isValid())
-    //        m_service->readCharacteristic(m_readCharacteristic);
-}
 
 void DeviceHandler::update_currentService()
 {

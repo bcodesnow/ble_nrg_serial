@@ -102,6 +102,7 @@ public:
     DeviceHandler(QObject *parent = 0);
 
     Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str);
+    Q_INVOKABLE void requestBLESensorData(void);
 
     enum class AddressType {
         PublicAddress,
@@ -135,7 +136,7 @@ private slots:
     void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
-    void onTimerTriggered(void);
+    //void onTimerTriggered(void);
 
 
 private:
@@ -184,8 +185,8 @@ private:
     QLowEnergyService::WriteMode m_writeMode;
     QLowEnergyCharacteristic m_readCharacteristic;
 
-    QTimer* m_test_timer;
-    QTimer* replyDelayTimer;
+//    QTimer* m_test_timer;
+//    QTimer* replyDelayTimer;
 
     QLowEnergyController::RemoteAddressType m_addressType = QLowEnergyController::PublicAddress;
 };

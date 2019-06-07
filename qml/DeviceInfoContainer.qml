@@ -6,12 +6,13 @@ Rectangle
     id: rightLeftContainer
     width: parent.width / 2
 
-    property int fileIndex: 0
+    property string fileIndex: "-"
     property string address: "FF:FF:FF:FF"
     property string state: "Unknown"
     property string conatinerName: "Unknown"
     property bool indicatorActive: false
     property color indicatorColor: "red"
+    property bool indicatorLeft: false
 
     //anchors.top: parent.top
     //anchors.right: parent.right
@@ -26,13 +27,25 @@ Rectangle
         font.pixelSize: AppConstants.mediumFontSize
         text: parent.conatinerName
         StatusIndicator {
+            id: indicator
             width: title.height * 0.66
             height: width
             anchors.verticalCenter:  title.verticalCenter
-            anchors.right: title.right
-            anchors.rightMargin: title.width / 16
             color: indicatorColor
             active: indicatorActive
+        }
+        Component.onCompleted:
+        {
+            if (indicatorLeft)
+            {
+                indicator.anchors.leftMargin = title.width / 16;
+                indicator.anchors.left = title.left;
+            }
+            else
+            {
+                indicator.anchors.rightMargin = title.width / 16;
+                indicator.anchors.right = title.right;
+            }
         }
 
         BottomLine {
@@ -85,12 +98,36 @@ Rectangle
         verticalAlignment: Text.AlignVCenter
         color: AppConstants.textColor
         font.pixelSize: AppConstants.smallFontSize
-        text: "File Index: " + parent.fileIndex
+        text: parent.fileIndex
 
         BottomLine {
             height: 1;
             width: parent.width
             color: "#898989"
         }
+    }
+
+    AppButton {
+        id: gatherDataButton
+        anchors.horizontalCenter: rightLeftContainer.horizontalCenter
+        anchors.top: fileIndex.bottom
+        anchors.topMargin: AppConstants.fieldMargin
+        anchors.bottomMargin: AppConstants.fieldMargin
+        width: fileIndex.width - AppConstants.fieldMargin / 2
+        height: AppConstants.fieldHeight
+        enabled: true
+        pressedColor: AppConstants.infoColor
+
+        Text {
+            anchors.centerIn: parent
+            font.pixelSize: AppConstants.tinyFontSize
+            text: qsTr("Gather Data!")
+            color: gatherDataButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+        }
+        Component.onCompleted:
+        {
+            startBlinking();
+        }
+
     }
 }

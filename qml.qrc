@@ -14,5 +14,6 @@
         <file>qml/qmldir</file>
         <file>qml/Catch.qml</file>
         <file>qml/DeviceInfoContainer.qml</file>
+        <file>qml/DualAppPage.qml</file>
     </qresource>
 </RCC>

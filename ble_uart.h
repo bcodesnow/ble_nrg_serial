@@ -7,21 +7,25 @@
 /*1st byte:
     CMD BYTE
 **/
-#define TRIGGERED     			0x06
-#define GET_STATE		  			0x03
+#define TRIGGERED                       0x06
+#define GET_STATE                       0x03
 #define STOP				  			0x02
 #define START				  			0x01
-#define IGNORE_LAST_X	  		0x07
-#define DATA_COLLECTED  		0x08
-#define WRITE_CATCH_SUCCESS 0x09
-#define ALIVE								0x10
+#define IGNORE_LAST_X                   0x07
+#define DATA_COLLECTED                  0x08
+#define WRITE_CATCH_SUCCESS             0x09
+#define REQUEST_SENSORDATA              0x0A
+#define SENDING_SENSORDATA_FINISHED     0x0B
+#define ALIVE                           0x10
+#define HUGE_CHUNK_START                0x77
+#define	HUGE_CHUNK_FINISH               0x88
+#define SWITCH_RECEIVE_MODE             0x99
+#define TURN_ON_SD_LOGGING              0x66
 
-#define HUGE_CHUNK_START		0x77
-#define	HUGE_CHUNK_FINISH 	0x88
-#define SWITCH_RECEIVE_MODE 0x99
-#define TURN_ON_SD_LOGGING  0x66
+/* REQUEST_SENSOR_DATA  -> byte[1] 0xFF */
 
 /* IGNORE_LAST_X 		-> byte[1] how many to ignore */
+
 
 /* ALIVE 							-> byte[1] mainState
                                             -> byte[2] subState

@@ -3,18 +3,23 @@ import QtQuick.Controls 2.2
 import "."
 
 
-AppPage {
+DualAppPage {
 
-    errorMessage: deviceHandler_0.error
-    infoMessage: deviceHandler_0.info
+    errorMessageL: deviceHandler_0.error
+    infoMessageL: deviceHandler_0.info
+
+    errorMessageR: deviceHandler_1.error
+    infoMessageR: deviceHandler_1.info
 
     property bool catchConfirmationNeeded: true
+    property bool usingSDonDevice : false
 
-    Rectangle {
+    Rectangle
+    {
         id: viewContainer
         anchors.top: parent.top
         anchors.bottom: catchButton.top
-        anchors.topMargin: AppConstants.fieldMargin + messageHeight
+        anchors.topMargin: AppConstants.fieldMargin + messageHeightL
         anchors.bottomMargin: AppConstants.fieldMargin
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width - AppConstants.fieldMargin*2
@@ -27,9 +32,10 @@ AppPage {
             anchors.top: parent.top
             state: deviceHandler_0.deviceState
             address: deviceHandler_0.deviceAddress
-            fileIndex: deviceHandler_0.fileIndexOnDevice
+            fileIndex: usingSDonDevice ? "File Index: " + deviceHandler_0.fileIndexOnDevice : "BLE Mode"
             indicatorColor: deviceHandler_0.alive ? AppConstants.infoColor : AppConstants.errorColor;
             conatinerName: "LEFT"
+            indicatorLeft: true
         }
         Connections {
             target: deviceHandler_0
@@ -45,16 +51,25 @@ AppPage {
             anchors.top: parent.top
             state: deviceHandler_1.deviceState
             address: deviceHandler_1.deviceAddress
-            fileIndex: deviceHandler_1.fileIndexOnDevice
+            fileIndex: usingSDonDevice ? "File Index: " + deviceHandler_0.fileIndexOnDevice : "BLE Mode"
+            indicatorColor: deviceHandler_1.alive ? AppConstants.infoColor : AppConstants.errorColor;
             conatinerName: "RIGHT"
         }
+        Connections {
+            target: deviceHandler_1
+            onAliveArrived:
+            {
+                rightContainer.indicatorActive = !rightContainer.indicatorActive
+            }
+        }
+
 
         Rectangle {
             id: midDecorator
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.top: parent.top
-            width: parent.width * 0.025
+            width: parent.width * 0.020
             height: parent.height * 0.85
             radius: height*0.5
         }
@@ -68,9 +83,11 @@ AppPage {
         width: viewContainer.width
         height: AppConstants.fieldHeight
         enabled: parent.catchConfirmationNeeded
+        pressedColor: AppConstants.infoColor
         onClicked:
         {
-            deviceFinder.sendConfirmationToBothDevices(1);
+            if (usingSDonDevice)
+                deviceFinder.sendConfirmationToBothDevices(1);
         }
 
         Text {
@@ -89,9 +106,13 @@ AppPage {
         width: viewContainer.width
         height: AppConstants.fieldHeight
         enabled: parent.catchConfirmationNeeded
+        blinkingColor: AppConstants.errorColor
+        pressedColor: AppConstants.errorColor
         onClicked:
         {
-            deviceFinder.sendConfirmationToBothDevices(0);
+            catchButton.startBlinking();
+            if (usingSDonDevice)
+                deviceFinder.sendConfirmationToBothDevices(0);
         }
 
         Text {

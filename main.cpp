@@ -27,14 +27,14 @@ int main(int argc, char *argv[])
     log_file_handler.set_aut_incr(false);
     //log_file_handler.set_fil_src_cnt(2);
     //log_file_handler.set_last_type(TYPE_PRS);
+
     ConnectionHandler connection_handler; //keeps track of local ble interface
     DeviceHandler device_handler[2];
     device_handler[0].setRefToFileHandler(&log_file_handler);
     device_handler[0].setIdentifier("LEFT");
 
-
-    device_handler[1].setRefToFileHandler(&log_file_handler);
     DeviceFinder device_finder(&device_handler[0]);
+    device_handler[1].setRefToFileHandler(&log_file_handler);
     device_handler[1].setIdentifier("RIGHT");
 
     QQmlApplicationEngine engine;
@@ -44,6 +44,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);
     engine.rootContext()->setContextProperty("deviceHandler_0", &device_handler[0]);
     engine.rootContext()->setContextProperty("deviceHandler_1", &device_handler[1]);
+    engine.rootContext()->setContextProperty("fileHandler", &log_file_handler);
+
 
 
     //QQmlContext *ctxt = engine.rootContext();
