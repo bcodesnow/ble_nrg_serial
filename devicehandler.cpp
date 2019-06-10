@@ -55,6 +55,7 @@
 #include <QRandomGenerator>
 #include <QDebug>
 #include <QtGlobal>
+
 /*
  *  This is the real deal, it creates a BLE Controller
  *  setDevice connects the device
@@ -176,6 +177,11 @@ void DeviceHandler::setRefToFileHandler(LogFileHandler *t_fil_helper)
     m_refToFileHandler = t_fil_helper;
 }
 
+void DeviceHandler::setRefToTimeStampler(TimeStampler *t_time_stampler)
+{
+    m_refToTimeStampler = t_time_stampler;
+}
+
 void DeviceHandler::setIdentifier(QString str)
 {
     m_ident_str = str;
@@ -187,7 +193,10 @@ void DeviceHandler::setDevice(DeviceInfo *device)
     clearMessages();
     m_currentDevice = device;
     if (device != NULL)
+    {
         m_deviceAddress = device->getAddress();
+        emit deviceAddressChanged();
+    }
 
     // Disconnect and delete old connection
     if (m_control) {
@@ -336,6 +345,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 tba[1] = 0xFF; //just a second char, not needed
                 m_refToOtherDevice->ble_uart_tx(tba);
             }
+            m_refToFileHandler->add_to_log_fil(m_ident_str,"Triggered", QString::number(m_refToTimeStampler->get_timestamp_us()));
             break;
 
         case DATA_COLLECTED:
@@ -402,7 +412,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             break;
             //
         case SENSORDATA_AVAILABLE:
-            qDebug()<<"SENDING_SENSORDATA_FINISHED";
+            qDebug()<<"Sensor Data can be downloaded!";
             setInfo("Sensordata available!");
             emit sensorDataAvailable();
             break;

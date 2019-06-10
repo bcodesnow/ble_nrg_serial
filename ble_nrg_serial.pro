@@ -1,4 +1,4 @@
-QT += quick qml bluetooth serialbus
+QT += quick qml bluetooth serialbus quickcontrols2
 CONFIG += c++11
 
 # The following define makes your compiler emit warnings if you use
@@ -50,5 +50,4 @@ HEADERS += \
     catchcontroller.h
 
 DISTFILES += \
-    pre_trash \
     preTrash

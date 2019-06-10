@@ -100,7 +100,8 @@ DualAppPage {
             }
         }
 
-        Rectangle {
+        Rectangle
+        {
             id: midDecorator
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: bottomField.top//parent.bottom
@@ -109,8 +110,17 @@ DualAppPage {
             height: parent.height * 0.85
             radius: height*0.5
         }
+        Rectangle
+        {
+            id: bottomDecorator
+            anchors.bottom: midDecorator.bottom
+            width: parent.width
+            height: midDecorator.width
+            radius: height*0.5
+        }
 
-        Rectangle {
+        Rectangle
+        {
             id: bottomField
             anchors.bottom: parent.bottom
             width: parent.width
@@ -118,76 +128,74 @@ DualAppPage {
             color: AppConstants.viewColor
             radius: AppConstants.buttonRadius
 
-            RowLayout {
-                anchors.fill: parent
+            Rectangle
+            {
+                id: bottomLeft
+                color: parent.color
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.right: parent.horizontalCenter
                 anchors.leftMargin: AppConstants.fieldMargin / 2
                 anchors.rightMargin: AppConstants.fieldMargin / 2
 
                 AppButton
                 {
                     id: restartButton
-                    Layout.preferredWidth: parent.width / 5
-                    height: parent.height*0.85
-                    //                    anchors.right: rstIdxButton.left
-                    //                    anchors.rightMargin: filIdxTxt.anchors.rightMargin
+                    width: parent.width / 4
+                    height: width
+                    anchors.centerIn: parent
                     pressedColor: AppConstants.infoColor
                     baseColor: AppConstants.backgroundColor
                     color: AppConstants.backgroundColor
-                    //                    anchors.margins: AppConstants.fieldMargin*0.5
 
-//                    Text {
-//                        anchors.centerIn: parent
-//                        font.pixelSize: AppConstants.tinyFontSize
-//                        color: AppConstants.textColor
-//                        text: qsTr("START")
-//                    }
                     Image {
                         anchors.centerIn: parent
+                        width: parent.width * 0.85
+                        height: width
                         source: "images/baseline_replay_white_18dp.png"
                     }
                     onClicked: deviceFinder.sendRestartToBothDevices();
+                }
+            }
 
-                }
-                Item
-                {
-                    id: spacer
-                    Layout.preferredWidth: parent.width / 6
-                }
+            Rectangle
+            {
+                id: bottomRight
+                color: parent.color
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.left: parent.horizontalCenter
+                anchors.leftMargin: AppConstants.fieldMargin / 2
+                anchors.rightMargin: AppConstants.fieldMargin / 2
 
                 AppButton
                 {
                     id: rstIdxButton
-                    Layout.preferredWidth: parent.width / 6
-                    height: parent.height*0.85
-                    //anchors.left: parent.left
-                    //                    anchors.right: filIdxTxt.left
-                    //                    anchors.rightMargin: filIdxTxt.anchors.rightMargin
+                    width: rstTxt.width * 1.2
+                    height: parent.width / 4
                     anchors.verticalCenter: parent.verticalCenter
                     pressedColor: AppConstants.infoColor
                     baseColor: AppConstants.backgroundColor
                     color: AppConstants.backgroundColor
-                    //                    anchors.margins: AppConstants.fieldMargin*0.5
 
-                                        Text {
-                                            anchors.centerIn: parent
-                                            font.pixelSize: AppConstants.mediumFontSize
-                                            color: AppConstants.textColor
-                                            text: qsTr("RST")
-                                        }
-//                    Image {
-//                        anchors.centerIn: parent
-//                        source: "images/baseline_replay_white_18dp.png"
-//                    }
-
+                    Text {
+                        id: rstTxt
+                        anchors.centerIn: parent
+                        font.pixelSize: AppConstants.mediumFontSize
+                        color: AppConstants.textColor
+                        text: qsTr("RST")
+                    }
                     onClicked: fileHandler.rst_idx();
 
                 }
 
                 Text {
                     id: filIdxTxt
-                    //anchors.centerIn: parent
-                    Layout.preferredWidth: parent.width / 6
-                    height: parent.height*0.85
+                    anchors.centerIn: parent
+                    width: parent.width / 4
+                    height: width
                     text: fileHandler.idx
                     color: AppConstants.textColor
                     font.pixelSize: AppConstants.mediumFontSize
@@ -198,14 +206,13 @@ DualAppPage {
                 AppButton
                 {
                     id: pluesButton
-                    Layout.preferredWidth: parent.width / 6
-                    height: parent.height * 0.85
-                    //                    anchors.right: parent.right
+                    width: parent.width / 4
+                    height: width
+                    anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     pressedColor: AppConstants.infoColor
                     baseColor: AppConstants.backgroundColor
                     color: AppConstants.backgroundColor
-                    //                    anchors.margins: AppConstants.fieldMargin*0.5
                     onClicked: fileHandler.incr_idx();
 
                     Text {
@@ -216,10 +223,14 @@ DualAppPage {
                     }
 
                 }
-            }
 
+            }
         }
+
     }
+
+
+
 
     AppButton {
         id: catchButton
@@ -261,7 +272,7 @@ DualAppPage {
             if (usingSDonDevice)
                 deviceFinder.sendConfirmationToBothDevices(0);
 
-            fileHandler.sendCatchSuccessFromQML(true);
+            fileHandler.sendCatchSuccessFromQML(false);
         }
 
         Text {

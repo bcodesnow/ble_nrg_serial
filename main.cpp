@@ -10,18 +10,21 @@
 #include "terminaltoqmlb.h"
 #include <QTimer>
 #include "logfilehandler.h"
+#include <QQuickStyle>
 #include "ble_uart.h"
+#include "timestampler.h"
 
 int main(int argc, char *argv[])
 {
-    TerminalToQmlB term;
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
-    //QApplication app(argc, argv);
-    // can be changed to QGuiApplication for QML only
 
-    QTimer timer;
+    TerminalToQmlB term;
+    term.setActive (true);
+
+    TimeStampler ts;
+    ts.start_time_stamp();
 
     LogFileHandler log_file_handler;
     log_file_handler.set_aut_incr(false);
@@ -29,13 +32,18 @@ int main(int argc, char *argv[])
     //log_file_handler.set_last_type(TYPE_PRS);
 
     ConnectionHandler connection_handler; //keeps track of local ble interface
+
     DeviceHandler device_handler[2];
     device_handler[0].setRefToFileHandler(&log_file_handler);
     device_handler[0].setIdentifier("LEFT");
+    device_handler[0].setRefToTimeStampler(&ts);
 
     DeviceFinder device_finder(&device_handler[0]);
     device_handler[1].setRefToFileHandler(&log_file_handler);
     device_handler[1].setIdentifier("RIGHT");
+    device_handler[0].setRefToTimeStampler(&ts);
+
+    ts.setRefToDevHandlerArr(device_handler);
 
     QQmlApplicationEngine engine;
     qmlRegisterUncreatableType<DeviceHandler>("Shared", 1, 0, "AddressType", "Enum is not a type");
@@ -46,17 +54,12 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceHandler_1", &device_handler[1]);
     engine.rootContext()->setContextProperty("fileHandler", &log_file_handler);
 
-
-
-    //QQmlContext *ctxt = engine.rootContext();
-    //ctxt->setContextProperty("termModel", QVariant::fromValue(term.m_ioBuff));
-    //qDebug() << qApp->primaryScreen()->size();
+    QQuickStyle::setStyle("Material");
 
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
 
-    qDebug()<<"Starting Search";
+    qInfo()<<"Starting Search";
     device_finder.startSearch();
-
 
     return app.exec();
 }

@@ -24,11 +24,6 @@ Item {
     {
     }
 
-    function close()
-    {
-        app.prevPage()
-    }
-
     Rectangle {
         id: msgl
         anchors.top: parent.top

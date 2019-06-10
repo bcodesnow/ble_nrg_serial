@@ -50,6 +50,7 @@
 
 import QtQuick 2.7
 import QtQuick.Window 2.2
+import QtQuick.Controls.Material 2.2
 import "."
 
 Window {
@@ -59,6 +60,12 @@ Window {
     height: 1240 * .7
     title: qsTr("Catch Detection")
     color: AppConstants.backgroundColor
+
+    Material.theme: Material.LightGreen
+    Material.accent: AppConstants.infoColor
+    Material.background: AppConstants.backgroundColor
+    Material.foreground: AppConstants.buttonColor
+    Material.primary: AppConstants.textColor
 
     Component.onCompleted: {
         AppConstants.wWidth = Qt.binding(function() {return width})
@@ -74,7 +81,7 @@ Window {
 
         onStatusChanged: {
             if (status === Loader.Ready) {
-                appLoader.setSource("App.qml");
+                appLoader.setSource("SwipePages.qml");
             }
         }
     }
@@ -86,7 +93,7 @@ Window {
             appLoader.item.init()
             splashLoader.visible = false
             splashLoader.setSource("")
-            appLoader.item.forceActiveFocus();
+            //appLoader.item.forceActiveFocus();
         }
     }
 
@@ -94,7 +101,7 @@ Window {
         id: appLoader
         anchors.fill: parent
         visible: false
-        asynchronous: true
+        asynchronous: false
         onStatusChanged: {
             if (status === Loader.Ready)
                 splashLoader.item.appReady()

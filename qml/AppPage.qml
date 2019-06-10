@@ -1,4 +1,3 @@
-
 import QtQuick 2.5
 import "."
 
@@ -13,11 +12,6 @@ Item {
 
     function init()
     {
-    }
-
-    function close()
-    {
-        app.prevPage()
     }
 
     Rectangle {

@@ -6,7 +6,6 @@
         <file>qml/Connect.qml</file>
         <file>qml/SplashScreen.qml</file>
         <file>qml/Terminal.qml</file>
-        <file>qml/App.qml</file>
         <file>qml/BluetoothAlarmDialog.qml</file>
         <file>qml/AppButton.qml</file>
         <file>qml/AppPage.qml</file>
@@ -15,5 +14,6 @@
         <file>qml/Catch.qml</file>
         <file>qml/DeviceInfoContainer.qml</file>
         <file>qml/DualAppPage.qml</file>
+        <file>qml/SwipePages.qml</file>
     </qresource>
 </RCC>

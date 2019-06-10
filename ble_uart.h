@@ -24,13 +24,29 @@
 /* SENDING_SENSORDATA_FINISHED   -> byte[1] 0xFF */
 /* SENSORDATA_AVAILABLE					 -> byte[1] 0xFF */
 
-
 #define ALIVE                           0x10
 
 #define HUGE_CHUNK_START                0x77
 #define	HUGE_CHUNK_FINISH               0x88
 #define SWITCH_RECEIVE_MODE             0x99
 #define TURN_ON_SD_LOGGING              0x66
+
+#define TIME_SYNC_START                 0xA1
+#define TIME_SYNC_FINISHED              0xA2
+
+#define TIME_SYNC_FROM_SERVER           0xAA
+/* TIME_SYNC_FROM_SERVER                    -> byte[1] timeStampOnServer byte[0]
+                                            -> byte[2] timeStampOnServer byte[1]
+                                            -> byte[3] timeStampOnServer byte[2]
+                                            -> byte[4] timeStampOnServer byte[3]
+*/
+#define TIME_SYNC_FROM_CLIENT           0xBB
+/* TIME_SYNC_FROM_CLIENT                    -> byte[1] timeStampOnClientWhenSrvMsgReceived byte[0]
+                                            -> byte[2] timeStampOnClientWhenSrvMsgReceived byte[1]
+                                            -> byte[3] timeStampOnClientWhenSrvMsgReceived byte[2]
+                                            -> byte[4] timeStampOnClientWhenSrvMsgReceived byte[3]
+*/
+
 
 /* REQUEST_SENSOR_DATA  -> byte[1] 0xFF */
 

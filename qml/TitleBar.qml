@@ -79,7 +79,6 @@ Rectangle    {
                 anchors.fill: parent
                 onClicked:
                 {
-                    console.log("index: "+index)
                     titleClicked(index)
                 }
             }

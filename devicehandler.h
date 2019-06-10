@@ -53,15 +53,13 @@
 
 #include "bluetoothbaseclass.h"
 #include "logfilehandler.h"
+#include "timestampler.h"
 
 #include <QDateTime>
 #include <QVector>
 #include <QTimer>
 #include <QLowEnergyController>
 #include <QLowEnergyService>
-
-
-
 
 #define CDSM_STATE_INIT													( 0u )
 #define CDSM_STATE_RUNNING                                              (	1u << 0u )
@@ -84,6 +82,7 @@
 
 
 class DeviceInfo;
+class TimeStampler;
 
 class DeviceHandler : public BluetoothBaseClass
 {
@@ -97,17 +96,56 @@ class DeviceHandler : public BluetoothBaseClass
     Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
 
 private:
+    const QString BLE_UART_RX_CHAR = "{d973f2e2-b19e-11e2-9e96-0800200c9a66}";
+    const QString BLE_UART_TX_CHAR = "{d973f2e1-b19e-11e2-9e96-0800200c9a66}";
+    const QString BLE_UART_SERVICE = "{d973f2e0-b19e-11e2-9e96-0800200c9a66}";
+
     QString m_ident_str;
     QByteArray m_huge_chunk;
     bool m_sdEnabled;
+    QString m_deviceAddress;
+    QString m_deviceState;
+    qint16 m_fileIndexOnDevice;
+    quint8 m_deviceSubState;
+    quint8 m_deviceLastError;
 
+    bool m_found_BLE_UART_Service;
+
+    QLowEnergyController *m_control;
+    QLowEnergyService *m_service;
+    QLowEnergyController::RemoteAddressType m_addressType = QLowEnergyController::PublicAddress;
+
+    DeviceInfo *m_currentDevice;
+    QLowEnergyDescriptor m_notificationDescriptor;
+
+    DeviceHandler* m_refToOtherDevice;
+    LogFileHandler* m_refToFileHandler;
+    TimeStampler* m_refToTimeStampler;
+
+    QLowEnergyCharacteristic m_writeCharacteristic;
+    QLowEnergyService::WriteMode m_writeMode;
+    QLowEnergyCharacteristic m_readCharacteristic;
+
+    //QLowEnergyController
+    void serviceDiscovered(const QBluetoothUuid &);
+    void serviceScanDone();
+
+    //QLowEnergyService
+    void serviceStateChanged(QLowEnergyService::ServiceState s);
+    void ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value);
+    QString state_to_string(uint8_t tmp);
+
+    void confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value);
+    void update_currentService();
+
+    void searchCharacteristic();
+    void printProperties(QLowEnergyCharacteristic::PropertyTypes);
 
 public:
     DeviceHandler(QObject *parent = 0);
 
     Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str);
     Q_INVOKABLE void requestBLESensorData(void);
-    //Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
 
     enum class AddressType {
         PublicAddress,
@@ -115,13 +153,14 @@ public:
     };
     Q_ENUM(AddressType)
 
-
     void setDevice(DeviceInfo *device);
     void setAddressType(AddressType type);
     AddressType addressType() const;
 
     void setRefToOtherDevice (DeviceHandler* t_dev_handler);
     void setRefToFileHandler (LogFileHandler* t_fil_helper);
+    void setRefToTimeStampler (TimeStampler* t_time_stampler);
+
     void setIdentifier(QString str);
 
     bool alive() const;
@@ -144,59 +183,7 @@ private slots:
     void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
-    //void onTimerTriggered(void);
 
-
-private:
-    //QLowEnergyController
-    void serviceDiscovered(const QBluetoothUuid &);
-    void serviceScanDone();
-
-    //QLowEnergyService
-    void serviceStateChanged(QLowEnergyService::ServiceState s);
-    void ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value);
-    QString state_to_string(uint8_t tmp);
-
-    // PayloadLength Max 1 CHAR_MAX_LEN-1= 19
-    //    void sendCMDwaitforReply(quint8 cmd, quint8* payload, int payloadLength)
-    //    {
-    //        replyDelayTimer->setSingleShot(true);
-    //    }
-
-    void confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value);
-    void update_currentService();
-
-    void searchCharacteristic();
-    void printProperties(QLowEnergyCharacteristic::PropertyTypes);
-
-    QLowEnergyController *m_control;
-    QLowEnergyService *m_service;
-    QString m_deviceAddress;
-    QString m_deviceState;
-    qint16 m_fileIndexOnDevice;
-    quint8 m_deviceSubState;
-    quint8 m_deviceLastError;
-
-    DeviceInfo *m_currentDevice;
-    QLowEnergyDescriptor m_notificationDescriptor;
-
-    DeviceHandler* m_refToOtherDevice;
-    LogFileHandler* m_refToFileHandler;
-
-    const QString BLE_UART_RX_CHAR = "{d973f2e2-b19e-11e2-9e96-0800200c9a66}";
-    const QString BLE_UART_TX_CHAR = "{d973f2e1-b19e-11e2-9e96-0800200c9a66}";
-    const QString BLE_UART_SERVICE = "{d973f2e0-b19e-11e2-9e96-0800200c9a66}";
-
-    bool m_found_BLE_UART_Service;
-
-    QLowEnergyCharacteristic m_writeCharacteristic;
-    QLowEnergyService::WriteMode m_writeMode;
-    QLowEnergyCharacteristic m_readCharacteristic;
-
-//    QTimer* m_test_timer;
-//    QTimer* replyDelayTimer;
-
-    QLowEnergyController::RemoteAddressType m_addressType = QLowEnergyController::PublicAddress;
 };
 
 #endif // DEVICEHANDLER_H

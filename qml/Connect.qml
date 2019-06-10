@@ -166,13 +166,11 @@ AppPage {
             state: "disconnected"
             onClicked:
             {
-                //state == "disconnected" ? state = "disconnected" : state = "connected"
                 if (state === "disconnected")
                 {
                     state = "connected"
                     deviceFinder.connectToMultipleServices();
-                    app.__currentIndex = 1;
-                    app.showPage("Catch.qml");
+                    view.setCurrentIndex(1);
                 }
                 else
                 {
@@ -184,12 +182,10 @@ AppPage {
                 State {
                     name: "disconnected"
                     PropertyChanges { target: addressTypeText; text: qsTr("CONNECT") }
-                    //PropertyChanges { target: deviceHandler; addressType: AddressType.PublicAddress }
                 },
                 State {
                     name: "connected"
                     PropertyChanges { target: addressTypeText; text: qsTr("TERMINATE") }
-                    //PropertyChanges { target: deviceHandler; addressType: AddressType.RandomAddress }
                 }
             ]
 

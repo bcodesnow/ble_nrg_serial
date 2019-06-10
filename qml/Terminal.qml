@@ -1,83 +1,36 @@
-/****************************************************************************
-**
-** Copyright (C) 2017 The Qt Company Ltd.
-** Contact: https://www.qt.io/licensing/
-**
-** This file is part of the examples of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:BSD$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** BSD License Usage
-** Alternatively, you may use this file under the terms of the BSD license
-** as follows:
-**
-** "Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions are
-** met:
-**   * Redistributions of source code must retain the above copyright
-**     notice, this list of conditions and the following disclaimer.
-**   * Redistributions in binary form must reproduce the above copyright
-**     notice, this list of conditions and the following disclaimer in
-**     the documentation and/or other materials provided with the
-**     distribution.
-**   * Neither the name of The Qt Company Ltd nor the names of its
-**     contributors may be used to endorse or promote products derived
-**     from this software without specific prior written permission.
-**
-**
-** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-** "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-** LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-** A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-** OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-** LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
-
-//! [Imports]
-import QtQuick.Window 2.3
-
-//! [Imports]
 import QtQuick 2.9
 import QtQuick.Controls 2.2
 import "."
 
 // Orientation 1 Portrait, Orientation 2 Landscape
-
 //ApplicationWindow {
 //    id: rootWindow
 //    visible: true
 //    width: Screen.width //640
 //    height: Screen.height //480
 //    title: qsTr("BLE UART Terminal")
+
 AppPage
 {
+
+    property int idOfDevHandlerReceivingTerminalMsgs: 0
 
     Switch {
         id: autoscrollSW
         anchors.top: terminalBackground.bottom //( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
         anchors.left: parent.left //( Screen.orientation === Qt.PortraitOrientation  ) ? parent.left : terminalBackground.right
-        anchors.margins: 5
-        height: 32
-        width: 64
-        contentItem: Text {
+        anchors.margins: width
+        height: parent.height / 40
+        width: height * 2
+        contentItem:
+            Text {
             text: "Turn OFF Autoscroll"
+            font.pixelSize: AppConstants.tinyFontSize
             color: AppConstants.textColor
             anchors.left: parent.right
+            anchors.leftMargin: parent.width / 2
+            verticalAlignment: Text.AlignVCenter
+
         }
         onCheckedChanged:
         {
@@ -86,16 +39,50 @@ AppPage
     }
 
     Switch {
-        id: sdEnableSW
+        id: deviceSelector
         anchors.top: autoscrollSW.bottom //( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
         anchors.left: parent.left //( Screen.orientation === Qt.PortraitOrientation  ) ? parent.left : terminalBackground.right
-        anchors.margins: 5
-        height: 32
-        width: 64
+        anchors.margins: width
+        height: parent.height / 40
+        width: height * 2
+        contentItem:
+            Text {
+            text: "Device 0 <-> Device 1"
+            font.pixelSize: AppConstants.tinyFontSize
+            color: AppConstants.textColor
+            anchors.left: parent.right
+            anchors.leftMargin: parent.width / 2
+            verticalAlignment: Text.AlignVCenter
+
+        }
+        onCheckedChanged:
+        {
+            if (idOfDevHandlerReceivingTerminalMsgs === 0)
+            {
+                idOfDevHandlerReceivingTerminalMsgs = 1;
+            }
+            else
+            {
+                idOfDevHandlerReceivingTerminalMsgs = 0;
+            }
+        }
+    }
+
+    Switch {
+        id: sdEnableSW
+        anchors.top: deviceSelector.bottom //( Screen.orientation === Qt.PortraitOrientation  ) ? terminalBackground.bottom : parent.top
+        anchors.left: parent.left //( Screen.orientation === Qt.PortraitOrientation  ) ? parent.left : terminalBackground.right
+        anchors.margins: width
+        height: parent.height / 40
+        width: height * 2
+
         contentItem: Text {
+            font.pixelSize: AppConstants.tinyFontSize
             text: "Turn On SD Card Logging"
             color: AppConstants.textColor
             anchors.left: parent.right
+            anchors.leftMargin: parent.width / 2
+            verticalAlignment: Text.AlignVCenter
         }
         onCheckedChanged:
         {
@@ -106,8 +93,8 @@ AppPage
         }
     }
 
+
     Connections {
-        id: connectTerminalMsgSignal
         target: terminalToQml
         onMessageArrived:
         {
@@ -119,7 +106,6 @@ AppPage
         id: terminalModel
         Component.onCompleted:
         {
-            //terminalToQml.isActive = false;
             terminalToQml.isActive = true;
         }
     }
@@ -140,7 +126,6 @@ AppPage
             GradientStop { position: 0.0; color: "gray" }
             GradientStop { position: 1.0; color: "black" }
         }
-
 
         Rectangle
         {
@@ -196,6 +181,7 @@ AppPage
                     anchors.left: parent.left
                     width: parent.width * 0.75
                     height: parent.height
+                    font.pixelSize: AppConstants.tinyFontSize
 
                     property string lastCMD: "get_state()"
 
@@ -213,7 +199,10 @@ AppPage
                     }
                     function sendCMD()
                     {
-                        deviceHandler_0.sendCMDStringFromTerminal(txtInput.text);
+                        if(idOfDevHandlerReceivingTerminalMsgs)
+                            deviceHandler_1.sendCMDStringFromTerminal(txtInput.text);
+                        else
+                            deviceHandler_0.sendCMDStringFromTerminal(txtInput.text);
                         lastCMD = txtInput.text;
                         txtInput.clear();
                     }
@@ -226,6 +215,7 @@ AppPage
                     height: parent.height
                     radius: terminalInputBlock.radius
                     text: "Send"
+                    font.pixelSize: AppConstants.tinyFontSize
                     onClicked:
                     {
                         txtInput.sendCMD();

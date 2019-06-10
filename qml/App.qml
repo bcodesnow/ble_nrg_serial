@@ -49,101 +49,67 @@
 ****************************************************************************/
 
 import QtQuick 2.5
+import QtQuick.Controls 2.2
 
-Item {
-    id: app
-    anchors.fill: parent
-    opacity: 0.0
 
-    Behavior on opacity { NumberAnimation { duration: 500 } }
+//Item {
+//    id: app
+//    anchors.fill: parent
+//    opacity: 0.0
 
-    property var lastPages: []
-    property int __currentIndex: 0
+//    Behavior on opacity { NumberAnimation { duration: 500 } }
 
-    function init()
-    {
-        opacity = 1.0
-        showPage("Connect.qml")
-    }
+//    property var lastPages: []
+//    property int __currentIndex: 0
 
-    function prevPage()
-    {
-        lastPages.pop()
-        pageLoader.setSource(lastPages[lastPages.length-1])
-        __currentIndex = lastPages.length-1;
-    }
+//    function init()
+//    {
+//        opacity = 1.0
+//        showPage("Connect.qml")
+//    }
 
-    function showPage(name)
-    {
-        lastPages.push(name)
-        pageLoader.setSource(name)
-       // __currentIndex = lastPages.length-1;
-    }
+//    function prevPage()
+//    {
+//        lastPages.pop()
+//        pageLoader.setSource(lastPages[lastPages.length-1])
+//        __currentIndex = lastPages.length-1;
+//    }
 
-    TitleBar {
-        id: titleBar
-        currentIndex: __currentIndex
+//    function showPage(name)
+//    {
+//        lastPages.push(name)
+//        pageLoader.setSource(name)
+//       // __currentIndex = lastPages.length-1;
+//    }
 
-        onTitleClicked:
-        {
-//            if (index < __currentIndex)
-//                pageLoader.item.close()
-            __currentIndex = index
-            switch( index)
-            {
-            case 0:
-                showPage("Connect.qml")
-                break;
-            case 1:
-                showPage("Catch.qml")
-                break;
-            case 2:
-                showPage("Terminal.qml")
-                break;
-            default:
-                break;
-            }
+//    Loader {
+//        id: pageLoader
+//        anchors.left: parent.left
+//        anchors.right: parent.right
+//        anchors.top: titleBar.bottom
+//        anchors.bottom: parent.bottom
 
-        }
-    }
+//        onStatusChanged: {
+//            if (status === Loader.Ready)
+//            {
+//                pageLoader.item.init();
+//                pageLoader.item.forceActiveFocus()
+//            }
+//        }
+//    }
 
-    Loader {
-        id: pageLoader
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: titleBar.bottom
-        anchors.bottom: parent.bottom
 
-        onStatusChanged: {
-            if (status === Loader.Ready)
-            {
-                pageLoader.item.init();
-                pageLoader.item.forceActiveFocus()
-            }
-        }
-    }
 
-    Keys.onReleased: {
-        switch (event.key) {
-        case Qt.Key_Escape:
-        case Qt.Key_Back:
-            if (__currentIndex > 0)
-            {
-                pageLoader.item.close()
-                event.accepted = true
-            }
-            else
-            {
-                Qt.quit()
-            }
-            break;     
-        default: break;
-        }
-    }
+//    PageIndicator {
+//        id: indicator
 
-    BluetoothAlarmDialog {
-        id: btAlarmDialog
-        anchors.fill: parent
-        visible: !connectionHandler.alive
-    }
-}
+//        count: view.count
+//        currentIndex: view.currentIndex
+
+//        anchors.bottom: view.bottom
+//        anchors.horizontalCenter: parent.horizontalCenter
+//    }
+
+
+
+//}

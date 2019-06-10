@@ -14,10 +14,10 @@ Rectangle
     property bool indicatorActive: false
     property color indicatorColor: "red"
     property bool indicatorLeft: false
-
     property bool sdEnabled: false
 
     signal buttonClicked();
+
     function gdButtStartSlowBlinking()
     {
         gatherDataButton.startSlowBlinking();
@@ -30,10 +30,6 @@ Rectangle
     {
         gatherDataButton.stopBlinking();
     }
-
-
-    //anchors.top: parent.top
-    //anchors.right: parent.right
 
     Text {
         id: title
@@ -65,15 +61,15 @@ Rectangle
             {
                 indicator.anchors.leftMargin = title.width / 16;
                 indicator.anchors.left = title.left;
-                sdPic.anchors.left = title.right;
-                sdPic.anchors.leftMargin =  title.width / 16;
+                sdPic.anchors.right = title.right;
+                sdPic.anchors.rightMargin =  title.width / 16;
             }
             else
             {
                 indicator.anchors.rightMargin = title.width / 16;
                 indicator.anchors.right = title.right;
-                sdPic.anchors.right = title.left;
-                sdPic.anchors.rightMargin =  title.width / 16;
+                sdPic.anchors.left = title.left;
+                sdPic.anchors.leftMargin =  title.width / 16;
             }
         }
 
