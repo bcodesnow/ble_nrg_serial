@@ -35,13 +35,13 @@ int main(int argc, char *argv[])
 
     DeviceHandler device_handler[2];
     device_handler[0].setRefToFileHandler(&log_file_handler);
-    device_handler[0].setIdentifier("LEFT");
+    device_handler[0].setIdentifier("LEFT", 0);
     device_handler[0].setRefToTimeStampler(&ts);
 
     DeviceFinder device_finder(&device_handler[0]);
     device_handler[1].setRefToFileHandler(&log_file_handler);
-    device_handler[1].setIdentifier("RIGHT");
-    device_handler[0].setRefToTimeStampler(&ts);
+    device_handler[1].setIdentifier("RIGHT", 1);
+    device_handler[1].setRefToTimeStampler(&ts);
 
     ts.setRefToDevHandlerArr(device_handler);
 

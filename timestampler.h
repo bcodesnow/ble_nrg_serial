@@ -2,6 +2,7 @@
 #define TIMESTAMPLER_H
 
 #include "devicehandler.h"
+#include "ble_uart.h"
 
 #include <QTimer>
 #include <QElapsedTimer>
@@ -11,26 +12,28 @@
 
 /* This class provides
  *          -> uSec TimeStamping
- *          -> TimeSync routine for ble devicehandlers
- *          -> Message Propagation Delay Measurement
+ *          -> TimeSync routine for BLE DeviceHandlers
+ *          -> Message Propagation Delay Measurement (both ways)
  */
 
-#define T_SYNC_MSG_CNT 50
+#define T_SYNC_MSG_CNT 33
 
 class DeviceHandler;
 
 class TimeStampler : public QObject
 {
     Q_OBJECT
+
 private:
-    qint64 m_lastTimeStamp;
-    qint64 m_mode; // TIMESTAMP + MESSAGE TIMER
-    DeviceHandler* m_device_handler_arr;
+    DeviceHandler* m_deviceHandler;
     QElapsedTimer m_etimer;
     QTimer m_send_timer;
     quint16 m_send_timer_repeat_count;
-    QVector<quint32> m_one_way_msg_latency;
-    QVector<quint32> m_two_way_msg_latency;
+
+    QVector<quint32> travelling_times; //"the total delay minus remote processing time" in decimillisec;
+    quint32 m_last_msg_ts;
+    quint8 m_dev_idx_in_sync;
+    void send_time_sync_msg();
 
 signals:
     void time_sync_completed();
@@ -38,57 +41,20 @@ signals:
 public:
     TimeStampler(QObject *parent = 0);
 
-    void setRefToDevHandlerArr(DeviceHandler* dev_handler_arr_ptr)
-    {
-        m_device_handler_arr = dev_handler_arr_ptr;
-    }
+    void setRefToDevHandlerArr(DeviceHandler* dev_handler_arr);
 
-    void start_time_stamp()
-    {
-        m_etimer.start();
-    }
+    void start_time_stamp();
+    uint32_t get_timestamp_decims();
+    uint32_t get_timestamp_ms();
+    uint32_t get_timestamp_us();
 
-    uint32_t get_timestamp_us()
-    {
-        return m_etimer.nsecsElapsed() / 1000;
-    }
-
-    uint32_t get_timestamp_ms()
-    {
-        return m_etimer.elapsed();
-    }
-
-    void send_time_sync_msg()
-    {
-
-    }
-
-    void start_time_sync()
-    {
-        m_send_timer.setInterval(20);
-        m_send_timer.start();
-    }
-
-    void send_timer_expired()
-    {
-        m_send_timer_repeat_count++;
-        if (m_send_timer_repeat_count == T_SYNC_MSG_CNT)
-        {
-            m_send_timer_repeat_count = 0;
-
-        }
-    }
-
-    void startResponseDelayTimer(quint16 delayInMs, quint8 idOfDeviceHandlerRequesting)
-    {
-
-    }
-    // elapsed returns ms
+    uint32_t get_diff_in_decims_to_current_ts ( uint32_t someTimeStamp );
+    void start_time_sync(quint8 devIdxToSync);
 
 public slots:
-    void time_sync_msg_arrived(QByteArray* msg);
-
-
+    void time_sync_msg_arrived(QByteArray msg);
+    void time_sync_msg_sent(QByteArray msg);
+    void send_timer_expired();
 
 };
 

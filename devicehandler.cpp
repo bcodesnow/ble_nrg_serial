@@ -141,12 +141,6 @@ void DeviceHandler::requestBLESensorData()
             m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
-//void DeviceHandler::sendCatchSuccessFromQML(bool wasItCatched)
-//{
-//    m_refToFileHandler->add_to_log_fil(m_ident_str,"SUCCESS", wasItCatched ? "CATCH" : "DROP");
-//    m_refToFileHandler->fin_log_fil();
-//}
-
 void DeviceHandler::setAddressType(AddressType type)
 {
     switch (type) {
@@ -182,7 +176,7 @@ void DeviceHandler::setRefToTimeStampler(TimeStampler *t_time_stampler)
     m_refToTimeStampler = t_time_stampler;
 }
 
-void DeviceHandler::setIdentifier(QString str)
+void DeviceHandler::setIdentifier(QString str, quint8 idx)
 {
     m_ident_str = str;
 }
@@ -261,8 +255,6 @@ void DeviceHandler::serviceScanDone()
         setError("BLE UART NOT FOUND");
         qCritical()<<"BLE UART NOT FOUND";
     }
-
-    //! [Filter HeartRate service 2]
 }
 
 // Service functions
@@ -425,6 +417,10 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             // need the write pointer
             //
             break;
+        case TIME_SYNC_FROM_CLIENT:
+            m_refToTimeStampler->time_sync_msg_arrived(value);
+            break;
+
             //)
         default:
             qWarning()<<"Unknown MSG: "<<value;
@@ -501,7 +497,12 @@ void DeviceHandler::onCharacteristicRead(const QLowEnergyCharacteristic &c, cons
 void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
     Q_UNUSED(c)
-    qDebug() << "SIGNAL: Characteristic Written!" << value;
+    qInfo() << "Characteristic Written! - Payload: " << value;
+    if (value.at(0) == TIME_SYNC_FROM_SERVER)
+    {
+        if (m_refToTimeStampler != 0)
+            m_refToTimeStampler->time_sync_msg_sent(value);
+    }
 }
 
 

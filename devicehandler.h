@@ -144,6 +144,8 @@ private:
 public:
     DeviceHandler(QObject *parent = 0);
 
+    quint8 m_ident_idx;
+
     Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str);
     Q_INVOKABLE void requestBLESensorData(void);
 
@@ -161,7 +163,7 @@ public:
     void setRefToFileHandler (LogFileHandler* t_fil_helper);
     void setRefToTimeStampler (TimeStampler* t_time_stampler);
 
-    void setIdentifier(QString str);
+    void setIdentifier(QString str, quint8 idx);
 
     bool alive() const;
     void ble_uart_tx(const QByteArray &value);
