@@ -93,7 +93,6 @@ AppPage
         }
     }
 
-
     Connections {
         target: terminalToQml
         onMessageArrived:

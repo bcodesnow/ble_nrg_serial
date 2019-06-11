@@ -58,8 +58,5 @@ int main(int argc, char *argv[])
 
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
 
-    qInfo()<<"Starting Search";
-    device_finder.startSearch();
-
     return app.exec();
 }

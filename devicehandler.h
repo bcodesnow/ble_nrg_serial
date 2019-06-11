@@ -101,6 +101,8 @@ private:
     const QString BLE_UART_SERVICE = "{d973f2e0-b19e-11e2-9e96-0800200c9a66}";
 
     QString m_ident_str;
+    quint8 m_ident_idx;
+
     QByteArray m_huge_chunk;
     bool m_sdEnabled;
     QString m_deviceAddress;
@@ -143,8 +145,6 @@ private:
 
 public:
     DeviceHandler(QObject *parent = 0);
-
-    quint8 m_ident_idx;
 
     Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str);
     Q_INVOKABLE void requestBLESensorData(void);

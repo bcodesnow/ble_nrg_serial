@@ -31,21 +31,20 @@
 #define SWITCH_RECEIVE_MODE             0x99
 #define TURN_ON_SD_LOGGING              0x66
 
-#define TIME_SYNC_START                 0xA1
-#define TIME_SYNC_FINISHED              0xA2
+#define TS_MSG                          0xAA
+/* TS_MSG                               -> byte[1] CMD
+ * TIME SYNC MSG FROM SERVER OR CLIENT  -> byte[2] timeStampOnServer / knownProcessingTime
+                                        -> byte[3] timeStampOnServer / knownProcessingTime
+                                        -> byte[4] timeStampOnServer / knownProcessingTime
+                                        -> byte[5] timeStampOnServer / knownProcessingTime
+*/
 
-#define TIME_SYNC_FROM_SERVER           0xAA
-/* TIME_SYNC_FROM_SERVER                    -> byte[1] timeStampOnServer byte[0]
-                                            -> byte[2] timeStampOnServer byte[1]
-                                            -> byte[3] timeStampOnServer byte[2]
-                                            -> byte[4] timeStampOnServer byte[3]
-*/
-#define TIME_SYNC_FROM_CLIENT           0xBB
-/* TIME_SYNC_FROM_CLIENT                    -> byte[1] timeStampOnClientWhenSrvMsgReceived byte[0]
-                                            -> byte[2] timeStampOnClientWhenSrvMsgReceived byte[1]
-                                            -> byte[3] timeStampOnClientWhenSrvMsgReceived byte[2]
-                                            -> byte[4] timeStampOnClientWhenSrvMsgReceived byte[3]
-*/
+#define TS_CMD_TIMESTAMP_IN_PAYLOAD             1u
+#define TS_CMD_LAST_ONE_WAS_GOOD_ONE            2u
+#define TS_CMD_ACK                              3u
+#define TS_CMD_KNOWN_PROCESSING_TIME_IN_PAYLOAD 4u
+#define TS_CMD_SYNC_START                       5u
+#define TS_CMD_SYNC_FINISH                      6u
 
 
 /* REQUEST_SENSOR_DATA  -> byte[1] 0xFF */

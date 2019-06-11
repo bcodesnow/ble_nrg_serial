@@ -121,6 +121,11 @@ void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
         tba[1] = 0;
         qInfo()<<"Sending Catch Confrim";
     }
+    else if (str == "ts()" )
+    {
+        m_refToTimeStampler->start_time_sync(m_ident_idx);
+        qInfo()<<"TimeSync in Test..";
+    }
     else
     {
         qCritical()<<"Unknown Command!";
@@ -179,6 +184,7 @@ void DeviceHandler::setRefToTimeStampler(TimeStampler *t_time_stampler)
 void DeviceHandler::setIdentifier(QString str, quint8 idx)
 {
     m_ident_str = str;
+    m_ident_idx = idx;
 }
 
 
@@ -417,7 +423,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             // need the write pointer
             //
             break;
-        case TIME_SYNC_FROM_CLIENT:
+        case TS_MSG:
             m_refToTimeStampler->time_sync_msg_arrived(value);
             break;
 
@@ -498,7 +504,7 @@ void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, c
 {
     Q_UNUSED(c)
     qInfo() << "Characteristic Written! - Payload: " << value;
-    if (value.at(0) == TIME_SYNC_FROM_SERVER)
+    if (value.at(0) == TS_MSG)
     {
         if (m_refToTimeStampler != 0)
             m_refToTimeStampler->time_sync_msg_sent(value);
