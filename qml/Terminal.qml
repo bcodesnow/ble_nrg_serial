@@ -103,10 +103,10 @@ AppPage
 
     ListModel {
         id: terminalModel
-        Component.onCompleted:
-        {
-            terminalToQml.isActive = true;
-        }
+//        Component.onCompleted:
+//        {
+//            terminalToQml.isActive = true;
+//        }
     }
 
     Rectangle

@@ -322,6 +322,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     static uint8_t state = CMD_STATE;
     static uint16_t incoming_byte_count;
     static uint8_t incoming_type;
+    static uint32_t rec_ts;
 
     if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
         return;
@@ -336,14 +337,25 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         case TRIGGERED:
             //inform the other device
             if (m_refToOtherDevice != NULL)
-            {
-                QByteArray tba;
-                tba.resize(2);
-                tba[0] = TRIGGERED;
-                tba[1] = 0xFF; //just a second char, not needed
-                m_refToOtherDevice->ble_uart_tx(tba);
-            }
-            m_refToFileHandler->add_to_log_fil(m_ident_str,"Triggered", QString::number(m_refToTimeStampler->get_timestamp_us()));
+                m_refToOtherDevice->ble_uart_tx(value); // 1-1 forward it!
+            //
+            if (m_sdEnabled)
+                m_refToFileHandler->add_to_log_fil(m_ident_str,"File ID on Device", QString::number(data[1]));
+            //
+            rec_ts = ( ( uint32_t ) ( rec_ts | data[2] ) ) << 8;
+            rec_ts = ( ( uint32_t ) ( rec_ts | data[3] ) ) << 8;
+            rec_ts = ( ( uint32_t ) ( rec_ts | data[4] ) ) << 8;
+            rec_ts =   ( uint32_t ) ( rec_ts | data[5] );
+            m_refToFileHandler->add_to_log_fil(m_ident_str,"TS in Trigger MSG", QString::number(rec_ts));
+            //
+            if (data[6] == 1u)
+                m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "MAG");
+            else if (data[6] == 2u)
+                m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "ACC");
+            else
+                m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "Things got messed up..");
+            //
+            m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger MSG Received", QString::number(m_refToTimeStampler->get_timestamp_us()));
             break;
 
         case DATA_COLLECTED:
@@ -504,7 +516,8 @@ void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, c
 {
     Q_UNUSED(c)
     qInfo() << "Characteristic Written! - Payload: " << value;
-    if (value.at(0) == TS_MSG)
+    const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
+    if ( data[0] == TS_MSG)
     {
         if (m_refToTimeStampler != 0)
             m_refToTimeStampler->time_sync_msg_sent(value);
@@ -518,7 +531,7 @@ void DeviceHandler::update_currentService()
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceHandler::ble_uart_rx);
     connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceHandler::confirmedDescriptorWrite);
     connect(m_service, QOverload<QLowEnergyService::ServiceError>::of(&QLowEnergyService::error),
-            [=](QLowEnergyService::ServiceError newError){ qCritical()<<"ERR - QlowEnergyServiceError!"; });
+            [=](QLowEnergyService::ServiceError newError){ qCritical()<<"ERR - QlowEnergyServiceError!"; Q_UNUSED(newError);});
     connect(m_service, SIGNAL(characteristicRead(QLowEnergyCharacteristic,QByteArray)), this, SLOT(onCharacteristicRead(QLowEnergyCharacteristic,QByteArray)));
     connect(m_service, SIGNAL(characteristicWritten(QLowEnergyCharacteristic,QByteArray)),this, SLOT(onCharacteristicWritten(QLowEnergyCharacteristic,QByteArray)));
 

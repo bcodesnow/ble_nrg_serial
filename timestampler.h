@@ -12,20 +12,19 @@
 
 /* This class provides
  *          -> uSec TimeStamping
- *          -> TimeSync -vPushalike NTP ove BLE UART
+ *          -> TimeSync -Pushalike NTP ove BLE UART
  *          -> Travelling Time Measurement
  */
-#define TS_MEASURE_MSG_CNT          35
-#define TS_COMPENSATED_MSG_CNT      50
-#define TS_SENDING_PERIOD_MS        30
+#define TS_MEASURE_MSG_CNT          15
+#define TS_COMPENSATED_MSG_CNT      30
 #define TS_TIMEOUT_DELAY_MS         25
+#define TS_TRSH_FACTOR              (float)2.0
 
 #define START_WAITS_FOR_ACK         (1<<0)
 #define MEASURING_TRAVELING_TIME    (1<<1)
 #define STOPPED                     (1<<2)
-#define CALCULATING_COMPENSATION    (1<<3)
-#define SENDING_COMPENSATED         (1<<4)
-#define STOP_WAITS_FOR_ACK          (1<<5)
+#define SENDING_COMPENSATED         (1<<3)
+#define STOP_WAITS_FOR_ACK          (1<<4)
 
 class DeviceHandler;
 
@@ -36,9 +35,8 @@ class TimeStampler : public QObject
 private:
     DeviceHandler* m_deviceHandler;
     QElapsedTimer m_etimer;
-    QTimer m_send_timer;
     QTimer m_timeout_timer;
-    quint16 m_send_timer_repeat_count = 0;
+    quint16 m_send_repeat_count = 0;
     quint32 m_sync_state = 0;
 
 
@@ -48,6 +46,7 @@ private:
     quint32 m_travelling_time_acceptance_trsh;
     void send_time_sync_msg();
     void send_compensated_time_sync_msg();
+    void calculate_compensation();
 
 signals:
     void time_sync_completed();
@@ -66,9 +65,8 @@ public:
     void start_time_sync(quint8 devIdxToSync);
 
 public slots:
-    void time_sync_msg_arrived(QByteArray msg);
-    void time_sync_msg_sent(QByteArray msg);
-    void send_timer_expired();
+    void time_sync_msg_sent(const QByteArray &msg);
+    void time_sync_msg_arrived(const QByteArray &msg);
     void timeout_timer_expired();
 };
 
