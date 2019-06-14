@@ -17,7 +17,7 @@
  */
 #define TS_MEASURE_MSG_CNT          15
 #define TS_COMPENSATED_MSG_CNT      30
-#define TS_TIMEOUT_DELAY_MS         25
+#define TS_TIMEOUT_DELAY_MS         50
 #define TS_TRSH_FACTOR              (float)2.0
 
 #define START_WAITS_FOR_ACK         (1<<0)

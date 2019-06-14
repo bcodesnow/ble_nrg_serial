@@ -342,10 +342,15 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             if (m_sdEnabled)
                 m_refToFileHandler->add_to_log_fil(m_ident_str,"File ID on Device", QString::number(data[1]));
             //
-            rec_ts = ( ( uint32_t ) ( rec_ts | data[2] ) ) << 8;
-            rec_ts = ( ( uint32_t ) ( rec_ts | data[3] ) ) << 8;
-            rec_ts = ( ( uint32_t ) ( rec_ts | data[4] ) ) << 8;
-            rec_ts =   ( uint32_t ) ( rec_ts | data[5] );
+//            rec_ts = ( ( uint32_t ) ( rec_ts | data[2] ) ) << 8;
+//            rec_ts = ( ( uint32_t ) ( rec_ts | data[3] ) ) << 8;
+//            rec_ts = ( ( uint32_t ) ( rec_ts | data[4] ) ) << 8;
+//            rec_ts =   ( uint32_t ) ( rec_ts | data[5] );
+            rec_ts = (uint32_t) ( rec_ts | data[2] ) << 24;
+            rec_ts |= (uint32_t) ( rec_ts | data[2] ) << 16;
+            rec_ts |= (uint32_t) ( rec_ts | data[2] ) << 8;
+            rec_ts |= (uint32_t) ( rec_ts | data[2] );
+
             m_refToFileHandler->add_to_log_fil(m_ident_str,"TS in Trigger MSG", QString::number(rec_ts));
             //
             if (data[6] == 1u)
