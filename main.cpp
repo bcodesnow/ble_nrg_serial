@@ -80,6 +80,17 @@ int main(int argc, char *argv[])
 //qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
 //qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
 
+//    QElapsedTimer testtim;
+//    testtim.start();
+//    uint32_t someval;
+//    quint32 someval_q;
+//    for (int i=0; i < 123; i++)
+//    {
+//        someval = testtim.nsecsElapsed() / 1000;
+//        someval_q = testtim.nsecsElapsed() / 1000;
+//        qDebug()<<"val"<<someval<<"qval"<<someval_q;
+//    }
+
 
     QQuickStyle::setStyle("Material");
 

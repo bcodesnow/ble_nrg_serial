@@ -22,7 +22,7 @@ void TimeStampler::time_sync_msg_sent(const QByteArray &msg)
 
 uint32_t TimeStampler::get_diff_in_us_to_current_ts(uint32_t some_ts)
 {
-    return ( ( ( (uint32_t) m_etimer.nsecsElapsed() ) / 1000 ) - some_ts );
+    return ( m_etimer.nsecsElapsed() / 1000 ) - some_ts;
 }
 
 void TimeStampler::setRefToDevHandlerArr(DeviceHandler *dev_handler_arr)
@@ -36,12 +36,12 @@ void TimeStampler::start_time_stamp()
 }
 uint32_t TimeStampler::get_timestamp_ms()
 {
-    return uint32_t (m_etimer.elapsed());
+    return m_etimer.elapsed();
 }
 
 uint32_t TimeStampler::get_timestamp_us()
 {
-    return ( ( (uint32_t) m_etimer.nsecsElapsed() ) / 1000 );
+    return ( m_etimer.nsecsElapsed() / 1000 );
 }
 
 void TimeStampler::send_time_sync_msg()
@@ -58,7 +58,7 @@ void TimeStampler::send_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
-    qDebug()<<"Timestamp:"<<tstamp;
+    qDebug()<<"TS: send_time_sync_msg() -> "<<tstamp;
 
     m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
     m_timeout_timer.start();
@@ -78,6 +78,10 @@ void TimeStampler::send_compensated_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
+    qDebug()<<"TS: send_compensated_time_sync_msg() -> "<<tstamp;
+    qDebug()<<"TS: Amount of Compensation -> "<<( m_travelling_time_acceptance_trsh / 2 );
+
+
 
 
     m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
