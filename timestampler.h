@@ -16,9 +16,9 @@
  *          -> Travelling Time Measurement
  */
 #define TS_MEASURE_MSG_CNT          10
-#define TS_COMPENSATED_MSG_CNT      30
-#define TS_TIMEOUT_DELAY_MS         100
-#define TS_TRSH_FACTOR              (float)2.0
+#define TS_COMPENSATED_MSG_CNT      40
+#define TS_TIMEOUT_DELAY_MS         200
+#define TS_TRSH_FACTOR              (float)2.5
 
 #define START_WAITS_FOR_ACK         (1<<0)
 #define MEASURING_TRAVELING_TIME    (1<<1)
