@@ -346,16 +346,17 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 //            rec_ts = ( ( uint32_t ) ( rec_ts | data[3] ) ) << 8;
 //            rec_ts = ( ( uint32_t ) ( rec_ts | data[4] ) ) << 8;
 //            rec_ts =   ( uint32_t ) ( rec_ts | data[5] );
-            rec_ts = (uint32_t) ( rec_ts | data[2] ) << 24;
-            rec_ts |= (uint32_t) ( rec_ts | data[2] ) << 16;
-            rec_ts |= (uint32_t) ( rec_ts | data[2] ) << 8;
-            rec_ts |= (uint32_t) ( rec_ts | data[2] );
+            rec_ts = 0;
+            rec_ts = ( (uint32_t) data[2] ) << 24;
+            rec_ts |=( (uint32_t) data[3] )<< 16;
+            rec_ts |=( (uint32_t) data[4] )<< 8;
+            rec_ts |= ( (uint32_t) data[5] );
 
             m_refToFileHandler->add_to_log_fil(m_ident_str,"TS in Trigger MSG", QString::number(rec_ts));
             //
-            if (data[6] == 1u)
+            if (data[6] == 1<<1)
                 m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "MAG");
-            else if (data[6] == 2u)
+            else if (data[6] == 1<<2)
                 m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "ACC");
             else
                 m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "Things got messed up..");

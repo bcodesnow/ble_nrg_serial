@@ -36,7 +36,7 @@ void TimeStampler::start_time_stamp()
 }
 uint32_t TimeStampler::get_timestamp_ms()
 {
-    return m_etimer.elapsed();
+    return uint32_t (m_etimer.elapsed());
 }
 
 uint32_t TimeStampler::get_timestamp_us()
@@ -58,6 +58,7 @@ void TimeStampler::send_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
+    qDebug()<<"Timestamp:"<<tstamp;
 
     m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
     m_timeout_timer.start();
@@ -183,7 +184,7 @@ void TimeStampler::time_sync_msg_arrived(const QByteArray &msg)
         else
         {
             // we did it!
-            qInfo()<<"TS: Sync completed!";
+            qInfo()<<"TS: Sync completed! Current TS: " << get_timestamp_us();
             emit time_sync_completed();
         }
         break;

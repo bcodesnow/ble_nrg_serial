@@ -54,6 +54,33 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceHandler_1", &device_handler[1]);
     engine.rootContext()->setContextProperty("fileHandler", &log_file_handler);
 
+//    QByteArray tba;
+//    uint32_t tstamp = 1252151251;
+//    tba.resize(7);
+//    tba[0] = TS_MSG;
+//    tba[1] = TS_CMD_TIMESTAMP_IN_PAYLOAD;
+//    tba[2] = ( tstamp >> 24 ) & 0xFF ;
+//    tba[3] = ( tstamp >> 16 ) & 0xFF ;
+//    tba[4] = ( tstamp >>  8 ) & 0xFF ;
+//    tba[5] =   tstamp & 0xFF ;
+
+//    uint32_t rec_ts = 0;
+//    const quint8 *data = reinterpret_cast<const quint8 *>(tba.constData());
+//    rec_ts = ( (uint32_t) data[2] ) << 24;
+//    rec_ts |=( (uint32_t) data[3] )<< 16;
+//    rec_ts |=( (uint32_t) data[4] )<< 8;
+//    rec_ts |= ( (uint32_t) data[5] );
+//    qDebug()<<"DIISE"<<rec_ts;
+//qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
+//qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
+//qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
+//qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
+//qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
+//qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
+//qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
+//qDebug()<<"get_diff_in_us_to_current_ts"<<ts.get_diff_in_us_to_current_ts(5);
+
+
     QQuickStyle::setStyle("Material");
 
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
