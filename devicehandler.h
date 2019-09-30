@@ -80,6 +80,11 @@
 #define CDSM_SUBSTATE_SAVING_GYRO                               5u
 #define CDSM_SUBSTATE_SENDING_DATA_COLLECTED                    6u
 
+struct huge_chunk_indexed_byterray_t
+{
+    quint16 received;
+    QByteArray barr[20];
+};
 
 class DeviceInfo;
 class TimeStampler;
@@ -100,11 +105,25 @@ private:
     const QString BLE_UART_RX_CHAR = "{d773f2e2-b19e-11e2-9e96-0800200c9a66}";
     const QString BLE_UART_TX_CHAR = "{d873f2e1-b19e-11e2-9e96-0800200c9a66}";
     const QString BLE_UART_SERVICE = "{d973f2e0-b19e-11e2-9e96-0800200c9a66}";
+    const QStringList BLE_UART_TX_POOL = {
+        "{8173f2e2-b19e-11e2-9e96-0800200c9a66}",
+        "{8273f2e2-b19e-11e2-9e96-0800200c9a66}",
+        "{8373f2e2-b19e-11e2-9e96-0800200c9a66}",
+        "{8473f2e2-b19e-11e2-9e96-0800200c9a66}",
+        "{8573f2e2-b19e-11e2-9e96-0800200c9a66}",
+        "{8673f2e2-b19e-11e2-9e96-0800200c9a66}",
+        "{8773f2e2-b19e-11e2-9e96-0800200c9a66}",
+        "{8873f2e2-b19e-11e2-9e96-0800200c9a66}",
+    };
 
     QString m_ident_str;
     quint8 m_ident_idx;
 
     QByteArray m_huge_chunk;
+    QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
+    QList<quint16> m_hc_missed;
+
+    bool m_multi_chunk_mode; // huge chunk on multiple characteristics
     bool m_sdEnabled;
     QBluetoothAddress m_adapterAddress;
     QString m_deviceAddress;
@@ -129,6 +148,10 @@ private:
     QLowEnergyCharacteristic m_writeCharacteristic;
     QLowEnergyService::WriteMode m_writeMode;
     QLowEnergyCharacteristic m_readCharacteristic;
+    QLowEnergyCharacteristic m_rxCharacteriscitPool[8];
+    QLowEnergyDescriptor m_rxCharacteriscitPoolDescriptors[8];
+
+
 
     //QLowEnergyController
     void serviceDiscovered(const QBluetoothUuid &);

@@ -544,7 +544,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         {
             if (m_hc_missed.size())
             {
-
+                
             }
             else
             {

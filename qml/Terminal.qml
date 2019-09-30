@@ -1,5 +1,5 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
+import QtQuick 2.9
+import QtQuick.Controls 2.2
 import "."
 
 // Orientation 1 Portrait, Orientation 2 Landscape

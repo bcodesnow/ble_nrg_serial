@@ -48,7 +48,7 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.12
+import QtQuick 2.9
 
 Rectangle {
     anchors.horizontalCenter: parent.horizontalCenter

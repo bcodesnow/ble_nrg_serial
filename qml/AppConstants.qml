@@ -1,5 +1,5 @@
 pragma Singleton
-import QtQuick 2.12
+import QtQuick 2.9
 
 Item {
     property int wHeight
