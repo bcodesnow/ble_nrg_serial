@@ -94,10 +94,11 @@ class DeviceHandler : public BluetoothBaseClass
     Q_PROPERTY(QString deviceState MEMBER m_deviceState NOTIFY deviceStateChanged)
     Q_PROPERTY(bool sdEnabled MEMBER m_sdEnabled NOTIFY sdEnabledChanged)
     Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
+    Q_PROPERTY(bool writeValid READ getWriteValid NOTIFY writeValidChanged)
 
 private:
-    const QString BLE_UART_RX_CHAR = "{d973f2e2-b19e-11e2-9e96-0800200c9a66}";
-    const QString BLE_UART_TX_CHAR = "{d973f2e1-b19e-11e2-9e96-0800200c9a66}";
+    const QString BLE_UART_RX_CHAR = "{d773f2e2-b19e-11e2-9e96-0800200c9a66}";
+    const QString BLE_UART_TX_CHAR = "{d873f2e1-b19e-11e2-9e96-0800200c9a66}";
     const QString BLE_UART_SERVICE = "{d973f2e0-b19e-11e2-9e96-0800200c9a66}";
 
     QString m_ident_str;
@@ -105,6 +106,7 @@ private:
 
     QByteArray m_huge_chunk;
     bool m_sdEnabled;
+    QBluetoothAddress m_adapterAddress;
     QString m_deviceAddress;
     QString m_deviceState;
     qint16 m_fileIndexOnDevice;
@@ -112,7 +114,7 @@ private:
     quint8 m_deviceLastError;
 
     bool m_found_BLE_UART_Service;
-
+    //  use main identifier to select which to select
     QLowEnergyController *m_control;
     QLowEnergyService *m_service;
     QLowEnergyController::RemoteAddressType m_addressType = QLowEnergyController::PublicAddress;
@@ -155,6 +157,10 @@ public:
     };
     Q_ENUM(AddressType)
 
+    void setBtAdapter(QBluetoothAddress addr)
+    {
+        m_adapterAddress = addr;
+    }
     void setDevice(DeviceInfo *device);
     void setAddressType(AddressType type);
     AddressType addressType() const;
@@ -163,10 +169,15 @@ public:
     void setRefToFileHandler (LogFileHandler* t_fil_helper);
     void setRefToTimeStampler (TimeStampler* t_time_stampler);
 
-    void setIdentifier(QString str, quint8 idx);
+    void setIdentifier(QString str, quint8 idx, QBluetoothAddress addr);
 
     bool alive() const;
     void ble_uart_tx(const QByteArray &value);
+
+    bool getWriteValid(void)
+    {
+        return m_writeCharacteristic.isValid();
+    }
 
 signals:
     void aliveChanged();
@@ -177,6 +188,7 @@ signals:
     void sensorDataAvailable();
     void sensorDataReceived();
     void sdEnabledChanged();
+    void writeValidChanged();
 
 public slots:
     void disconnectService();

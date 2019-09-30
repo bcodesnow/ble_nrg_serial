@@ -34,6 +34,7 @@ void TimeStampler::start_time_stamp()
 {
     m_etimer.start();
 }
+
 uint32_t TimeStampler::get_timestamp_ms()
 {
     return m_etimer.elapsed();
@@ -95,7 +96,7 @@ void TimeStampler::calculate_compensation()
     quint32 max = *std::max_element(travelling_times.constBegin(), travelling_times.constEnd());
     quint32 avg = std::accumulate(travelling_times.constBegin(), travelling_times.constEnd(), 0) / travelling_times.size() ;
 
-    qInfo()<<"TS: Travelling Times Calulated: ";
+    qInfo()<<"TS: Travelling Times Calculated: ";
     qInfo()<<"TS: Minimum: "<<min;
     qInfo()<<"TS: Maximum: "<<max;
     qInfo()<<"TS: Avarage: "<<avg;

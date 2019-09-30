@@ -51,8 +51,13 @@
 #ifndef CONNECTIONHANDLER_H
 #define CONNECTIONHANDLER_H
 
+#include "adapterinfo.h"
+#include "networkmanager.h"
+
 #include <QObject>
 #include <QBluetoothLocalDevice>
+#include <QBluetoothHostInfo>
+#include <QDebug>
 
 class ConnectionHandler : public QObject
 {
@@ -60,6 +65,7 @@ class ConnectionHandler : public QObject
     Q_PROPERTY(QString name READ name NOTIFY deviceChanged)
     Q_PROPERTY(QString address READ address NOTIFY deviceChanged)
     Q_PROPERTY(bool requiresAddressType READ requiresAddressType CONSTANT)
+    Q_PROPERTY(QVariant adapters READ adapters NOTIFY adaptersChanged)
 
     Q_OBJECT
 public:
@@ -70,14 +76,22 @@ public:
     QString name() const;
     QString address() const;
 
+    QVariant adapters();
+    QList<QBluetoothAddress> getAdaptersAddr();
+    void addAdapter(QString name, QBluetoothAddress addr);
+    void scanAdapters();
+    void initBtAdapters(QBluetoothAddress &leftaddr, QBluetoothAddress &rightaddr);
+
 signals:
     void deviceChanged();
+    void adaptersChanged();
 
 private slots:
     void hostModeChanged(QBluetoothLocalDevice::HostMode mode);
 
 private:
     QBluetoothLocalDevice m_localDevice;
+    QList<QObject*> m_adapters;
 };
 
 #endif // CONNECTIONHANDLER_H

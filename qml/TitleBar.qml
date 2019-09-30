@@ -48,7 +48,7 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.5
+import QtQuick 2.12
 
 Rectangle    {
     id: titleBar
@@ -58,7 +58,7 @@ Rectangle    {
     height: AppConstants.fieldHeight
     color: AppConstants.viewColor
 
-    property var __titles: ["CONNECT", "CATCH", "TERMINAL"]
+    property var __titles: ["CONNECT", "CATCH", "DATA", "TERMINAL"]
     property int currentIndex: 0
 
     signal titleClicked(int index)

@@ -137,13 +137,17 @@ void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
 
 void DeviceHandler::requestBLESensorData()
 {
-        QByteArray tba;
-        tba.resize(2);
-        tba[0] = REQUEST_SENSORDATA;
-        tba[1] = 0xFF;
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = REQUEST_SENSORDATA;
+    tba[1] = 0xFF;
 
-        if (tba.size())
-            m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+
+
+
+    if (tba.size() && m_writeCharacteristic.isValid())
+        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+
 }
 
 void DeviceHandler::setAddressType(AddressType type)
@@ -181,10 +185,11 @@ void DeviceHandler::setRefToTimeStampler(TimeStampler *t_time_stampler)
     m_refToTimeStampler = t_time_stampler;
 }
 
-void DeviceHandler::setIdentifier(QString str, quint8 idx)
+void DeviceHandler::setIdentifier(QString str, quint8 idx, QBluetoothAddress addr)
 {
     m_ident_str = str;
     m_ident_idx = idx;
+    m_adapterAddress = addr;
 }
 
 
@@ -192,7 +197,7 @@ void DeviceHandler::setDevice(DeviceInfo *device)
 {
     clearMessages();
     m_currentDevice = device;
-    if (device != NULL)
+    if (device != nullptr)
     {
         m_deviceAddress = device->getAddress();
         emit deviceAddressChanged();
@@ -202,16 +207,24 @@ void DeviceHandler::setDevice(DeviceInfo *device)
     if (m_control) {
         m_control->disconnectFromDevice();
         delete m_control;
-        m_control = 0;
+        m_control = nullptr;
     }
 
     // Create new controller and connect it if device available
     if (m_currentDevice) {
-        // We are using fixed RandomADdressType)
+        // We are using fixed RandomAddressType)
         m_addressType = QLowEnergyController::RandomAddress;
 
         // Make connections
-        m_control = new QLowEnergyController(m_currentDevice->getDevice(), this);
+        if (m_adapterAddress.isNull()) {
+            // Create default connection
+            m_control = new QLowEnergyController(m_currentDevice->getDevice(), this);
+        }
+        else {
+            // Connect with specified bt adapter
+            m_control = new QLowEnergyController(m_currentDevice->getDevice().address(),m_adapterAddress);
+            qDebug()<<m_ident_str<<"connecting with adapter:"<<m_adapterAddress;
+        }
 
         m_control->setRemoteAddressType(QLowEnergyController::RandomAddress); //changed to Random Address
 
@@ -323,6 +336,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     static uint16_t incoming_byte_count;
     static uint8_t incoming_type;
     static uint32_t rec_ts;
+    uint16_t tmp_write_pointer; // moved definition
 
     if (c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
         return;
@@ -342,10 +356,10 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             if (m_sdEnabled)
                 m_refToFileHandler->add_to_log_fil(m_ident_str,"File ID on Device", QString::number(data[1]));
             //
-//            rec_ts = ( ( uint32_t ) ( rec_ts | data[2] ) ) << 8;
-//            rec_ts = ( ( uint32_t ) ( rec_ts | data[3] ) ) << 8;
-//            rec_ts = ( ( uint32_t ) ( rec_ts | data[4] ) ) << 8;
-//            rec_ts =   ( uint32_t ) ( rec_ts | data[5] );
+            //            rec_ts = ( ( uint32_t ) ( rec_ts | data[2] ) ) << 8;
+            //            rec_ts = ( ( uint32_t ) ( rec_ts | data[3] ) ) << 8;
+            //            rec_ts = ( ( uint32_t ) ( rec_ts | data[4] ) ) << 8;
+            //            rec_ts =   ( uint32_t ) ( rec_ts | data[5] );
             rec_ts = 0;
             rec_ts = ( (uint32_t) data[2] ) << 24;
             rec_ts |=( (uint32_t) data[3] )<< 16;
@@ -396,7 +410,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             incoming_byte_count |=  data[2];
             incoming_type = data[3];
 
-            uint16_t tmp_write_pointer;
+            // uint16_t tmp_write_pointer; // moved definition
             tmp_write_pointer =  data[4] << 8;
             tmp_write_pointer |=  data[5];
 
@@ -461,7 +475,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                  data[3] == 0x55 )
             {
                 state = CMD_STATE;
-                m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type);
+                m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type, tmp_write_pointer);
                 qDebug()<<"SWITCH TO CMD STATE";
             }
         }
@@ -530,7 +544,6 @@ void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, c
     }
 }
 
-
 void DeviceHandler::update_currentService()
 {
     connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceHandler::serviceStateChanged);
@@ -571,6 +584,7 @@ void DeviceHandler::searchCharacteristic()
                 {
                     qDebug()<<"Write Characteristic Registered";
                     m_writeCharacteristic = c;
+                    emit writeValidChanged();
                     if(c.properties() & QLowEnergyCharacteristic::WriteNoResponse)
                     {
                         m_writeMode = QLowEnergyService::WriteWithoutResponse;

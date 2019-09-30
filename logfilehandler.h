@@ -2,6 +2,12 @@
 #define LOGFILEHANDLER_H
 
 #include <QObject>
+#include <QDataStream>
+#include <QVariant>
+#include <QDebug>
+
+#include <graphpainter.h>
+#include <paintdata.h>
 
 class LogFileHandler : public QObject
 {
@@ -9,6 +15,7 @@ class LogFileHandler : public QObject
 
     Q_PROPERTY(quint64 idx MEMBER m_curr_idx NOTIFY idxChanged)
     Q_PROPERTY(QString lastPath MEMBER m_last_path NOTIFY lastPathChanged)
+    Q_PROPERTY(QVariant paintDataList READ getPaintDataList NOTIFY paintDataListChanged)
 
 private:
     quint64 m_curr_idx;
@@ -19,20 +26,49 @@ private:
     QString m_homeLocation;
     bool m_is_aut_incr_en;
 
+    QList<QObject*> m_paintDataList;
+
+
 signals:
     void lastPathChanged(void);
     void idxChanged(quint64 tidx);
     void confirmNeeded();
+    void paintDataListChanged();
+    void qmltestsignal(int idx);
+    void newPaintData(QObject *dataptr, QString dataname);
+    // void newPaintData(QObject *dataptr, int type, char side);
 
 public:
     explicit LogFileHandler(QObject *parent = nullptr);
-    void write_type_to_file(QString ident, QByteArray data, uint8_t type);
+
+    Q_INVOKABLE void demo(QString ident, int type);
+
+    void sortArray(QByteArray *arr, uint16_t wp);
+    QVector<QVariant> bytesToInt16(QByteArray arr);
+    QVector<QVariant> bytesToUint16(QByteArray arr);
+    QVector<QVariant> bytesToFloat32(QByteArray arr);
+
+    int typeToIndex(uint8_t type);
+
+    void saveToCsv(QString location, QVector<QVariant> data);
+
+    QByteArray loadFromFile(QString ident, uint8_t type);
+
+    void write_type_to_file(QString ident, QByteArray data, uint8_t type, uint16_t wp);
 
     void start_new_log_fil();
 
     void add_to_log_fil(QString ident, QString key, QString val);
 
     void fin_log_fil(QString ident);
+
+    QString getHomeLocation();
+
+
+    QVariant getPaintDataList()
+    {
+        return QVariant::fromValue(m_paintDataList);
+    }
 
     Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
     Q_INVOKABLE void confirm (QString ident, bool bcatch)
@@ -55,8 +91,8 @@ public:
     }
     Q_INVOKABLE void incr_idx()
     {
-       m_curr_idx++;
-       emit idxChanged(m_curr_idx);
+        m_curr_idx++;
+        emit idxChanged(m_curr_idx);
     }
     void set_last_type (uint8_t type)
     {

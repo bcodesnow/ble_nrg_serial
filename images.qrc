@@ -4,5 +4,9 @@
         <file>qml/images/splash.png</file>
         <file>qml/images/baseline_sd_storage_white_18dp.png</file>
         <file>qml/images/baseline_replay_white_18dp.png</file>
+        <file>qml/images/gdrive.png</file>
+        <file>qml/images/lock_toopen_w.png</file>
+        <file>qml/images/lock_opened_w.png</file>
+        <file>qml/images/lock_not_w.png</file>
     </qresource>
 </RCC>

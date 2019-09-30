@@ -15,5 +15,6 @@
         <file>qml/DeviceInfoContainer.qml</file>
         <file>qml/DualAppPage.qml</file>
         <file>qml/SwipePages.qml</file>
+        <file>qml/Graphs.qml</file>
     </qresource>
 </RCC>

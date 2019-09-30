@@ -1,4 +1,4 @@
-QT += quick qml bluetooth serialbus quickcontrols2
+QT += quick quickwidgets qml bluetooth serialbus quickcontrols2 network networkauth
 CONFIG += c++11
 QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
 # The following define makes your compiler emit warnings if you use
@@ -13,10 +13,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += main.cpp \
+    adapterinfo.cpp \
     devicefinder.cpp \
     bluetoothbaseclass.cpp \
     devicehandler.cpp \
     deviceinfo.cpp \
+    graphpainter.cpp \
+    networkmanager.cpp \
+    paintdata.cpp \
     terminaltoqmlb.cpp \
     connectionhandler.cpp \
     timestampler.cpp \
@@ -24,6 +28,7 @@ SOURCES += main.cpp \
     catchcontroller.cpp
 
 RESOURCES += qml.qrc \
+    common.qrc \
     images.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
@@ -38,10 +43,14 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    adapterinfo.h \
     devicefinder.h \
     bluetoothbaseclass.h \
     devicehandler.h \
     deviceinfo.h \
+    graphpainter.h \
+    networkmanager.h \
+    paintdata.h \
     terminaltoqmlb.h \
     connectionhandler.h \
     timestampler.h \

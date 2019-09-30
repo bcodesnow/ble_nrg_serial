@@ -1,0 +1,9 @@
+# client id
+
+914794792674-hkarun0t7ccuchh8om2n0a160rnsnbce.apps.googleusercontent.com
+
+
+# client key
+
+sfsazjqU6A2WQfpPnYNc3eqn
+

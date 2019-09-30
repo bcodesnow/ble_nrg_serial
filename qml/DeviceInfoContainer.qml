@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.12
 import QtQuick.Extras 1.4
 
 
@@ -15,6 +15,7 @@ Rectangle
     property color indicatorColor: "red"
     property bool indicatorLeft: false
     property bool sdEnabled: false
+    property bool buttonsEnabled
 
     signal buttonClicked();
 
@@ -140,7 +141,7 @@ Rectangle
         anchors.bottomMargin: AppConstants.fieldMargin
         width: fileIndex.width - AppConstants.fieldMargin / 2
         height: AppConstants.fieldHeight
-        enabled: true
+        enabled: rightLeftContainer.buttonsEnabled
         pressedColor: AppConstants.infoColor
         baseColor: AppConstants.backgroundColor
         color: AppConstants.backgroundColor

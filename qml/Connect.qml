@@ -48,7 +48,7 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.5
+import QtQuick 2.12
 import Shared 1.0
 
 AppPage {
@@ -119,12 +119,10 @@ AppPage {
                         if (modelData.deviceFlags & 0x01)
                         {
                             deviceFinder.removeDeviceFromSelection(index);
-                            console.log("Device deSelected");
                         }
                         else
                         {
                             deviceFinder.addDeviceToSelection(index);
-                            console.log("Device Selected");
                         }
                         //deviceFinder.connectToService(modelData.deviceAddress);
                     }

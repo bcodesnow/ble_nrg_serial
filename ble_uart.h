@@ -70,6 +70,14 @@
 #define TYPE_PRS 5u
 #define TYPE_LOG 0xAA
 
+#define TYPE_COUNT 5 // different sensor types
+
+#define FREQ_AUD 8000
+#define FREQ_ACC 1000
+#define FREQ_GYR 1000
+#define FREQ_MAG 100
+#define FREQ_PRS 100
+
 
 /* HUGE_CHUNK_FINISH	-> byte[1] maxRepeatCount */
 
