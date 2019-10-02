@@ -75,6 +75,7 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     m_fileIndexOnDevice(0),
     m_sdEnabled(0)
 {
+    /*
     huge_chunk_indexed_byterray_t tmp;
     uint8_t data[12] = {0xff, 0x55, 0xff, 0x55, 0xff, 0x55, 0xff, 0x55, 0xff, 0x55, 0xff, 0x55};
     tmp.barr->append(10, data[1]);
@@ -86,7 +87,7 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     qDebug()<<"Appended"<<"vecsize:" << m_hc_vec.size();
     qDebug()<<m_hc_vec.at(4).barr<<m_hc_vec.at(7).idx;
     qDebug()<<m_hc_vec.at(0).barr<<m_hc_vec.at(0).idx;
-
+    */
 }
 
 void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
@@ -420,6 +421,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 break;
 
             case HUGE_CHUNK_START:
+                qDebug()<<"HC -> Starts, arrived msg size: <<"<<value.size();
                 state = HUGE_CHUNK_STATE;
                 incoming_byte_count =  data[1] << 8;
                 incoming_byte_count |=  data[2];
@@ -428,15 +430,20 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 // uint16_t tmp_write_pointer; // moved definition
                 tmp_write_pointer =  data[4] << 8;
                 tmp_write_pointer |=  data[5];
+                qDebug()<<"data6 contains:<< data[6]";
 
-                if (data[6] > 1)
+                // TODO HERE IS A BUG
+                //if (data[6] > 1)
+                if (true)
                 {
+                    qDebug()<<"HC -> Multi Chunk Transfer Starts! "<< incoming_byte_count << " Bytes to Receive!";
                     m_multi_chunk_mode = true;
                     quint8 val = 0;
                     if ( incoming_byte_count % 19 )
                         val = 1;
                     incoming_package_count = (incoming_byte_count/19) + val;
                     m_hc_vec = QVector<huge_chunk_indexed_byterray_t> ( incoming_package_count );
+                    qDebug()<<"HC -> Calculated Pkg Count"<< incoming_package_count;
 
                     hc_highest_index = 0;
                     first_multi_chunk = true;
@@ -504,6 +511,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 break; //technically not needed
             }
         }
+
         else if (state == HUGE_CHUNK_STATE )
         {
             if ( value.length() == SW_REC_MODE_LENGTH )
@@ -555,9 +563,11 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     }
     else
     {
+        // TODO and here is an other bug -> after 255 there is a second 255 idx...s
         // RX POOL is Active
         if ( ( state == HUGE_CHUNK_STATE ) && m_multi_chunk_mode )
         {
+            qDebug()<<"HC -> Receiving Packet.. current highest index: " <<hc_highest_index;
             uint16_t tidx = data[0];
             if (first_multi_chunk && !tidx )
             {
@@ -571,15 +581,18 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             else
             {
                 do {
-                    tidx += 0xFF;
+                    tidx += ( 0xFF + 1 );
                 } while (tidx < ( hc_highest_index - 100 ));
                 // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
                 hc_highest_index = tidx;
             }
             huge_chunk_indexed_byterray_t tmp;
+            qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
             tmp.barr->append(19, data[1]);
             tmp.received = 1;
             m_hc_vec.replace(tidx,tmp);
+
+            // TODO print which characteristic farted
         }
     }
 }
