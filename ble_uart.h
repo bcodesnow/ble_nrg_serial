@@ -25,6 +25,13 @@
 /* SENSORDATA_AVAILABLE					 -> byte[1] 0xFF */
 
 
+#define SET_CONN_PERIOD									0xBB // msg to receive conn period
+/*SET_CONN_PERIOD -> byte[1] min interv.
+
+                                            -> byte[2] max interv.
+                                            -> byte[3] & byte[4] timeout
+*/
+
 #define HUGE_CHUNK_ACK_PROC							0x0D // HC FINISHED / REQUEST MISSED
 #define HC1_BEGIN                                               HC_1_FIN
 #define HC_1_FIN												11u

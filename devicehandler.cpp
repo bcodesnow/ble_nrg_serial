@@ -246,7 +246,7 @@ void DeviceHandler::setDevice(DeviceInfo *device)
         connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceHandler::serviceScanDone);
 
         connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error), this, [this](QLowEnergyController::Error error) {Q_UNUSED(error);setError("Cannot connect to remote device.");});
-        connect(m_control, &QLowEnergyController::connected, this, [this]() { setInfo("Controller connected. Search services..."); m_control->discoverServices();});
+        connect(m_control, &QLowEnergyController::connected, this, &DeviceHandler::onConnected);
         connect(m_control, &QLowEnergyController::disconnected, this, [this]() { setError("BLE controller disconnected!");});
 
         // Connect
@@ -306,6 +306,7 @@ void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
         break;
     }
     default:
+        qDebug()<<"NOT USED SERVICE STATE : "<<s;
         //nothing for now
         break;
     }
@@ -709,6 +710,14 @@ void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, c
     }
 }
 
+void DeviceHandler::onConnected()
+{
+
+    setInfo("Controller connected. Search services...");
+    m_control->discoverServices();
+
+}
+
 void DeviceHandler::update_currentService()
 {
     connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceHandler::serviceStateChanged);
@@ -758,6 +767,7 @@ void DeviceHandler::searchCharacteristic()
                     {
                         m_writeMode = QLowEnergyService::WriteWithResponse;
                     }
+                    update_conn_period(); // DEBUG
                 }
                 else if ( c.uuid() == QBluetoothUuid( BLE_UART_TX_CHAR ) )
                 {
@@ -780,7 +790,7 @@ void DeviceHandler::searchCharacteristic()
                     // Look for TX Pool Characteristics
                     for (int i=0; i < ( BLE_UART_TX_POOL.size() ); i++)
                     {
-                        qDebug()<<"CHECKING IN BLE_POOL"<<c.uuid()<<"   ==   "<<BLE_UART_TX_POOL.at(i);
+                        //qDebug()<<"CHECKING IN BLE_POOL"<<c.uuid()<<"   ==   "<<BLE_UART_TX_POOL.at(i);
                         if ( c.uuid() == QBluetoothUuid( BLE_UART_TX_POOL.at(i) ))
                         {
                             qDebug()<<"We have a match, id found:"<<i;
@@ -861,4 +871,19 @@ void DeviceHandler::ackHugeChunk()
         qDebug()<<"ackHugeChunk()";
         this->ble_uart_tx(tba);
     }
+}
+
+void DeviceHandler::update_conn_period()
+{
+    quint8 conn_min_max =  m_ident_idx ? 6 : 10;
+    // add timeout timer..
+    QByteArray tba;
+    tba.resize(5);
+    tba[0] = SET_CONN_PERIOD;
+    tba[1] = conn_min_max;
+    tba[2] = conn_min_max;
+    tba[3] = (500u << 8) & 0xFF;
+    tba[4] = 500u & 0xFF;
+    qDebug()<<"Sending Conn Period!() min max = "<< conn_min_max << "default timeout = 500";
+    this->ble_uart_tx(tba);
 }

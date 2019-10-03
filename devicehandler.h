@@ -128,6 +128,8 @@ private:
 
     void ackHugeChunk();
 
+    void update_conn_period();
+
 public:
     DeviceHandler(QObject *parent = 0);
 
@@ -183,6 +185,7 @@ private slots:
     void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
+    void onConnected(void);
 
 };
 

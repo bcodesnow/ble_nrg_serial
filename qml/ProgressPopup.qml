@@ -1,13 +1,13 @@
 import QtQuick 2.9
-import QtQuick.Controls 2.9
-import QtQuick.Layouts 1.9
+import QtQuick.Controls 2.2
+import QtQuick.Layouts 1.3
 
 // Label
 
 
 Popup {
     id: progressPopup
-    anchors.centerIn: parent
+    //anchors.centerIn: parent
     width: parent.width - 30
     height: parent.height / 3
     closePolicy: Popup.NoAutoClose
