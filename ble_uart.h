@@ -24,6 +24,44 @@
 /* SENDING_SENSORDATA_FINISHED   -> byte[1] 0xFF */
 /* SENSORDATA_AVAILABLE					 -> byte[1] 0xFF */
 
+
+#define HUGE_CHUNK_ACK_PROC							0x0D // HC FINISHED / REQUEST MISSED
+#define HC1_BEGIN                                               HC_1_FIN
+#define HC_1_FIN												11u
+#define	HC_1_REQ												22u
+#define HC_1_ACK												33u
+
+/*HUGE_CHUNK_ACK_PROC -> byte[1]
+                                                                 finished requesting approval to continue - 11
+                                                                 request missed package 22
+                                                                 hc was ok, continue 33
+
+                                            -> byte[2] package Nr Hbyte
+                                            -> byte[3] package Nr Lbyte
+                                            -> byte[4]
+                                            -> byte[5]
+                                            -> byte[6]
+*/
+
+#define HUGE_CHUNK_MISSED_PACKAGE				0x0F// MSG Type for missed packages exchanged during huge chunk ac proc
+/*HUGE_CHUNK_MISSED_PACKAGE -> byte[1] - byte[19] payload
+*/
+
+#define DIAG_INFO												0x0E
+#define DIAG_1_TYPE_HC_STAT							1u
+#define DIAG_2_ARG1											2u
+#define DIAG_2_ARG2											3u
+#define DIAG_2_ARG3											4u
+#define DIAG_2_ARG4											5u
+
+/*DIAG_INFO -> byte[1] type
+                                            -> byte[2] arg1
+                                            -> byte[3] arg2
+                                            -> byte[4] ...
+                                            -> byte[5] ...
+                                            -> byte[6] ...
+*/
+
 #define ALIVE                           0x10
 
 #define HUGE_CHUNK_START                0x77
