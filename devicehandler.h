@@ -173,6 +173,8 @@ signals:
     void sdEnabledChanged();
     void writeValidChanged();
     void transferProgressChanged(uint8_t percentage);
+    void showProgressMessage(QString mainText, QString subText, int percent, uint8_t flag);
+    void progressFinished();
 
 public slots:
     void disconnectService();

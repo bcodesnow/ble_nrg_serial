@@ -16,5 +16,6 @@
         <file>qml/DualAppPage.qml</file>
         <file>qml/SwipePages.qml</file>
         <file>qml/Graphs.qml</file>
+        <file>qml/ProgressPopup.qml</file>
     </qresource>
 </RCC>
