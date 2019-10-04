@@ -21,10 +21,10 @@ DualAppPage {
     //    property bool dataGatheredfromBoth:
     //    property bool twoDevicesConnected:
 
-    ProgressPopup {
-        id: devicePopup
-        visible: true
-    }
+//    ProgressPopup {
+//        id: devicePopup
+//        visible: true
+//    }
 
     Rectangle
     {

@@ -19,7 +19,7 @@
 #define REQUEST_SENSORDATA              0x0A // available when data is in ram
 #define SENDING_SENSORDATA_FINISHED     0x0B // emitted when all the files were sent
 #define SENSORDATA_AVAILABLE            0x0C // emitted wehn data can be requested.
-
+#define SET_SHUT_UP                     0x33 // when set on device it should not send any notifications
 /* REQUEST_SENSOR_DATA  -> byte[1] 0xFF */
 /* SENDING_SENSORDATA_FINISHED   -> byte[1] 0xFF */
 /* SENSORDATA_AVAILABLE					 -> byte[1] 0xFF */

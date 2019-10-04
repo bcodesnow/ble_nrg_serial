@@ -77,7 +77,7 @@ AppPage {
                         if (modelData.paintName !== undefined)
                         {
                             painter.painterName = modelData.paintName
-                            console.log("New GraphPainter instance:",modelData.paintName,"Index:",delegateRect.index,"Item:",graphGrid.getDelegateInstanceAt(delegateRect.index))
+                          //  console.log("New GraphPainter instance:",modelData.paintName,"Index:",delegateRect.index,"Item:",graphGrid.getDelegateInstanceAt(delegateRect.index))
                         }
                     }
                 } //! GraphPainterCpp

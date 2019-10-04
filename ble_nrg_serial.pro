@@ -1,4 +1,4 @@
-QT += quick quickwidgets qml bluetooth serialbus quickcontrols2 network networkauth
+QT += quick quickwidgets qml bluetooth quickcontrols2 network networkauth
 CONFIG += c++11
 QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
 # The following define makes your compiler emit warnings if you use
@@ -59,4 +59,12 @@ HEADERS += \
     catchcontroller.h
 
 DISTFILES += \
+    android/AndroidManifest.xml \
+    android/build.gradle \
+    android/res/values/libs.xml \
     preTrash
+
+contains(ANDROID_TARGET_ARCH,) {
+    ANDROID_PACKAGE_SOURCE_DIR = \
+        $$PWD/android
+}

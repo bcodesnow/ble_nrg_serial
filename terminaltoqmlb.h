@@ -25,7 +25,7 @@ public:
     TerminalToQmlB()
     {
         handleToThis = this;
-        qInstallMessageHandler(fakeHandler);
+        //qInstallMessageHandler(fakeHandler);
         m_isActive = false;
     }
     void setActive(bool enable)

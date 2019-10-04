@@ -90,6 +90,8 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     qDebug()<<m_hc_vec.at(4).barr<<m_hc_vec.at(7).idx;
     qDebug()<<m_hc_vec.at(0).barr<<m_hc_vec.at(0).idx;
     */
+    m_hc_missed = QList<quint16>();
+
 }
 
 void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
@@ -288,6 +290,7 @@ void DeviceHandler::serviceScanDone()
         setError("BLE UART NOT FOUND");
         qCritical()<<"BLE UART NOT FOUND";
     }
+
 }
 
 // Service functions
@@ -356,9 +359,15 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     static bool first_multi_chunk;
     static uint8_t incoming_type;
     static uint32_t rec_ts;
-    uint16_t tmp_write_pointer; // moved definition
+    static uint16_t tmp_write_pointer; // moved definition
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     huge_chunk_indexed_byterray_t tmp;
+    static uint16_t last_idx;
+    uint16_t tidx;
+    float kbyte_ps;
+    float kbit_ps;
+    float secs;
+    quint64 elapsed;
 
     if (c.uuid() == QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
     {
@@ -437,9 +446,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 tmp_write_pointer |=  data[5];
                 qDebug()<<"data6 contains:<< data[6]";
 
-                // TODO HERE IS A BUG
-                //if (data[6] > 1)
-                if (true)
+                if (data[6] > 1)
                 {
                     qDebug()<<"HC -> Multi Chunk Transfer Starts! "<< incoming_byte_count << " Bytes to Receive!";
                     m_multi_chunk_mode = true;
@@ -452,6 +459,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
                     hc_highest_index = 0;
                     first_multi_chunk = true;
+                    m_missed_to_request = 0;
                 }
                 // MONGO TODO: data[6] -> channel count -> if > 1 -> set huge chunk multi mode flag
 
@@ -466,10 +474,9 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 break;
 
             case HUGE_CHUNK_FINISH:
-                //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type);
                 if (m_multi_chunk_mode)
                 {
-//                    for ()
+                    //                    for ()
                     // iterate through the vec and check where we missed, implement request reply message to request missing chunks..
                     qDebug()<<"Multichunk transfer finished..";
                 }
@@ -513,39 +520,48 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             case HUGE_CHUNK_ACK_PROC:
                 if ( data[1] == HC1_BEGIN )
                 {
-                    if ( arrived_package_count != incoming_package_count )
+                    qDebug()<<"HUGE_CHUNK_ACK_PROC : started!";
+                    qDebug()<<"vecsize!"<<                    m_hc_vec.size();
+                    qDebug()<<"HUGE_CHUNK_ACK_PROC : started!";
+
+                    if ( m_hc_vec.size() != incoming_package_count )
+                    {
+                        qDebug()<<"HUGE_CHUNK_ACK_PROC : arrived_package_count != incoming_package_count!";
+
                         for ( int i = 0; i < m_hc_vec.size(); i++)
                         {
                             if ( !m_hc_vec.at(i).received )
                             {
-                                m_missed_to_request++;
-                                m_hc_missed.append(i);
+                                qDebug()<<"Adding"<<i;
+                                m_missed_to_request++; //to rst later
+                                m_hc_missed.append(i); //to rst later
                             }
                         }
+                        qDebug()<<"HUGE_CHUNK_ACK_PROC : need to request"<<m_hc_missed.size()<<"packages ;( ;";
+                    }
+
+                    qDebug()<<"m_missed_to_request"<<m_missed_to_request;
 
                     if ( m_missed_to_request == 0 )
                     {
+                        setInfo("All Received!");
+                        qDebug()<<"All Received";
+                        m_refToFileHandler->add_to_log_fil(m_ident_str, QString("AllArrived"), QString("TRUE"));
+
                         state = CMD_STATE;
                         ackHugeChunk();
+                        parse_n_write_received_pool( tmp_write_pointer, incoming_type);
                     }
                     else
                     {
+                        qDebug()<<"Requesting missed";
                         state = REQUESTING_MISSED_STATE;
                         requestMissingPackage();
                     }
                 }
-
                 break;
-
-            case HUGE_CHUNK_MISSED_PACKAGE:
-
-                tmp.barr->append( value );
-                tmp.received = 1;
-                m_hc_vec.replace(m_missed_in_request , tmp );
-
-                if (m_hc_missed.size())
-                    requestMissingPackage();
-
+            case 0x0E:
+                qDebug()<<"Unimplemented diag msg";
                 break;
 
                 //)
@@ -567,88 +583,113 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                     state = CMD_STATE;
                     qDebug()<<"SWITCH TO CMD STATE";
                     // DEBUG MONGO
-                    //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type, tmp_write_pointer);
+                    if ( !m_multi_chunk_mode )
+                        m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type, tmp_write_pointer);
                 }
             }
             else
             {
-                    m_huge_chunk.append(value);
+                m_huge_chunk.append(value);
             }
         }
         else if ( state == REQUESTING_MISSED_STATE )
         {
             if ( data[0] == HUGE_CHUNK_MISSED_PACKAGE )
             {
+                qDebug()<<"Missed Package arived";
+
+                tmp.barr.append( value.right(value.size() - 1) );
+                tmp.received = 1;
+                m_hc_vec.replace(m_missed_in_request , tmp );
+
+                m_hc_missed.removeAt(m_missed_in_request); //added
+                m_missed_to_request--; // added
+
+                if (m_hc_missed.size())
+                    requestMissingPackage();
+
                 if (m_hc_missed.size())
                 {
-
+                    requestMissingPackage();
                 }
                 else
                 {
                     state = CMD_STATE;
+                    this->ackHugeChunk();
+                    parse_n_write_received_pool( tmp_write_pointer, incoming_type);
+                    // reset variables
                 }
             }
         }
     }
-    else
+    else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
     {
-        // RX POOL is Active
-        if ( ( state == HUGE_CHUNK_STATE ) && m_multi_chunk_mode )
+//        uint8_t debugflag = 0;
+//        for (int j = 0; j< BLE_UART_TX_POOL.size(); j++)
+//            if (QBluetoothUuid( BLE_UART_TX_POOL.at(j) ) == c.uuid() )
+//                debugflag = 1;
+
+//        if (!debugflag)
+//            qWarning()<<"!!!an unknown characteristic wrote";
+
+        // RX POOL is Active - this happens only if the state is hcs.. we could also filter if we got from the right char type
+        //        if ( ( state == HUGE_CHUNK_STATE ) && m_multi_chunk_mode )
+        //        {
+        // qDebug()<<"HC -> Receiving Packet.. current highest index: " <<hc_highest_index;
+        tidx = data[0];
+
+        if (first_multi_chunk && !tidx )
         {
-           // qDebug()<<"HC -> Receiving Packet.. current highest index: " <<hc_highest_index;
-            uint16_t tidx = data[0];
-            static uint16_t last_idx;
-            if (first_multi_chunk && !tidx )
-            {
-                tidx = 0;
-                first_multi_chunk = false;
-                debugTimer.start();
-            }
-            else if ( tidx > hc_highest_index )
-            {
-                hc_highest_index = tidx;
-            }
-            else
-            {
-                do {
-                    tidx += ( 0xFF + 1 );
-                } while (tidx < ( hc_highest_index - 100 ));
-                // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
-                hc_highest_index = tidx;
-            }
-           //  qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
-            tmp.barr->append(19, data[1]);
-            tmp.received = 1;
-            if (tidx < incoming_package_count)
-                m_hc_vec.replace(tidx,tmp);
-            else
-                qDebug()<<"Shit is FUCKED uP!";
+            tidx = 0;
+            first_multi_chunk = false;
+            debugTimer.start();
+        }
+        else if ( tidx > hc_highest_index )
+        {
+            hc_highest_index = tidx;
+        }
+        else
+        {
+            do {
+                tidx += ( 0xFF + 1 );
+            } while (tidx < ( hc_highest_index - 100 ));
+            // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
+            hc_highest_index = tidx;
+        }
+        //  qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
 
-            if (tidx > last_idx++)
-            {
-                qDebug()<<"HC -> Skipped !!! "<<last_idx+1;
-            }
+        tmp.barr.append(19, data[1]);
+        tmp.received = 1;
+        if (tidx < incoming_package_count)
+            m_hc_vec.replace(tidx,tmp);
+        else
+            qWarning()<<"HC -> Received idx too high, would leak out of the vector and crash the system!";
 
-            if ( tidx == incoming_package_count - 1 )
-            {
-                qDebug()<<"Last PKG!";
-                quint64 elapsed = debugTimer.elapsed();
+        if (tidx > last_idx++)
+        {
+            qDebug()<<"HC -> Skipped !!! "<<last_idx+1;
+        }
 
-                float kbyte_ps = 0;
-                float kbit_ps = 0;
-                float secs = elapsed / 1000;
-                kbyte_ps = (float) incoming_byte_count / 1000 / secs ;
-                kbit_ps = kbyte_ps * 8;
+        if ( tidx == incoming_package_count - 1 )
+        {
+            //qDebug()<<"HC -> Last PKG!";
+            elapsed = debugTimer.elapsed();
+            kbyte_ps = 0;
+            kbit_ps = 0;
+            secs = (float) elapsed / 1000.0f;
+            kbyte_ps = incoming_byte_count /  secs / 1000  ;
+            kbit_ps = kbyte_ps * 8.0;
+            qInfo()<<"HC -> Transfer of"<<incoming_byte_count<<"bytes took"<< elapsed<<"ms";
+            qInfo()<<"HC -> Throughput of net data is" <<QString::number(kbyte_ps)<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
+            secs = (float) elapsed / 1000.0f;
+            kbyte_ps = ( incoming_byte_count + incoming_package_count ) /  secs / 1000  ;
+            kbit_ps = kbyte_ps * 8.0;
+            qInfo()<<"HC -> Throughput of raw data is" <<QString::number(kbyte_ps)<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
 
-                qDebug()<<"Transfer of"<<incoming_byte_count<<"bytes took"<< elapsed<<"ms";
-                qDebug()<<"Throughput of net data is ___ kbyte / s : "<<kbyte_ps<<"___   kbit/s"<<kbit_ps;
-            }
-            else if (tidx > incoming_package_count )
-            {
-                qDebug()<<"Too many?!";
-            }
-
-
+        }
+        else if (tidx > incoming_package_count )
+        {
+            qWarning()<<"HC -> Too many?!";
         }
     }
 }
@@ -719,6 +760,16 @@ void DeviceHandler::onConnected()
 
 }
 
+void DeviceHandler::onShutUpSet(bool shutUp)
+{
+        // add timeout timer..
+        QByteArray tba;
+        tba.resize(5);
+        tba[0] = SET_SHUT_UP;
+        tba[1] = shutUp;
+        this->ble_uart_tx(tba);
+}
+
 void DeviceHandler::update_currentService()
 {
     connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceHandler::serviceStateChanged);
@@ -754,7 +805,9 @@ void DeviceHandler::searchCharacteristic()
             if( c.isValid() )
             {
                 qDebug()<<"Characteristic UUID:"<<c.uuid();
+#ifdef DEBUG_ALL_OUT
                 printProperties(c.properties());
+#endif
                 if ( c.uuid() == QBluetoothUuid( BLE_UART_RX_CHAR) && ( c.properties() & QLowEnergyCharacteristic::WriteNoResponse || c.properties() & QLowEnergyCharacteristic::Write) )
                 {
                     qDebug()<<"Write Characteristic Registered";
@@ -772,7 +825,9 @@ void DeviceHandler::searchCharacteristic()
                 }
                 else if ( c.uuid() == QBluetoothUuid( BLE_UART_TX_CHAR ) )
                 {
+#ifdef DEBUG_ALL_OUT
                     qDebug()<<"Read (Notify) Characteristic Registered";
+#endif
                     m_readCharacteristic = c;
                     m_notificationDescriptor = c.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
 
@@ -794,12 +849,16 @@ void DeviceHandler::searchCharacteristic()
                         //qDebug()<<"CHECKING IN BLE_POOL"<<c.uuid()<<"   ==   "<<BLE_UART_TX_POOL.at(i);
                         if ( c.uuid() == QBluetoothUuid( BLE_UART_TX_POOL.at(i) ))
                         {
+#ifdef DEBUG_ALL_OUT
                             qDebug()<<"We have a match, id found:"<<i;
+#endif
                             m_rxCharacteriscitPool[i] =  c;
                             m_rxCharacteriscitPoolDescriptors[i] = c.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
 
                             if (m_rxCharacteriscitPoolDescriptors[i].isValid()) {
+#ifdef DEBUG_ALL_OUT
                                 qDebug()<<"Characteristic Descriptor: ClientCharacteristicConfiguration, writing 0100 to descriptor"<< "TXPOOL MEMBER: "<<i;
+#endif
                                 m_service->writeDescriptor(m_rxCharacteriscitPoolDescriptors[i], QByteArray::fromHex("0100"));
                             }
                             else
@@ -840,8 +899,7 @@ void DeviceHandler::printProperties(QLowEnergyCharacteristic::PropertyTypes prop
 
 void DeviceHandler::requestMissingPackage()
 {
-    if (m_hc_missed.size())
-    {
+
         uint16_t i = m_hc_missed.at(0);
         m_hc_missed.removeAt(0);
 
@@ -854,24 +912,17 @@ void DeviceHandler::requestMissingPackage()
         tba[3] =   i & 0xFF ;
         qDebug()<<"HC -> Requesting missed : "<<i;
         this->ble_uart_tx(tba);
-    }
 }
 
 void DeviceHandler::ackHugeChunk()
 {
-    if (m_hc_missed.size())
-    {
-        uint16_t i = m_hc_missed.at(0);
-        m_hc_missed.removeAt(0);
-
-        // add timeout timer..
-        QByteArray tba;
-        tba.resize(4);
-        tba[0] = HUGE_CHUNK_ACK_PROC;
-        tba[1] = HC_1_ACK;
-        qDebug()<<"ackHugeChunk()";
-        this->ble_uart_tx(tba);
-    }
+    // add timeout timer..
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = HUGE_CHUNK_ACK_PROC;
+    tba[1] = HC_1_ACK;
+    qInfo()<<"ackHugeChunk()";
+    this->ble_uart_tx(tba);
 }
 
 void DeviceHandler::update_conn_period()
@@ -887,4 +938,18 @@ void DeviceHandler::update_conn_period()
     tba[4] = 500u & 0xFF;
     qDebug()<<"Sending Conn Period!() min max = "<< conn_min_max << "default timeout = 500";
     this->ble_uart_tx(tba);
+}
+
+
+
+void DeviceHandler::parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type )
+{
+    m_huge_chunk.clear();
+    for (int i = 0; i < m_hc_vec.size(); i++)
+    {
+        m_huge_chunk.append( m_hc_vec.at(i).barr );
+
+    }
+    qDebug()<<"PARSER FINISHED, gathered:"<<m_huge_chunk.size();
+    //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, type, tmp_write_pointer);
 }

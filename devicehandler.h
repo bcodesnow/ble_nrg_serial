@@ -35,7 +35,7 @@
 struct huge_chunk_indexed_byterray_t
 {
     quint16 received;
-    QByteArray barr[20];
+    QByteArray barr;
 };
 
 class DeviceInfo;
@@ -130,6 +130,8 @@ private:
 
     void update_conn_period();
 
+    void parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type );
+
 public:
     DeviceHandler(QObject *parent = 0);
 
@@ -186,6 +188,7 @@ private slots:
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onConnected(void);
+    void onShutUpSet(bool shutUp);
 
 };
 
