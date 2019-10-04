@@ -566,7 +566,8 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 {
                     state = CMD_STATE;
                     qDebug()<<"SWITCH TO CMD STATE";
-                    m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type, tmp_write_pointer);
+                    // DEBUG MONGO
+                    //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, incoming_type, tmp_write_pointer);
                 }
             }
             else
@@ -594,7 +595,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         // RX POOL is Active
         if ( ( state == HUGE_CHUNK_STATE ) && m_multi_chunk_mode )
         {
-            qDebug()<<"HC -> Receiving Packet.. current highest index: " <<hc_highest_index;
+           // qDebug()<<"HC -> Receiving Packet.. current highest index: " <<hc_highest_index;
             uint16_t tidx = data[0];
             static uint16_t last_idx;
             if (first_multi_chunk && !tidx )
@@ -615,7 +616,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
                 hc_highest_index = tidx;
             }
-            qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
+           //  qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
             tmp.barr->append(19, data[1]);
             tmp.received = 1;
             if (tidx < incoming_package_count)

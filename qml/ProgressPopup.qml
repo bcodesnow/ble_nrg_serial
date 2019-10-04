@@ -1,14 +1,15 @@
 import QtQuick 2.9
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
+import QtGraphicalEffects 1.0
 
 // Label
 
 
 Popup {
     id: progressPopup
-    //anchors.centerIn: parent
-    width: parent.width - 30
+    anchors.centerIn: parent
+    width: parent.width //- 30
     height: parent.height / 3
     closePolicy: Popup.NoAutoClose
     focus: visible
@@ -16,13 +17,34 @@ Popup {
     dim: false
 
     background: Rectangle {
-        color: "transparent"
+        id: bg
+        color: "white"
+        smooth: true
+
+        //        ShaderEffectSource {
+        //            id: effectSource
+
+        //            sourceItem: bg
+        //            anchors.centerIn: bg
+        //            width: bg.width
+        //            height: bg.height
+        //            sourceRect: Qt.rect(x, y, width, height)
+        //        }
+
+        //        FastBlur {
+        //                anchors.fill: effectSource
+        //                source: effectSource
+        //                radius: 100
+        //            }
     }
+
+
+
 
     property string maintitle: "Balint is having a shit"
     property string subtitle: "Progress is as follows:"
     property int progress: 0
-    property double maxOpacity: 0.95
+    property double maxOpacity: 0.97
 
     enter: Transition {
         NumberAnimation { property: "opacity"; from: 0.0; to: maxOpacity }
@@ -32,11 +54,28 @@ Popup {
     }
 
     Rectangle {
-        id: bg
+        id: container
         anchors.fill: parent
         color: Qt.lighter( AppConstants.backgroundColor )//Qt.darker("white")
         opacity: maxOpacity
         radius: AppConstants.buttonRadius*2
+
+        ShaderEffectSource {
+            id: effectSource
+            sourceItem: container
+            anchors.centerIn: container
+            width: container.width
+            height: container.height
+            sourceRect: Qt.rect(x, y, width, height)
+        }
+
+        FastBlur {
+            anchors.fill: effectSource
+            source: effectSource
+            radius: 100
+        }
+
+
         ColumnLayout {
 
             anchors.fill: parent
