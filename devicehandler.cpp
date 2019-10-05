@@ -55,7 +55,16 @@
 #include <QRandomGenerator>
 #include <QDebug>
 #include <QtGlobal>
+#include <QLowEnergyConnectionParameters>
 
+// change connection period with shutup!
+// correct parsed length
+// check if passed package nrs are correct when requesting a missed.
+// request sensor data change to 7.5ms
+// use less tx pool objects on each device
+// add a catch drop button dialog
+// add at startup the question to use sd card
+// force connection parameters from both sides before huge chunk
 
 QElapsedTimer debugTimer;
 /*
@@ -250,6 +259,7 @@ void DeviceHandler::setDevice(DeviceInfo *device)
         connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error), this, [this](QLowEnergyController::Error error) {Q_UNUSED(error);setError("Cannot connect to remote device.");});
         connect(m_control, &QLowEnergyController::connected, this, &DeviceHandler::onConnected);
         connect(m_control, &QLowEnergyController::disconnected, this, [this]() { setError("BLE controller disconnected!");});
+        connect(m_control, &QLowEnergyController::connectionUpdated, this, &DeviceHandler::onConnectionParamUpdated);
 
         // Connect
         m_control->connectToDevice();
@@ -411,6 +421,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             case DATA_COLLECTED:
                 //confirm if it was a catch or drop -> we should give it to a class above iE devFinder
                 setInfo("Waiting for Confirmation!");
+
                 break;
 
             case ALIVE:
@@ -503,6 +514,8 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 qDebug()<<"Sensor Data can be downloaded!";
                 setInfo("Sensordata available!");
                 emit sensorDataAvailable();
+                setConnParams(7.5, 7.5);
+                qDebug()<<"SETTING PARAMS!";
                 break;
                 //
             case SENDING_SENSORDATA_FINISHED:
@@ -658,7 +671,8 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         }
         //  qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
 
-        tmp.barr.append(19, data[1]);
+        tmp.barr.append(value.size()-1, data[1]);
+
         tmp.received = 1;
         if (tidx < incoming_package_count)
             m_hc_vec.replace(tidx,tmp);
@@ -680,11 +694,11 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             kbyte_ps = incoming_byte_count /  secs / 1000  ;
             kbit_ps = kbyte_ps * 8.0;
             qInfo()<<"HC -> Transfer of"<<incoming_byte_count<<"bytes took"<< elapsed<<"ms";
-            qInfo()<<"HC -> Throughput of net data is" <<QString::number(kbyte_ps)<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
+            qInfo()<<"HC -> Throughput of net data is" <<kbyte_ps<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
             secs = (float) elapsed / 1000.0f;
             kbyte_ps = ( incoming_byte_count + incoming_package_count ) /  secs / 1000  ;
             kbit_ps = kbyte_ps * 8.0;
-            qInfo()<<"HC -> Throughput of raw data is" <<QString::number(kbyte_ps)<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
+            qInfo()<<"HC -> Throughput of raw data is" <<kbyte_ps<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
 
         }
         else if (tidx > incoming_package_count )
@@ -725,6 +739,13 @@ void DeviceHandler::disconnectService()
         delete m_service;
         m_service = 0;
     }
+}
+
+void DeviceHandler::onConnectionParamUpdated(const QLowEnergyConnectionParameters &newParameters)
+{
+    qDebug()<<"CONN UPDATED!!"<<newParameters.latency()<<
+              newParameters.minimumInterval()<<newParameters.maximumInterval()<<
+              newParameters.supervisionTimeout();
 }
 
 void DeviceHandler::onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value)
@@ -951,5 +972,14 @@ void DeviceHandler::parse_n_write_received_pool (uint16_t tmp_write_pointer, uin
 
     }
     qDebug()<<"PARSER FINISHED, gathered:"<<m_huge_chunk.size();
-    //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, type, tmp_write_pointer);
+    m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, type, tmp_write_pointer);
+}
+
+void DeviceHandler::setConnParams(double min_peri, double max_peri)
+{
+    QLowEnergyConnectionParameters para;
+    para.setLatency(2);
+    para.setIntervalRange(min_peri, max_peri);
+    para.setSupervisionTimeout(10000);
+    m_control->requestConnectionUpdate(para);
 }

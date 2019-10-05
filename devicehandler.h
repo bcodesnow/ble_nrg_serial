@@ -182,6 +182,7 @@ signals:
 
 public slots:
     void disconnectService();
+    void onConnectionParamUpdated(const QLowEnergyConnectionParameters &newParameters);
 
 private slots:
     void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
@@ -189,6 +190,7 @@ private slots:
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onConnected(void);
     void onShutUpSet(bool shutUp);
+    void setConnParams(double min_peri, double max_peri);
 
 };
 

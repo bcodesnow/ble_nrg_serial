@@ -79,15 +79,12 @@ void TimeStampler::send_compensated_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
-    qDebug()<<"TS: send_compensated_time_sync_msg() -> "<<tstamp;
-    qDebug()<<"TS: Amount of Compensation -> "<<( m_travelling_time_acceptance_trsh / 2 );
-
-
-
-
     m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
+
     m_timeout_timer.start();
 
+    qDebug()<<"TS: send_compensated_time_sync_msg() -> "<<tstamp;
+    qDebug()<<"TS: Amount of Compensation -> "<<( m_travelling_time_acceptance_trsh / 2 );
 }
 
 void TimeStampler::calculate_compensation()
