@@ -1,4 +1,4 @@
-// ?? L2CAP Connection Parameter Update Response, TX POWER
+/* ?? L2CAP Connection Parameter Update Response, TX POWER */
 
 #ifndef DEVICEHANDLER_H
 #define DEVICEHANDLER_H
@@ -72,6 +72,7 @@ private:
     QString m_ident_str;
     quint8 m_ident_idx;
 
+    QTimer m_connParamTimer;
     QByteArray m_huge_chunk;
     QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
     QList<quint16> m_hc_missed;
@@ -107,6 +108,8 @@ private:
     uint16_t m_missed_to_request;
     uint16_t m_missed_in_request;
 
+    quint8 m_conn_param_mode;
+
 
 
     //QLowEnergyController
@@ -131,6 +134,8 @@ private:
     void update_conn_period();
 
     void parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type );
+
+
 
 public:
     DeviceHandler(QObject *parent = 0);
@@ -191,7 +196,11 @@ private slots:
     void onConnected(void);
     void onShutUpSet(bool shutUp);
     void setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency);
+    void onConnParamTimerExpired();
+    void setConnParamsWaitReply(uint8_t mode);
 
 };
 
 #endif // DEVICEHANDLER_H
+
+

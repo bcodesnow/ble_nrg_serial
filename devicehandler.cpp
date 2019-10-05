@@ -101,8 +101,9 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     qDebug()<<m_hc_vec.at(0).barr<<m_hc_vec.at(0).idx;
     */
     m_hc_missed = QList<quint16>();
-
+    // connect(m_connParamTimer, &QTimer::timeout, this, &DeviceHandler::onConnParamTimerExpired);
 }
+
 
 void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
 {
@@ -168,7 +169,7 @@ void DeviceHandler::requestBLESensorData()
     tba[0] = REQUEST_SENSORDATA;
     tba[1] = 0xFF;
 
-// CHANGE CONN PARAM
+    // CHANGE CONN PARAM
 
     if (m_refToOtherDevice != NULL)
     {
@@ -646,13 +647,13 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
     }
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
     {
-//        uint8_t debugflag = 0;
-//        for (int j = 0; j< BLE_UART_TX_POOL.size(); j++)
-//            if (QBluetoothUuid( BLE_UART_TX_POOL.at(j) ) == c.uuid() )
-//                debugflag = 1;
+        //        uint8_t debugflag = 0;
+        //        for (int j = 0; j< BLE_UART_TX_POOL.size(); j++)
+        //            if (QBluetoothUuid( BLE_UART_TX_POOL.at(j) ) == c.uuid() )
+        //                debugflag = 1;
 
-//        if (!debugflag)
-//            qWarning()<<"!!!an unknown characteristic wrote";
+        //        if (!debugflag)
+        //            qWarning()<<"!!!an unknown characteristic wrote";
 
         // RX POOL is Active - this happens only if the state is hcs.. we could also filter if we got from the right char type
         //        if ( ( state == HUGE_CHUNK_STATE ) && m_multi_chunk_mode )
@@ -792,12 +793,12 @@ void DeviceHandler::onConnected()
 
 void DeviceHandler::onShutUpSet(bool shutUp)
 {
-        // add timeout timer..
-        QByteArray tba;
-        tba.resize(5);
-        tba[0] = SET_SHUT_UP;
-        tba[1] = shutUp;
-        this->ble_uart_tx(tba);
+    // add timeout timer..
+    QByteArray tba;
+    tba.resize(5);
+    tba[0] = SET_SHUT_UP;
+    tba[1] = shutUp;
+    this->ble_uart_tx(tba);
 }
 
 void DeviceHandler::update_currentService()
@@ -930,18 +931,18 @@ void DeviceHandler::printProperties(QLowEnergyCharacteristic::PropertyTypes prop
 void DeviceHandler::requestMissingPackage()
 {
 
-        uint16_t i = m_hc_missed.at(0);
-        m_hc_missed.removeAt(0);
+    uint16_t i = m_hc_missed.at(0);
+    m_hc_missed.removeAt(0);
 
-        // add timeout timer..
-        QByteArray tba;
-        tba.resize(4);
-        tba[0] = HUGE_CHUNK_ACK_PROC;
-        tba[1] = HC_1_REQ;
-        tba[2] = ( i >>  8 ) & 0xFF ;
-        tba[3] =   i & 0xFF ;
-        qDebug()<<"HC -> Requesting missed : "<<i;
-        this->ble_uart_tx(tba);
+    // add timeout timer..
+    QByteArray tba;
+    tba.resize(4);
+    tba[0] = HUGE_CHUNK_ACK_PROC;
+    tba[1] = HC_1_REQ;
+    tba[2] = ( i >>  8 ) & 0xFF ;
+    tba[3] =   i & 0xFF ;
+    qDebug()<<"HC -> Requesting missed : "<<i;
+    this->ble_uart_tx(tba);
 }
 
 void DeviceHandler::ackHugeChunk()
@@ -991,4 +992,60 @@ void DeviceHandler::setConnParams(double min_peri, double max_peri, int supervis
     para.setIntervalRange(min_peri, max_peri);
     para.setSupervisionTimeout(supervision_timeout);
     m_control->requestConnectionUpdate(para);
+}
+
+
+void  DeviceHandler::onConnParamTimerExpired()
+{
+
+}
+
+#define SLOW 1
+#define MID  2
+#define FAST 3
+
+#define S_MIN   100
+#define S_MAX   200
+#define S_LAT   5
+#define S_SUP   1000
+
+#define M_MIN   50
+#define M_MAX   85
+#define M_LAT   0
+#define M_SUP   500
+
+#define F_MIN   7.5
+#define F_MAX   7.5
+#define F_LAT   0
+#define F_SUP   100
+
+void DeviceHandler::setConnParamsWaitReply(uint8_t mode)
+{
+    QLowEnergyConnectionParameters para;
+    m_conn_param_mode = mode;
+
+    switch (mode)
+    {
+        case SLOW:
+            para.setLatency(S_LAT);
+            para.setIntervalRange(S_MIN, S_MAX);
+            para.setSupervisionTimeout(S_SUP);
+            break;
+
+        case MID:
+            para.setLatency(M_LAT);
+            para.setIntervalRange(M_MIN, M_MAX);
+            para.setSupervisionTimeout(M_SUP);
+            break;
+
+        case FAST:
+            para.setLatency(F_LAT);
+            para.setIntervalRange(F_MIN, F_MAX);
+            para.setSupervisionTimeout(F_SUP);
+            break;
+    }
+
+    m_connParamTimer.singleShot(100, this, SLOT(onConnParamTimerExpired()));
+    m_control->requestConnectionUpdate(para);
+
 }
