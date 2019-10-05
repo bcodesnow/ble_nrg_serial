@@ -56,6 +56,7 @@
 #include <QDebug>
 #include <QtGlobal>
 #include <QLowEnergyConnectionParameters>
+#include <QThread>
 
 // change connection period with shutup!
 // correct parsed length
@@ -167,7 +168,17 @@ void DeviceHandler::requestBLESensorData()
     tba[0] = REQUEST_SENSORDATA;
     tba[1] = 0xFF;
 
+// CHANGE CONN PARAM
 
+    if (m_refToOtherDevice != NULL)
+    {
+        m_refToOtherDevice->setConnParams(150,500,10000,0);
+        QThread::msleep(10); // give it just a few msecs to breathe
+        qDebug()<<"SET CONN PARAM OF OTHER DEV";
+    }
+    setConnParams(7.5, 7.5, 100, 0);
+    QThread::msleep(10); // give it just a few msecs to breathe
+    qDebug()<<"SETTING PARAMS!";
 
 
     if (tba.size() && m_writeCharacteristic.isValid())
@@ -514,8 +525,6 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 qDebug()<<"Sensor Data can be downloaded!";
                 setInfo("Sensordata available!");
                 emit sensorDataAvailable();
-                setConnParams(7.5, 7.5);
-                qDebug()<<"SETTING PARAMS!";
                 break;
                 //
             case SENDING_SENSORDATA_FINISHED:
@@ -842,7 +851,7 @@ void DeviceHandler::searchCharacteristic()
                     {
                         m_writeMode = QLowEnergyService::WriteWithResponse;
                     }
-                    update_conn_period(); // DEBUG
+                    //update_conn_period(); // DEBUG
                 }
                 else if ( c.uuid() == QBluetoothUuid( BLE_UART_TX_CHAR ) )
                 {
@@ -972,14 +981,14 @@ void DeviceHandler::parse_n_write_received_pool (uint16_t tmp_write_pointer, uin
 
     }
     qDebug()<<"PARSER FINISHED, gathered:"<<m_huge_chunk.size();
-    m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, type, tmp_write_pointer);
+    //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, type, tmp_write_pointer);
 }
 
-void DeviceHandler::setConnParams(double min_peri, double max_peri)
+void DeviceHandler::setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency)
 {
     QLowEnergyConnectionParameters para;
-    para.setLatency(2);
+    para.setLatency(latency);
     para.setIntervalRange(min_peri, max_peri);
-    para.setSupervisionTimeout(10000);
+    para.setSupervisionTimeout(supervision_timeout);
     m_control->requestConnectionUpdate(para);
 }

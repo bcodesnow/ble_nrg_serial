@@ -190,7 +190,7 @@ private slots:
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onConnected(void);
     void onShutUpSet(bool shutUp);
-    void setConnParams(double min_peri, double max_peri);
+    void setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency);
 
 };
 
