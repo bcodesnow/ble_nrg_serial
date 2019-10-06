@@ -81,6 +81,9 @@ private:
     QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
     QList<quint16> m_hc_missed;
 
+    conn_param_info_t m_dev_curr_param_info;
+    uint8_t m_dev_requested_conn_param_mode;
+
     bool m_multi_chunk_mode; // huge chunk on multiple characteristics
     bool m_sdEnabled;
     QBluetoothAddress m_adapterAddress;

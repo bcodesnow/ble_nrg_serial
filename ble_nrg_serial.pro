@@ -56,7 +56,8 @@ HEADERS += \
     timestampler.h \
     ble_uart.h \
     logfilehandler.h \
-    catchcontroller.h
+    catchcontroller.h \
+    ble_uart_types.h
 
 DISTFILES += \
     android/AndroidManifest.xml \
@@ -65,6 +66,11 @@ DISTFILES += \
     preTrash
 
 contains(ANDROID_TARGET_ARCH,) {
+    ANDROID_PACKAGE_SOURCE_DIR = \
+        $$PWD/android
+}
+
+contains(ANDROID_TARGET_ARCH,armeabi-v7a) {
     ANDROID_PACKAGE_SOURCE_DIR = \
         $$PWD/android
 }

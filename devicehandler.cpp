@@ -174,18 +174,18 @@ void DeviceHandler::requestBLESensorData()
     if (m_refToOtherDevice != NULL)
     {
         m_refToOtherDevice->setConnParams(250,500,1000,0);
-//        QThread::msleep(10); // give it just a few msecs to breathe
+        //        QThread::msleep(10); // give it just a few msecs to breathe
         qDebug()<<"SET CONN PARAM OF OTHER DEV";
     }
     //setConnParams(7.5, 7.5, 100, 0);
     setConnParams(250,500,1000,0);
 
-//    QThread::msleep(10); // give it just a few msecs to breathe
+    //    QThread::msleep(10); // give it just a few msecs to breathe
     qDebug()<<"SETTING PARAMS!";
 
 
-//    if (tba.size() && m_writeCharacteristic.isValid())
-//        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+    //    if (tba.size() && m_writeCharacteristic.isValid())
+    //        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 
 }
 
@@ -230,7 +230,6 @@ void DeviceHandler::setIdentifier(QString str, quint8 idx, QBluetoothAddress add
     m_ident_idx = idx;
     m_adapterAddress = addr;
 }
-
 
 void DeviceHandler::setDevice(DeviceInfo *device)
 {
@@ -317,7 +316,6 @@ void DeviceHandler::serviceScanDone()
 
 }
 
-// Service functions
 //! [Find BLE UART characteristic]
 void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
 {
@@ -374,6 +372,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 #define CMD_STATE    0x00
 #define HUGE_CHUNK_STATE 0x01
 #define REQUESTING_MISSED_STATE 0x02
+#define CMD_PARAM_CONF_STATE    0x04
 
     static uint8_t state = CMD_STATE;
     static uint16_t incoming_byte_count;
@@ -435,7 +434,6 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             case DATA_COLLECTED:
                 //confirm if it was a catch or drop -> we should give it to a class above iE devFinder
                 setInfo("Waiting for Confirmation!");
-
                 break;
 
             case ALIVE:
@@ -461,15 +459,6 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
             case HUGE_CHUNK_START:
                 qDebug()<<"HC -> Starts, arrived msg size: <<"<<value.size();
-                state = HUGE_CHUNK_STATE;
-                incoming_byte_count =  data[1] << 8;
-                incoming_byte_count |=  data[2];
-                incoming_type = data[3];
-
-                // uint16_t tmp_write_pointer; // moved definition
-                tmp_write_pointer =  data[4] << 8;
-                tmp_write_pointer |=  data[5];
-                qDebug()<<"data6 contains:<< data[6]";
 
                 if (data[6] > 1)
                 {
@@ -585,11 +574,12 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                     }
                 }
                 break;
-            case 0x0E:
-                if ( data[1] == 1 )
+
+            case DIAG_INFO:
+                if ( data[1] == DIAG_1_TYPE_HC_STAT )
                 {
                 }
-                else if (data[1] == 2)
+                else if (data[1] == DIAG_1_TYPE_CONN_PARAM)
                 {
                     qDebug()<<"CONN PARAM CHANGE CHECKED BY THE DEVICE!";
                     uint16_t interv =  data[2] << 8;
@@ -598,21 +588,25 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                     superv |=  data[5];
                     qDebug()<<"Interv:"<<interv<<"Superv"<<superv;
                 }
-                else if (data[1] == 3)
+                else if (data[1] == DIAG_1_TYPE_LENGTH_TEST)
                 {
                     qDebug()<<"MESS LEN:::"<<value.size();
                 }
                 else
-            {
+                {
 
-                qDebug()<<"Unimplemented diag msg";
-             }
-
+                    qDebug()<<"Unimplemented diag msg";
+                }
+                break;
+                //
+            case CONN_PARAM_INFO:
+                // i should have implemented all packages this way..
+                conn_param_info_t* cp_ptr;
+                cp_ptr = (conn_param_info_t*) data[1];
+                m_dev_curr_param_info = *cp_ptr;
 
                 break;
-
-
-                //)
+                //
             default:
                 qWarning()<<"Unknown MSG: "<<value;
                 break; //technically not needed
@@ -669,6 +663,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 }
             }
         }
+
     }
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) // TX CHAR OF THE SERVER
     {
@@ -1025,25 +1020,6 @@ void  DeviceHandler::onConnParamTimerExpired()
 
 }
 
-#define SLOW 1
-#define MID  2
-#define FAST 3
-
-#define S_MIN   100
-#define S_MAX   200
-#define S_LAT   5
-#define S_SUP   1000
-
-#define M_MIN   50
-#define M_MAX   85
-#define M_LAT   0
-#define M_SUP   500
-
-#define F_MIN   7.5
-#define F_MAX   7.5
-#define F_LAT   0
-#define F_SUP   100
-
 void DeviceHandler::setConnParamsWaitReply(uint8_t mode)
 {
     QLowEnergyConnectionParameters para;
@@ -1051,23 +1027,23 @@ void DeviceHandler::setConnParamsWaitReply(uint8_t mode)
 
     switch (mode)
     {
-        case SLOW:
-            para.setLatency(S_LAT);
-            para.setIntervalRange(S_MIN, S_MAX);
-            para.setSupervisionTimeout(S_SUP);
-            break;
+    case SLOW:
+        para.setLatency(S_LAT);
+        para.setIntervalRange(S_MIN, S_MAX);
+        para.setSupervisionTimeout(S_SUP);
+        break;
 
-        case MID:
-            para.setLatency(M_LAT);
-            para.setIntervalRange(M_MIN, M_MAX);
-            para.setSupervisionTimeout(M_SUP);
-            break;
+    case MID:
+        para.setLatency(M_LAT);
+        para.setIntervalRange(M_MIN, M_MAX);
+        para.setSupervisionTimeout(M_SUP);
+        break;
 
-        case FAST:
-            para.setLatency(F_LAT);
-            para.setIntervalRange(F_MIN, F_MAX);
-            para.setSupervisionTimeout(F_SUP);
-            break;
+    case FAST:
+        para.setLatency(F_LAT);
+        para.setIntervalRange(F_MIN, F_MAX);
+        para.setSupervisionTimeout(F_SUP);
+        break;
     }
 
     m_connParamTimer.singleShot(100, this, SLOT(onConnParamTimerExpired()));
