@@ -173,17 +173,19 @@ void DeviceHandler::requestBLESensorData()
 
     if (m_refToOtherDevice != NULL)
     {
-        m_refToOtherDevice->setConnParams(150,500,10000,0);
-        QThread::msleep(10); // give it just a few msecs to breathe
+        m_refToOtherDevice->setConnParams(250,500,1000,0);
+//        QThread::msleep(10); // give it just a few msecs to breathe
         qDebug()<<"SET CONN PARAM OF OTHER DEV";
     }
-    setConnParams(7.5, 7.5, 100, 0);
-    QThread::msleep(10); // give it just a few msecs to breathe
+    //setConnParams(7.5, 7.5, 100, 0);
+    setConnParams(250,500,1000,0);
+
+//    QThread::msleep(10); // give it just a few msecs to breathe
     qDebug()<<"SETTING PARAMS!";
 
 
-    if (tba.size() && m_writeCharacteristic.isValid())
-        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+//    if (tba.size() && m_writeCharacteristic.isValid())
+//        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 
 }
 
@@ -584,8 +586,31 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 }
                 break;
             case 0x0E:
+                if ( data[1] == 1 )
+                {
+                }
+                else if (data[1] == 2)
+                {
+                    qDebug()<<"CONN PARAM CHANGE CHECKED BY THE DEVICE!";
+                    uint16_t interv =  data[2] << 8;
+                    interv |=  data[3];
+                    uint16_t superv =  data[4] << 8;
+                    superv |=  data[5];
+                    qDebug()<<"Interv:"<<interv<<"Superv"<<superv;
+                }
+                else if (data[1] == 3)
+                {
+                    qDebug()<<"MESS LEN:::"<<value.size();
+                }
+                else
+            {
+
                 qDebug()<<"Unimplemented diag msg";
+             }
+
+
                 break;
+
 
                 //)
             default:

@@ -32,6 +32,8 @@
 #define CDSM_SUBSTATE_SAVING_GYRO                               5u
 #define CDSM_SUBSTATE_SENDING_DATA_COLLECTED                    6u
 
+#define CONTINUE
+
 struct huge_chunk_indexed_byterray_t
 {
     quint16 received;
@@ -73,6 +75,8 @@ private:
     quint8 m_ident_idx;
 
     QTimer m_connParamTimer;
+    QTimer m_timeoutTimer;
+    quint8 m_timeoutReason;
     QByteArray m_huge_chunk;
     QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
     QList<quint16> m_hc_missed;
