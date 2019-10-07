@@ -434,26 +434,19 @@ void DeviceHandler::searchCharacteristic()
 
 void DeviceHandler::requestBLESensorData()
 {
-    QByteArray tba;
-    tba.resize(2);
-    tba[0] = REQUEST_SENSORDATA;
-    tba[1] = 0xFF;
-
-    // CHANGE CONN PARAM
 
     if (m_refToOtherDevice != NULL)
     {
         m_refToOtherDevice->setConnParams(250,500,1000,0);
-        //        QThread::msleep(10); // give it just a few msecs to breathe
-        qDebug()<<"SET CONN PARAM OF OTHER DEV";
+        qDebug()<<"CONNPARA: Set Connection parameters to other device.";
     }
-    //setConnParams(7.5, 7.5, 100, 0);
-    setConnParams(250,500,1000,0);
+    setConnParams(7.5, 7.5, 100, 0);
+    qDebug()<<"CONNPARA: Set Connection parameters of this device.";
 
-    //    QThread::msleep(10); // give it just a few msecs to breathe
-    qDebug()<<"SETTING PARAMS!";
-
-
+    //    QByteArray tba;
+    //    tba.resize(2);
+    //    tba[0] = REQUEST_SENSORDATA;
+    //    tba[1] = 0xFF;
     //    if (tba.size() && m_writeCharacteristic.isValid())
     //        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 

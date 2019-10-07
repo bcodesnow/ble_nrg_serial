@@ -296,6 +296,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                     setShutUp(1);
 
                     //continue with requesting sensor data.. if the second device also reached its requested state..
+                    // todo replace checking the connection mode flag with checking app state...
                     if (m_dev_requested_conn_mode == FAST && m_refToOtherDevice->isDeviceInRequestedConnState() )
                     {
                         QByteArray tba;
