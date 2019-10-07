@@ -10,7 +10,7 @@ void DeviceHandler::ble_uart_tx(const QByteArray &value)
 
 inline bool DeviceHandler::isDeviceInRequestedConnState()
 {
-    return (m_dev_curr_param_info.current_mode == m_dev_requested_conn_mode && m_dev_curr_param_info.requested_mode == m_dev_requested_conn_mode);
+    return ( ( m_dev_curr_param_info.current_mode == m_dev_requested_conn_mode ) && ( m_dev_curr_param_info.requested_mode == m_dev_requested_conn_mode ));
 
 }
 
@@ -293,12 +293,15 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 {
                     //make the necessary shutup!!
                     qDebug()<<"Dev also made the necessary changes and switched!";
-                    setShutUp(1);
+
 
                     //continue with requesting sensor data.. if the second device also reached its requested state..
                     // todo replace checking the connection mode flag with checking app state...
                     if (m_dev_requested_conn_mode == FAST && m_refToOtherDevice->isDeviceInRequestedConnState() )
                     {
+                        m_refToOtherDevice->setShutUp(1);
+                        setShutUp(1);
+                        qDebug()<<"Other device is also ready -> go on!";
                         QByteArray tba;
                         tba.resize(2);
                         tba[0] = REQUEST_SENSORDATA;
@@ -308,6 +311,10 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                             m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
                     }
 
+                }
+                else
+                {
+                   setConnParamsOnCentral(m_dev_requested_conn_mode);
                 }
             }
                 break;

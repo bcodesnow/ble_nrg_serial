@@ -435,12 +435,17 @@ void DeviceHandler::searchCharacteristic()
 void DeviceHandler::requestBLESensorData()
 {
 
+
     if (m_refToOtherDevice != NULL)
     {
-        m_refToOtherDevice->setConnParams(250,500,1000,0);
+        m_refToOtherDevice->setShutUp(0);
+        m_refToOtherDevice->setRequestedConnMode(SLOW);
+        m_refToOtherDevice->setConnParamsOnCentral(SLOW);
         qDebug()<<"CONNPARA: Set Connection parameters to other device.";
     }
-    setConnParams(7.5, 7.5, 100, 0);
+    setShutUp(0);
+    setRequestedConnMode(FAST);
+    setConnParamsOnCentral(FAST);
     qDebug()<<"CONNPARA: Set Connection parameters of this device.";
 
     //    QByteArray tba;
@@ -496,6 +501,28 @@ void DeviceHandler::ackHugeChunk()
 //    this->ble_uart_tx(tba);
 //}
 
+void DeviceHandler::setRequestedConnMode(uint8_t mode)
+{
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = SET_CONN_MODE;
+    switch (mode)
+    {
+    case SLOW:
+        tba[1] = SLOW;
+        break;
+
+    case MID:
+        tba[1] = MID;
+        break;
+
+    case FAST:
+        tba[1] = FAST;
+        break;
+    }
+    m_dev_requested_conn_mode = mode;
+    this->ble_uart_tx(tba);
+}
 
 
 void DeviceHandler::parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type )
@@ -510,59 +537,59 @@ void DeviceHandler::parse_n_write_received_pool (uint16_t tmp_write_pointer, uin
     //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, type, tmp_write_pointer);
 }
 
-void DeviceHandler::setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency)
+//void DeviceHandler::setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency)
+//{
+//    QLowEnergyConnectionParameters para;
+//    para.setLatency(latency);
+//    para.setIntervalRange(min_peri, max_peri);
+//    para.setSupervisionTimeout(supervision_timeout);
+//    m_control->requestConnectionUpdate(para);
+//}
+
+
+//void  DeviceHandler::onConnParamTimerExpired()
+//{
+
+//}
+
+void DeviceHandler::setShutUp(bool mode)
 {
-    QLowEnergyConnectionParameters para;
-    para.setLatency(latency);
-    para.setIntervalRange(min_peri, max_peri);
-    para.setSupervisionTimeout(supervision_timeout);
-    m_control->requestConnectionUpdate(para);
-}
-
-
-void  DeviceHandler::onConnParamTimerExpired()
-{
-
-}
-
-void DeviceHandler::setShutUp(bool shutUp)
-{
-    // add timeout timer..
+    qDebug()<<"Turning DEV"<<m_ident_idx<<m_ident_str<<"in shutupMode:"<<mode;
     QByteArray tba;
-    tba.resize(5);
+    tba.resize(2);
     tba[0] = SET_SHUT_UP;
-    tba[1] = shutUp;
+    tba[1] = mode;
     this->ble_uart_tx(tba);
 }
 
 
-//void DeviceHandler::setConnParamsWaitReply(uint8_t mode)
-//{
-//    QLowEnergyConnectionParameters para;
-//    m_conn_param_mode = mode;
 
-//    switch (mode)
-//    {
-//    case SLOW:
-//        para.setLatency(S_LAT);
-//        para.setIntervalRange(S_MIN, S_MAX);
-//        para.setSupervisionTimeout(S_SUP);
-//        break;
+void DeviceHandler::setConnParamsOnCentral(uint8_t mode)
+{
+    QLowEnergyConnectionParameters para;
+    m_dev_requested_conn_mode = mode;
 
-//    case MID:
-//        para.setLatency(M_LAT);
-//        para.setIntervalRange(M_MIN, M_MAX);
-//        para.setSupervisionTimeout(M_SUP);
-//        break;
+    switch (mode)
+    {
+    case SLOW:
+        para.setLatency(S_LAT);
+        para.setIntervalRange(S_MIN, S_MAX);
+        para.setSupervisionTimeout(S_SUP);
+        break;
 
-//    case FAST:
-//        para.setLatency(F_LAT);
-//        para.setIntervalRange(F_MIN, F_MAX);
-//        para.setSupervisionTimeout(F_SUP);
-//        break;
-//    }
+    case MID:
+        para.setLatency(M_LAT);
+        para.setIntervalRange(M_MIN, M_MAX);
+        para.setSupervisionTimeout(M_SUP);
+        break;
 
-//    m_connParamTimer.singleShot(100, this, SLOT(onConnParamTimerExpired()));
-//    m_control->requestConnectionUpdate(para);
+    case FAST:
+        para.setLatency(F_LAT);
+        para.setIntervalRange(F_MIN, F_MAX);
+        para.setSupervisionTimeout(F_SUP);
+        break;
+    }
 
-//}
+    //m_connParamTimer.singleShot(100, this, SLOT(onConnParamTimerExpired()));
+    m_control->requestConnectionUpdate(para);
+}

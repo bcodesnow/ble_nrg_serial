@@ -69,6 +69,11 @@ private:
         "{8873f2e2-b19e-11e2-9e96-0800200c9a66}",
     };
 
+    //  use main identifier to select which to select
+    QBluetoothAddress m_adapterAddress;
+    QString m_deviceAddress;
+    QString m_deviceState;
+
     QString m_ident_str;
     quint8 m_ident_idx;
 
@@ -86,15 +91,13 @@ private:
 
     bool m_multi_chunk_mode; // huge chunk on multiple characteristics
     bool m_sdEnabled;
-    QBluetoothAddress m_adapterAddress;
-    QString m_deviceAddress;
-    QString m_deviceState;
+
     qint16 m_fileIndexOnDevice;
     quint8 m_deviceSubState;
     quint8 m_deviceLastError;
 
     bool m_found_BLE_UART_Service;
-    //  use main identifier to select which to select
+
     QLowEnergyController *m_control;
     QLowEnergyService *m_service;
     QLowEnergyController::RemoteAddressType m_addressType = QLowEnergyController::PublicAddress;
@@ -138,7 +141,8 @@ private:
 
     void ackHugeChunk();
 
-    void update_conn_period();
+    void setConnParamMode(uint8_t mode);
+//    void update_conn_period();
 
     void parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type );
 
@@ -203,8 +207,10 @@ private slots:
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onConnected(void);
     void setShutUp(bool shutUp);
-    void setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency);
-    void onConnParamTimerExpired();
+    void setConnParamsOnCentral(uint8_t mode);
+    void setRequestedConnMode(uint8_t mode);
+    //void setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency);
+    //void onConnParamTimerExpired();
     //void setConnParamsWaitReply(uint8_t mode);
 
 };
