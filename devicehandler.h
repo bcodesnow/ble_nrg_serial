@@ -6,7 +6,7 @@
 #include "bluetoothbaseclass.h"
 #include "logfilehandler.h"
 #include "timestampler.h"
-
+#include <QElapsedTimer>
 #include <QDateTime>
 #include <QVector>
 #include <QTimer>
@@ -31,8 +31,6 @@
 #define CDSM_SUBSTATE_SAVING_ACC                                4u
 #define CDSM_SUBSTATE_SAVING_GYRO                               5u
 #define CDSM_SUBSTATE_SENDING_DATA_COLLECTED                    6u
-
-#define CONTINUE
 
 struct huge_chunk_indexed_byterray_t
 {
@@ -74,6 +72,8 @@ private:
     QString m_ident_str;
     quint8 m_ident_idx;
 
+    QElapsedTimer debugTimer; // temp
+
     QTimer m_connParamTimer;
     QTimer m_timeoutTimer;
     quint8 m_timeoutReason;
@@ -82,7 +82,7 @@ private:
     QList<quint16> m_hc_missed;
 
     conn_param_info_t m_dev_curr_param_info;
-    uint8_t m_dev_requested_conn_param_mode;
+    uint8_t m_dev_requested_conn_mode;
 
     bool m_multi_chunk_mode; // huge chunk on multiple characteristics
     bool m_sdEnabled;
@@ -115,7 +115,7 @@ private:
     uint16_t m_missed_to_request;
     uint16_t m_missed_in_request;
 
-    quint8 m_conn_param_mode;
+    //quint8 m_conn_param_mode;
 
 
 
@@ -201,7 +201,7 @@ private slots:
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onConnected(void);
-    void onShutUpSet(bool shutUp);
+    void setShutUp(bool shutUp);
     void setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency);
     void onConnParamTimerExpired();
     void setConnParamsWaitReply(uint8_t mode);
