@@ -8,6 +8,12 @@ void DeviceHandler::ble_uart_tx(const QByteArray &value)
         m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
+inline bool DeviceHandler::isDeviceInRequestedConnState()
+{
+    return (m_dev_curr_param_info.current_mode == m_dev_requested_conn_mode && m_dev_curr_param_info.requested_mode == m_dev_requested_conn_mode);
+
+}
+
 
 void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
@@ -172,24 +178,34 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                 break;
                 //
             case SENSORDATA_AVAILABLE:
+            {
                 qDebug()<<"Sensor Data can be downloaded!";
                 setInfo("Sensordata available!");
                 emit sensorDataAvailable();
+            }
                 break;
                 //
             case SENDING_SENSORDATA_FINISHED:
+            {
                 emit sensorDataReceived();
-                qDebug()<<"SENDING_SENSORDATA_FINISHED";
+                qDebug()<<"SENDING_SENSORDATA_FINISHED && allowing device to speak -> setShutUp(1)";
+                // disabling shutup
+                setShutUp(0);
+                m_refToOtherDevice->setShutUp(0);
                 setInfo("Sensordata Received!");
                 // set state ready to increase, ask the pal if he is ready - if true - increase
                 // need the write pointer
                 //
+            }
                 break;
             case TS_MSG:
+            {
                 m_refToTimeStampler->time_sync_msg_arrived(value);
+            }
                 break;
 
             case HUGE_CHUNK_ACK_PROC:
+            {
                 if ( data[1] == HC1_BEGIN )
                 {
                     qDebug()<<"HUGE_CHUNK_ACK_PROC : started!";
@@ -231,9 +247,11 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                         requestMissingPackage();
                     }
                 }
+            }
                 break;
 
             case DIAG_INFO:
+            {
                 if ( data[1] == DIAG_1_TYPE_HC_STAT )
                 {
                 }
@@ -255,9 +273,11 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
                     qDebug()<<"Unimplemented diag msg";
                 }
+            }
                 break;
                 //
             case CONN_PARAM_INFO:
+            {
                 // i should have implemented all packages this way..
                 conn_param_info_t* cp_ptr;
                 cp_ptr = (conn_param_info_t*) &data[1];
@@ -269,14 +289,14 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 //                    qDebug()<<"Dev Received our Mode Request..";
 //                    //setConnParamsOnCentral(m_dev_requested_conn_mode);
 //                }
-                if (m_dev_curr_param_info.current_mode == m_dev_requested_conn_mode && m_dev_curr_param_info.requested_mode == m_dev_requested_conn_mode)
+                if (isDeviceInRequestedConnState())
                 {
                     //make the necessary shutup!!
                     qDebug()<<"Dev also made the necessary changes and switched!";
                     setShutUp(1);
 
-                    //continue with requesting sensor data..
-                    if (m_dev_requested_conn_mode == FAST )
+                    //continue with requesting sensor data.. if the second device also reached its requested state..
+                    if (m_dev_requested_conn_mode == FAST && m_refToOtherDevice->isDeviceInRequestedConnState() )
                     {
                         QByteArray tba;
                         tba.resize(2);
@@ -288,8 +308,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
                     }
 
                 }
-
-
+            }
                 break;
                 //
             default:

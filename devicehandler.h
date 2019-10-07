@@ -177,6 +177,7 @@ public:
     {
         return m_writeCharacteristic.isValid();
     }
+    inline bool isDeviceInRequestedConnState();
 
 signals:
     void aliveChanged();
@@ -204,7 +205,7 @@ private slots:
     void setShutUp(bool shutUp);
     void setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency);
     void onConnParamTimerExpired();
-    void setConnParamsWaitReply(uint8_t mode);
+    //void setConnParamsWaitReply(uint8_t mode);
 
 };
 
