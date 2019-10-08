@@ -127,12 +127,20 @@ void DeviceHandler::setRefToTimeStampler(TimeStampler *t_time_stampler)
     m_refToTimeStampler = t_time_stampler;
 }
 
+void DeviceHandler::setBtAdapter(QBluetoothAddress addr)
+{
+    m_adapterAddress = addr;
+    qDebug()<<m_ident_str<<"Received the Adapter:"<<addr.toString();
+}
+
 void DeviceHandler::setIdentifier(QString str, quint8 idx, QBluetoothAddress addr)
 {
     m_ident_str = str;
     m_ident_idx = idx;
     m_adapterAddress = addr;
 }
+
+
 
 void DeviceHandler::setDevice(DeviceInfo *device)
 {
@@ -277,6 +285,7 @@ void DeviceHandler::onConnectionParamUpdated(const QLowEnergyConnectionParameter
               newParameters.supervisionTimeout();
 }
 
+
 void DeviceHandler::onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
     Q_UNUSED(c)
@@ -356,13 +365,15 @@ void DeviceHandler::searchCharacteristic()
                 {
                     qDebug()<<"Write Characteristic Registered";
                     m_writeCharacteristic = c;
-                    emit writeValidChanged();
+                    //emit writeValidChanged();
                     if(c.properties() & QLowEnergyCharacteristic::WriteNoResponse)
                     {
+                        qInfo()<<"QLowEnergyService::WriteWithoutResponse";
                         m_writeMode = QLowEnergyService::WriteWithoutResponse;
                     }
                     else
                     {
+                        qInfo()<<"QLowEnergyService::WriteWithResponse";
                         m_writeMode = QLowEnergyService::WriteWithResponse;
                     }
                     //update_conn_period(); // DEBUG
@@ -439,12 +450,12 @@ void DeviceHandler::requestBLESensorData()
     if (m_refToOtherDevice != NULL)
     {
         m_refToOtherDevice->setShutUp(0);
-        m_refToOtherDevice->setRequestedConnMode(SLOW);
+        m_refToOtherDevice->setRequestedConnParamsOnDevice(SLOW);
         m_refToOtherDevice->setConnParamsOnCentral(SLOW);
         qDebug()<<"CONNPARA: Set Connection parameters to other device.";
     }
     setShutUp(0);
-    setRequestedConnMode(FAST);
+    setRequestedConnParamsOnDevice(FAST);
     setConnParamsOnCentral(FAST);
     qDebug()<<"CONNPARA: Set Connection parameters of this device.";
 
@@ -460,17 +471,15 @@ void DeviceHandler::requestBLESensorData()
 
 void DeviceHandler::requestMissingPackage()
 {
-
-    uint16_t i = m_hc_missed.at(0);
+    request_missing_pkg_t req;
+    req.pkg_id = m_hc_missed.at(0);
     m_hc_missed.removeAt(0);
 
-    // add timeout timer..
     QByteArray tba;
-    tba.resize(4);
-    tba[0] = HUGE_CHUNK_ACK_PROC;
-    tba[1] = HC_1_REQ;
-    tba[2] = ( i >>  8 ) & 0xFF ;
-    tba[3] =   i & 0xFF ;
+
+    tba.append(HUGE_CHUNK_ACK_PROC);
+    tba.append((const char*) &req, sizeof(request_missing_pkg_t));
+
     qDebug()<<"HC -> Requesting missed : "<<i;
     this->ble_uart_tx(tba);
 }
@@ -501,7 +510,7 @@ void DeviceHandler::ackHugeChunk()
 //    this->ble_uart_tx(tba);
 //}
 
-void DeviceHandler::setRequestedConnMode(uint8_t mode)
+void DeviceHandler::setRequestedConnParamsOnDevice(uint8_t mode)
 {
     QByteArray tba;
     tba.resize(2);
@@ -527,13 +536,13 @@ void DeviceHandler::setRequestedConnMode(uint8_t mode)
 
 void DeviceHandler::parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type )
 {
-    m_huge_chunk.clear();
+    QByteArray tba;
     for (int i = 0; i < m_hc_vec.size(); i++)
     {
-        m_huge_chunk.append( m_hc_vec.at(i).barr );
+        tba.append( m_hc_vec.at(i).barr );
 
     }
-    qDebug()<<"PARSER FINISHED, gathered:"<<m_huge_chunk.size();
+    qDebug()<<"PARSER FINISHED, gathered:"<<tba.size();
     //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, type, tmp_write_pointer);
 }
 

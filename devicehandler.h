@@ -51,7 +51,7 @@ class DeviceHandler : public BluetoothBaseClass
     Q_PROPERTY(QString deviceState MEMBER m_deviceState NOTIFY deviceStateChanged)
     Q_PROPERTY(bool sdEnabled MEMBER m_sdEnabled NOTIFY sdEnabledChanged)
     Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
-    Q_PROPERTY(bool writeValid READ getWriteValid NOTIFY writeValidChanged)
+    //Q_PROPERTY(bool writeValid READ getWriteValid NOTIFY writeValidChanged)
 
 private:
     const QString BLE_UART_RX_CHAR = "{d773f2e2-b19e-11e2-9e96-0800200c9a66}";
@@ -79,22 +79,24 @@ private:
 
     QElapsedTimer debugTimer; // temp
 
-    QTimer m_connParamTimer;
+    //QTimer m_connParamTimer;
     QTimer m_timeoutTimer;
-    quint8 m_timeoutReason;
-    QByteArray m_huge_chunk;
+    //quint8 m_timeoutReason;
+
+    //QByteArray m_huge_chunk;
     QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
     QList<quint16> m_hc_missed;
 
-    conn_param_info_t m_dev_curr_param_info;
+    conn_param_info_t m_dev_conn_param_sinfo;
+    huge_chunk_start_t hc_transfer_struct;
     uint8_t m_dev_requested_conn_mode;
 
-    bool m_multi_chunk_mode; // huge chunk on multiple characteristics
+    //bool m_multi_chunk_mode; // huge chunk on multiple characteristics
     bool m_sdEnabled;
-
-    qint16 m_fileIndexOnDevice;
     quint8 m_deviceSubState;
     quint8 m_deviceLastError;
+
+    qint16 m_fileIndexOnDevice;
 
     bool m_found_BLE_UART_Service;
 
@@ -118,6 +120,14 @@ private:
     uint16_t m_missed_to_request;
     uint16_t m_missed_in_request;
 
+    struct
+    {
+        QTimer cmd_timer;
+        QByteArray last_cmd;
+        quint8 retry;
+        quint16 timeout;
+    } cmd_resp_struct;
+
     //quint8 m_conn_param_mode;
 
 
@@ -137,9 +147,7 @@ private:
     void searchCharacteristic();
     void printProperties(QLowEnergyCharacteristic::PropertyTypes);
 
-    void requestMissingPackage();
 
-    void ackHugeChunk();
 
     void setConnParamMode(uint8_t mode);
 //    void update_conn_period();
@@ -160,10 +168,6 @@ public:
     };
     Q_ENUM(AddressType)
 
-    void setBtAdapter(QBluetoothAddress addr)
-    {
-        m_adapterAddress = addr;
-    }
     void setDevice(DeviceInfo *device);
     void setAddressType(AddressType type);
     AddressType addressType() const;
@@ -171,28 +175,48 @@ public:
     void setRefToOtherDevice (DeviceHandler* t_dev_handler);
     void setRefToFileHandler (LogFileHandler* t_fil_helper);
     void setRefToTimeStampler (TimeStampler* t_time_stampler);
+    void setBtAdapter(QBluetoothAddress addr);
 
     void setIdentifier(QString str, quint8 idx, QBluetoothAddress addr);
+    void onHCACKprocArrive( QByteArray value );
 
     bool alive() const;
     void ble_uart_tx(const QByteArray &value);
 
-    bool getWriteValid(void)
-    {
-        return m_writeCharacteristic.isValid();
-    }
+//    bool getWriteValid(void)
+//    {
+//        return m_writeCharacteristic.isValid();
+//    }
+
     inline bool isDeviceInRequestedConnState();
+    bool ble_uart_send_cmd_with_resp(const QByteArray &value, quint16 timeout = 200, quint8 retry = 5);
+    void ble_uart_send_cmd_ok();
+
+    void setShutUp(bool shutUp);
+    void setConnParamsOnCentral(uint8_t mode);
+    void setRequestedConnParamsOnDevice(uint8_t mode);
+    void requestMissingPackage();
+    void ackHugeChunk();
 
 signals:
-    void aliveChanged();
+
+    void aliveChanged(); // alive information gets notified to handler
+    void aliveArrived(QByteArray value); // alive msg arrives
+    void hugeChunkAckProcArrived(QByteArray value);
+    void hugeChunkStartArrived();
+    void triggeredArrived();
+    void timeSyncMessageArrived(QByteArray value);
+    void connParamInfoArrived();
+
+    void sensorDataAvailable(); // it should be also called arrived..
+
+
     void deviceAddressChanged();
     void deviceStateChanged();
     void fileIndexOnDeviceChanged();
-    void aliveArrived();
-    void sensorDataAvailable();
     void sensorDataReceived();
     void sdEnabledChanged();
-    void writeValidChanged();
+    //void writeValidChanged();
     void transferProgressChanged(uint8_t percentage);
     void showProgressMessage(QString mainText, QString subText, int percent, uint8_t flag);
     void progressFinished();
@@ -202,13 +226,22 @@ public slots:
     void onConnectionParamUpdated(const QLowEnergyConnectionParameters &newParameters);
 
 private slots:
+    void onAliveArrived(QByteArray value); // alive msg gets handled
+    void onHugeChunkStartArrived();
+    void onTriggeredArrived(QByteArray value);
+    void onhugeChunkAckProcArrived(QByteArray value);
+    //void onTimeSyncMessageArrived(QByteArra value); //unimplemented.. we need to use the same instanz to keep it simple.
+    void onConnParamInfoArrived();
+
     void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
+
     void onConnected(void);
-    void setShutUp(bool shutUp);
-    void setConnParamsOnCentral(uint8_t mode);
-    void setRequestedConnMode(uint8_t mode);
+
+    void onCmdTimerExpired();
+
+    // fake slots..
     //void setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency);
     //void onConnParamTimerExpired();
     //void setConnParamsWaitReply(uint8_t mode);

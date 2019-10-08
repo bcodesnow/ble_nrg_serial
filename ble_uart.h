@@ -4,20 +4,12 @@
 #include "stdint.h"
 #include "ble_uart_types.h"
 
-/*
-uint16_t cheatsheat
-send
-    [0] = ( bytesToWrite >> 8 ) & 0xFF;
-    [1] = bytesToWrite & 0xFF;
-receive
-    u16 = ( ( (uint16_t) [0] ) << 8 ) & 0xFF;
-    u16 |= [1];
-*/
 #define USED_ON_MICRO 0
 
 /* ------------------------------------------------------------------- */
 
 #if USED_ON_MICRO == 1
+
     #include "bluenrg_types.h"
     #include "bluenrg_gatt_server.h"
     #include "bluenrg_gap.h"
@@ -32,22 +24,14 @@ receive
     #include "sm.h"
     #include <stdlib.h>
 
-//	/* For enabling the capability to handle BlueNRG Congestion */
-//	//#define ACC_BLUENRG_CONGESTION
-//	#ifdef ACC_BLUENRG_CONGESTION
-//	/* For defining how many events skip when there is a congestion */
-//	#define ACC_BLUENRG_CONGESTION_SKIP 30
-//	#endif /* ACC_BLUENRG_CONGESTION */
-
     /* Stack Init Modes:*/
     #define DISCOVERY_MODE 		1u<<1u
     #define	ADV_MODE			 		1u<<2u
     #define BLE_UART_MODE 		1u<<3u
     #define USE_TX_POOL				1u<<4u
-//	#define USE_SAFETY_DELAY 	1
-//	#define MAX_BLE_UART_TRIES 255
     #define BLE_UART_TX_TIMEOUT	1000
 
+    #define CHAR_MAX_PAYLOAD 20
     #define INDEX_SIZE	1u
     #define HC_USABLE_PAYLOAD ( CHAR_MAX_PAYLOAD - INDEX_SIZE )
     #define POOLED_HUGE_CHUNK_TIMEOUT		10000
@@ -56,37 +40,33 @@ receive
 
 /* ------------------------------------------------------------------- */
 
-#define CHAR_MAX_PAYLOAD 20
-
 /* Simple Protocol: */
 
 /*1st byte:
     CMD BYTE
 **/
+
+#define CMD_OK                          0x00
+#define CMD_HC_OK                       0xDD
+#define CMD_REQUEST_SENSORDATA          0x0A // available when data is in ram
+#define CMD_WRITE_CATCH_SUCCESS         0x09
+#define CMD_SET_SHUT_UP                 0x33 // when set on device it should not send any notifications
+#define CMD_SET_CONN_MODE   			0xBB // msg to receive conn period
+#define CMD_HUGE_CHUNK_START            0x77
+#define CMD_TURN_ON_SD_LOGGING          0x66
+#define CMD_TURN_ON_BLE_SENDING         0x55
+#define CMD_HUGE_CHUNK_ACK_PROC_START   0x0D
+#define CMD_REQUEST_MISSING_PACKAGE     0xC0
+
 #define TRIGGERED                       0x06
-#define GET_STATE                       0x03
-#define STOP				  									0x02
-#define START				  									0x01
-#define IGNORE_LAST_X                   0x07 // not implemented yet
-#define DATA_COLLECTED                  0x08 // used when data is saved to sd..
-#define WRITE_CATCH_SUCCESS             0x09
-
-
-#define REQUEST_SENSORDATA              0x0A // available when data is in ram
+#define DATA_SAVED_TO_SD                0x08 // used when data is saved to sd... DATA_COLLECTED
 #define SENDING_SENSORDATA_FINISHED     0x0B // emitted when all the files were sent
 #define SENSORDATA_AVAILABLE            0x0C // emitted wehn data can be requested.
-#define SET_SHUT_UP                     0x33 // when set on device it should not send any notifications
-/* REQUEST_SENSOR_DATA  -> byte[1] 0xFF */
-/* SENDING_SENSORDATA_FINISHED   -> byte[1] 0xFF */
-/* SENSORDATA_AVAILABLE					 -> byte[1] 0xFF */
+#define ALIVE                           0x10
 
-#define SET_CONN_MODE   				0xBB // msg to receive conn period
+#define CONN_PARAM_INFO                 0x12
 
-#define CONN_PARAM_INFO	0x12
-
-//uint16_t interval
-//uint16_t supervision
-
+/* Connection Modes: */
 #define SLOW 1
 #define MID  2
 #define FAST 3
@@ -106,63 +86,20 @@ receive
 #define F_LAT   0
 #define F_SUP   100
 
-
-#define HUGE_CHUNK_ACK_PROC							0x0D // HC FINISHED / REQUEST MISSED
-#define HC1_BEGIN                                               HC_1_FIN
-#define HC_1_FIN												11u
-#define	HC_1_REQ												22u
-#define HC_1_ACK												33u
-
-/*HUGE_CHUNK_ACK_PROC -> byte[1]
-                                                                 finished requesting approval to continue - 11
-                                                                 request missed package 22
-                                                                 hc was ok, continue 33
-
-                                            -> byte[2] package Nr Hbyte
-                                            -> byte[3] package Nr Lbyte
-                                            -> byte[4]
-                                            -> byte[5]
-                                            -> byte[6]
-*/
-
-#define HUGE_CHUNK_MISSED_PACKAGE				0x0F// MSG Type for missed packages exchanged during huge chunk ac proc
-/*HUGE_CHUNK_MISSED_PACKAGE -> byte[1] - byte[19] payload
-*/
-
-#define DIAG_INFO												0x0E
-#define DIAG_1_TYPE_HC_STAT							1u
-#define DIAG_1_TYPE_CONN_PARAM					2u
-#define DIAG_1_TYPE_LENGTH_TEST					3u
-
-#define DIAG_2_ARG1											2u
-#define DIAG_3_ARG2											3u
-#define DIAG_4_ARG3											4u
-#define DIAG_5_ARG4											5u
-
-#define DIAG_2_CP_LAT										2u
-#define DIAG_3_CP_INT										3u
-#define DIAG_4_CP_SUP										4u
-#define DIAG_4_CP_STA										5u
-
-/*DIAG_INFO -> byte[1] type
-                                            -> byte[2] arg1
-                                            -> byte[3] arg2
-                                            -> byte[4] ...
-                                            -> byte[5] ...
-                                            -> byte[6] ...
-*/
-
-#define ALIVE                           0x10
-
-#define HUGE_CHUNK_START                0x77
-#define	HUGE_CHUNK_FINISH               0x88
-#define SWITCH_RECEIVE_MODE             0x99
-#define TURN_ON_SD_LOGGING              0x66
-#define TURN_ON_BLE_SENDING             0x55
-
-#define TS_MSG                          0xAA
+#define DIAG_INFO							0x0E
+#define DIAG_1_TYPE_HC_STAT					1u
+#define DIAG_1_TYPE_LENGTH_TEST				3u
 
 /* ------------------------------------------------------------------- */
+
+#define GET_STATE                       0x03
+#define STOP				  			0x02
+#define START				  			0x01
+#define IGNORE_LAST_X                   0x07 // not implemented yet
+
+/* ------------------------------------------------------------------- */
+
+#define TS_MSG                          0xAA
 
 /* TS_MSG                               -> byte[1] CMD
  * TIME SYNC MSG FROM SERVER OR CLIENT  -> byte[2] timeStampOnServer / knownProcessingTime
@@ -179,22 +116,6 @@ receive
 #define TS_CMD_SYNC_FINISH                      6u
 
 
-/* REQUEST_SENSOR_DATA  -> byte[1] 0xFF */
-
-/* IGNORE_LAST_X 		-> byte[1] how many to ignore */
-
-
-/* ALIVE 							-> byte[1] mainState
-                                            -> byte[2] subState
-                                            -> byte[3] fileIndex
-                                            -> byte[4] lastError
-*/
-
-/* HUGE_CHUNK_START		-> byte[1] bytesToSend HBYTE
-                                            -> byte[2] bytesToSend LBYTE
-                                            -> byte[3] TYPE
-                                            -> byte[4] Used Charactertics as Channels (count)
-*/
 // THIS BLOCK HAS NOTHING TO DO HERE
 #define TYPE_AUD 1u
 #define	TYPE_ACC 2u
@@ -212,22 +133,6 @@ receive
 #define FREQ_PRS 100
 // THIS BLOCK HAS NOTHING TO DO HERE
 
-/* HUGE_CHUNK_FINISH	-> byte[1] maxRepeatCount */
-
-/* SWITCH_RECEIVE_MODE		-> byte[1] 0x55
-                            -> byte[2] 0xFF
-                            -> byte[3] 0x55
-                            -> byte[4] 0xFF
-                            -> byte[5] 0x55
-                            -> byte[6] MODE
-*/
-
-#define SW_REC_MODE_LENGTH 7
-#define MODE_CMD 1u
-#define MODE_HUGE_CHUNK 2u
-
-
-/* TURN_ON_SD_LOGGING	-> byte[1] ON / OFF */
 
 
 /* ------------------------------------------------------------------- */
