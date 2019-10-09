@@ -47,16 +47,20 @@
 **/
 
 #define CMD_OK                          0x00
-#define CMD_HC_OK                       0xDD
+
 #define CMD_REQUEST_SENSORDATA          0x0A // available when data is in ram
 #define CMD_WRITE_CATCH_SUCCESS         0x09
 #define CMD_SET_SHUT_UP                 0x33 // when set on device it should not send any notifications
 #define CMD_SET_CONN_MODE   			0xBB // msg to receive conn period
-#define CMD_HUGE_CHUNK_START            0x77
+
 #define CMD_TURN_ON_SD_LOGGING          0x66
 #define CMD_TURN_ON_BLE_SENDING         0x55
-#define CMD_HUGE_CHUNK_ACK_PROC_START   0x0D
-#define CMD_REQUEST_MISSING_PACKAGE     0xC0
+
+#define CMD_START_HUGE_CHUNK            0x77
+#define CMD_START_HUGE_CHUNK_ACK_PROC   0x0D
+#define CMD_REQUEST_MISSING_PACKAGE     0xC0 // modify to tx pool
+#define REPLY_MISSED_PACKAGE            0xC1
+#define CMD_HC_OK                       0xDD
 
 #define TRIGGERED                       0x06
 #define DATA_SAVED_TO_SD                0x08 // used when data is saved to sd... DATA_COLLECTED
@@ -86,16 +90,15 @@
 #define F_LAT   0
 #define F_SUP   100
 
-#define DIAG_INFO							0x0E
-#define DIAG_1_TYPE_HC_STAT					1u
-#define DIAG_1_TYPE_LENGTH_TEST				3u
-
 /* ------------------------------------------------------------------- */
 
 #define GET_STATE                       0x03
 #define STOP				  			0x02
 #define START				  			0x01
 #define IGNORE_LAST_X                   0x07 // not implemented yet
+
+#define DIAG_INFO							0x0E
+#define DIAG_1_TYPE_LENGTH_TEST				3u
 
 /* ------------------------------------------------------------------- */
 

@@ -34,7 +34,7 @@ void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
         tba.resize(2);
         tba[0] = WRITE_CATCH_SUCCESS;
         tba[1] = 1;
-        qInfo()<<"Sending Catch Confrim";
+        qInfo()<<"Sending Catch Configrm";
     }
 
     else if (str == "confirm(0)" )
@@ -98,3 +98,9 @@ void DeviceHandler::printProperties(QLowEnergyCharacteristic::PropertyTypes prop
     if (props.testFlag(QLowEnergyCharacteristic::WriteSigned)) qDebug()<<"Property: Write (signed)";
     if (props.testFlag(QLowEnergyCharacteristic::ExtendedProperty)) qDebug()<<"Property: Extended Property";
 }
+
+void transferStatistics()
+float kbyte_ps;
+float kbit_ps;
+float secs;
+quint64 elapsed;

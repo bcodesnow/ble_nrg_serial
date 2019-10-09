@@ -21,7 +21,6 @@ typedef struct huge_chunk_start_s {
 } __attribute__((packed)) huge_chunk_start_t;
 
 typedef struct request_missing_pkg_s {
-    uint8_t cmd_2 = HC_1_REQ;
     uint16_t pkg_id;
 } __attribute__((packed)) request_missing_pkg_t;
 #endif

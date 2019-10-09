@@ -32,6 +32,12 @@
 #define CDSM_SUBSTATE_SAVING_GYRO                               5u
 #define CDSM_SUBSTATE_SENDING_DATA_COLLECTED                    6u
 
+
+#define HUGE_CHUNK_IN_PROCESS       (1u<<1u)
+#define CONN_PARAMS_IN_CHANGE       (1u<<3u)
+
+
+
 struct huge_chunk_indexed_byterray_t
 {
     quint16 received;
@@ -69,11 +75,12 @@ private:
         "{8873f2e2-b19e-11e2-9e96-0800200c9a66}",
     };
 
+   // quint32 m_deviceFlags;
     //  use main identifier to select which to select
     QBluetoothAddress m_adapterAddress;
     QString m_deviceAddress;
-    QString m_deviceState;
 
+    QString m_deviceState;
     QString m_ident_str;
     quint8 m_ident_idx;
 
@@ -87,9 +94,11 @@ private:
     QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
     QList<quint16> m_hc_missed;
 
-    conn_param_info_t m_dev_conn_param_sinfo;
+    conn_param_info_t m_dev_conn_param_info;
     huge_chunk_start_t hc_transfer_struct;
     uint8_t m_dev_requested_conn_mode;
+
+
 
     //bool m_multi_chunk_mode; // huge chunk on multiple characteristics
     bool m_sdEnabled;
@@ -175,12 +184,12 @@ public:
     void setRefToOtherDevice (DeviceHandler* t_dev_handler);
     void setRefToFileHandler (LogFileHandler* t_fil_helper);
     void setRefToTimeStampler (TimeStampler* t_time_stampler);
-    void setBtAdapter(QBluetoothAddress addr);
+    void setBtAdapter(QBluetoothAddress addr); // modify to pass the pointer
 
     void setIdentifier(QString str, quint8 idx, QBluetoothAddress addr);
     void onHCACKprocArrive( QByteArray value );
 
-    bool alive() const;
+    bool alive() const; // this is a connection state..
     void ble_uart_tx(const QByteArray &value);
 
 //    bool getWriteValid(void)
@@ -189,6 +198,7 @@ public:
 //    }
 
     inline bool isDeviceInRequestedConnState();
+
     bool ble_uart_send_cmd_with_resp(const QByteArray &value, quint16 timeout = 200, quint8 retry = 5);
     void ble_uart_send_cmd_ok();
 
@@ -197,18 +207,20 @@ public:
     void setRequestedConnParamsOnDevice(uint8_t mode);
     void requestMissingPackage();
     void ackHugeChunk();
+    void requestSensorData();
 
 signals:
 
-    void aliveChanged(); // alive information gets notified to handler
+    void aliveChanged(); // alive information gets notified to handler ... rename it to connectionAlive or sth...
+
     void aliveArrived(QByteArray value); // alive msg arrives
-    void hugeChunkAckProcArrived(QByteArray value);
-    void hugeChunkStartArrived();
+    void startHugeChunkAckProcArrived(QByteArray value);
+    void startHugeChunkArrived();
     void triggeredArrived();
     void timeSyncMessageArrived(QByteArray value);
     void connParamInfoArrived();
-
-    void sensorDataAvailable(); // it should be also called arrived..
+    void sensorDataAvailableArrived();
+    void replyMissingPackageArrived();
 
 
     void deviceAddressChanged();
@@ -227,15 +239,18 @@ public slots:
 
 private slots:
     void onAliveArrived(QByteArray value); // alive msg gets handled
-    void onHugeChunkStartArrived();
+    void onStartHugeChunkArrived();
     void onTriggeredArrived(QByteArray value);
-    void onhugeChunkAckProcArrived(QByteArray value);
+    void onStartHugeChunkAckProcArrived(QByteArray value);
     //void onTimeSyncMessageArrived(QByteArra value); //unimplemented.. we need to use the same instanz to keep it simple.
     void onConnParamInfoArrived();
-
+    void onSensorDataAvailableArrived();
     void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
+    void onReplyMissingPackageArrived(QByteArray value);
+
+
 
     void onConnected(void);
 

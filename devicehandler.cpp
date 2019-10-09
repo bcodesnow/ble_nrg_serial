@@ -87,9 +87,7 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     m_fileIndexOnDevice(0),
     m_sdEnabled(0)
 {
-    /*
-    */
-    m_hc_missed = QList<quint16>();
+
 }
 
 void DeviceHandler::setAddressType(AddressType type)
@@ -139,8 +137,6 @@ void DeviceHandler::setIdentifier(QString str, quint8 idx, QBluetoothAddress add
     m_ident_idx = idx;
     m_adapterAddress = addr;
 }
-
-
 
 void DeviceHandler::setDevice(DeviceInfo *device)
 {
@@ -314,6 +310,7 @@ void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, c
     }
 }
 
+
 void DeviceHandler::onConnected()
 {
 
@@ -443,46 +440,16 @@ void DeviceHandler::searchCharacteristic()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DeviceHandler::requestBLESensorData()
+void DeviceHandler::requestSensorData()
 {
-
-
-    if (m_refToOtherDevice != NULL)
-    {
-        m_refToOtherDevice->setShutUp(0);
-        m_refToOtherDevice->setRequestedConnParamsOnDevice(SLOW);
-        m_refToOtherDevice->setConnParamsOnCentral(SLOW);
-        qDebug()<<"CONNPARA: Set Connection parameters to other device.";
-    }
-    setShutUp(0);
-    setRequestedConnParamsOnDevice(FAST);
-    setConnParamsOnCentral(FAST);
-    qDebug()<<"CONNPARA: Set Connection parameters of this device.";
-
-    //    QByteArray tba;
-    //    tba.resize(2);
-    //    tba[0] = REQUEST_SENSORDATA;
-    //    tba[1] = 0xFF;
-    //    if (tba.size() && m_writeCharacteristic.isValid())
-    //        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
-
-}
-
-
-void DeviceHandler::requestMissingPackage()
-{
-    request_missing_pkg_t req;
-    req.pkg_id = m_hc_missed.at(0);
-    m_hc_missed.removeAt(0);
-
     QByteArray tba;
+    tba.resize(2);
+    tba[0] = CMD_REQUEST_SENSORDATA;
+    tba[1] = 0xFF;
+    ble_uart_send_cmd_with_resp(tba);
 
-    tba.append(HUGE_CHUNK_ACK_PROC);
-    tba.append((const char*) &req, sizeof(request_missing_pkg_t));
-
-    qDebug()<<"HC -> Requesting missed : "<<i;
-    this->ble_uart_tx(tba);
 }
+
 
 void DeviceHandler::ackHugeChunk()
 {
@@ -514,7 +481,7 @@ void DeviceHandler::setRequestedConnParamsOnDevice(uint8_t mode)
 {
     QByteArray tba;
     tba.resize(2);
-    tba[0] = SET_CONN_MODE;
+    tba[0] = CMD_SET_CONN_MODE;
     switch (mode)
     {
     case SLOW:
@@ -530,7 +497,7 @@ void DeviceHandler::setRequestedConnParamsOnDevice(uint8_t mode)
         break;
     }
     m_dev_requested_conn_mode = mode;
-    this->ble_uart_tx(tba);
+    this->ble_uart_send_cmd_with_resp(tba);
 }
 
 
