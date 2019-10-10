@@ -53,9 +53,13 @@
 
 ConnectionHandler::ConnectionHandler(QObject *parent) : QObject(parent)
 {
-    qDebug()<<"connection handler";
+    qDebug()<<"Connection Handler -> hostModeStateChanged of QBluetoothLocalDevice";
     connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged,
             this, &ConnectionHandler::hostModeChanged);
+
+     qDebug()<<"Fetching Adapter List";
+     m_adapterList = QBluetoothLocalDevice::allDevices();
+     qDebug()<<"Adapter List Size: "<< m_adapterList.size();
 }
 
 bool ConnectionHandler::alive() const
@@ -87,54 +91,54 @@ void ConnectionHandler::hostModeChanged(QBluetoothLocalDevice::HostMode /*mode*/
     emit deviceChanged();
 }
 
-QVariant ConnectionHandler::adapters()
-{
-    return QVariant::fromValue(m_adapters);
-}
+//QVariant ConnectionHandler::adapters()
+//{
+//    return QVariant::fromValue(m_adapters);
+//}
 
-QList<QBluetoothAddress> ConnectionHandler::getAdaptersAddr()
-{
-    QList<QBluetoothAddress> tmplist;
-    tmplist.clear();
-    for (int i=0;i<m_adapters.size();i++) {
-        tmplist.append(((AdapterInfo*)m_adapters.at(i))->getAddress());
-    }
-    return tmplist;
-}
+//QList<QBluetoothAddress> ConnectionHandler::getAdaptersAddr()
+//{
+//    QList<QBluetoothAddress> tmplist;
+//    tmplist.clear();
+//    for (int i=0;i<m_adapters.size();i++) {
+//        tmplist.append(((AdapterInfo*)m_adapters.at(i))->getAddress());
+//    }
+//    return tmplist;
+//}
 
-void ConnectionHandler::addAdapter(QString name, QBluetoothAddress addr)
-{
-    qDebug()<<"BT-Adapter added:"<<name<<addr;
-    m_adapters.append(new AdapterInfo(name, addr));
-}
+//void ConnectionHandler::addAdapter(QString name, QBluetoothAddress addr)
+//{
+//    qDebug()<<"BT-Adapter added:"<<name<<addr;
+//    m_adapters.append(new AdapterInfo(name, addr));
+//}
 
-void ConnectionHandler::scanAdapters()
-{
-    m_adapters.clear();
-    QList<QBluetoothHostInfo> adapterList = QBluetoothLocalDevice::allDevices();
-    for (int i=0;i<adapterList.size();i++) {
-        addAdapter(adapterList.at(i).name(),adapterList.at(i).address());
-    }
-}
+//void ConnectionHandler::scanAdapters()
+//{
+//    m_adapters.clear();
+//    QList<QBluetoothHostInfo> adapterList = QBluetoothLocalDevice::allDevices();
+//    for (int i=0;i<adapterList.size();i++) {
+//        addAdapter(adapterList.at(i).name(),adapterList.at(i).address());
+//    }
+//}
 
-void ConnectionHandler::initBtAdapters(QBluetoothAddress &leftaddr, QBluetoothAddress &rightaddr)
-{
-    scanAdapters();
-    QList<QBluetoothAddress> adapterAddrList = this->getAdaptersAddr();
+//void ConnectionHandler::initBtAdapters(QBluetoothAddress &leftaddr, QBluetoothAddress &rightaddr)
+//{
+//    scanAdapters();
+//    QList<QBluetoothAddress> adapterAddrList = this->getAdaptersAddr();
 
-    int adapterCount = adapterAddrList.size();
-    if (adapterCount == 1) {
-        // set address to both handles
-        leftaddr = rightaddr = adapterAddrList.at(0);
-    }
-    else if (adapterCount > 1) {
-        // set first two addresses to handles
-        leftaddr = adapterAddrList.at(0);
-        rightaddr = adapterAddrList.at(1);
-    }
-    else {
-        // none adapters found, which means QBluetoothLocalDevice is not supported on OS
-    }
-}
+//    int adapterCount = adapterAddrList.size();
+//    if (adapterCount == 1) {
+//        // set address to both handles
+//        leftaddr = rightaddr = adapterAddrList.at(0);
+//    }
+//    else if (adapterCount > 1) {
+//        // set first two addresses to handles
+//        leftaddr = adapterAddrList.at(0);
+//        rightaddr = adapterAddrList.at(1);
+//    }
+//    else {
+//        // none adapters found, which means QBluetoothLocalDevice is not supported on OS
+//    }
+//}
 
 

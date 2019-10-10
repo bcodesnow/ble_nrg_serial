@@ -50,18 +50,7 @@ void DeviceHandler::ble_uart_tx(const QByteArray &value)
 inline bool DeviceHandler::isDeviceInRequestedConnState()
 {
     return ( ( m_dev_conn_param_info.current_mode == m_dev_requested_conn_mode ) && ( m_dev_conn_param_info.requested_mode == m_dev_requested_conn_mode ));
-
 }
-
-static uint16_t hc_highest_index;
-    static bool first_multi_chunk;
-    static uint32_t rec_ts;
-
-    static uint16_t last_idx;
-    uint16_t tidx;
-    index
-
-    //static uint16_t arrived_package_count;
 
 void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
@@ -109,7 +98,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         }
             break;
 
-        case CMD_START_HUGE_CHUNK_ACK_PROC:
+        case REPLY_START_HUGE_CHUNK:
         {
             huge_chunk_start_t* hc_transfer_struct_ptr;
             hc_transfer_struct_ptr = (huge_chunk_start_t*) &data[1];
@@ -151,8 +140,9 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
         case REPLY_MISSED_PACKAGE:
         {
-            enit replyMissingPackageArrived();
+            emit replyMissingPackageArrived();
         }
+            break;
 
         case DIAG_INFO:
         {
@@ -185,65 +175,59 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) -> One of the TX_POOL Characteristics
     {
+        // this is the ble rx pooled part.. it could be also moved to an own handler
+        uint16_t tidx;
+        huge_chunk_indexed_byterray_t hc_tmp_iba_struct;
 
-    tidx = data[0];
+        tidx = data[0];
 
-    if (first_multi_chunk && !tidx )
-    {
-        tidx = 0;
-        first_multi_chunk = false;
-        debugTimer.start();
-    }
-    else if ( tidx > hc_highest_index )
-    {
-        hc_highest_index = tidx;
-    }
-    else
-    {
-        do {
-            tidx += ( 0xFF + 1 );
-        } while (tidx < ( hc_highest_index - 100 ));
-        // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
-        hc_highest_index = tidx;
-    }
-    //  qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
+        if (hc_helper_struct.first_multi_chunk && !tidx )
+        {
+            tidx = 0;
+            hc_helper_struct.first_multi_chunk = false;
+            m_debugTimer.start();
+        }
+        else if ( tidx > hc_helper_struct.hc_highest_index )
+        {
+            hc_helper_struct.hc_highest_index = tidx;
+        }
+        else
+        {
+            do {
+                tidx += ( 0xFF + 1 );
+            } while (tidx < ( hc_helper_struct.hc_highest_index - 100 ));
+            // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
+            hc_helper_struct.hc_highest_index = tidx;
+        }
+        //  qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
 
-    tmp.barr.append(value.size()-1, data[1]);
+        hc_tmp_iba_struct.barr.append(value.size()-1, data[1]);
+        hc_tmp_iba_struct.received = 1;
 
-    tmp.received = 1;
-    if (tidx < incoming_package_count)
-        m_hc_vec.replace(tidx,tmp);
-    else
-        qWarning()<<"HC -> Received idx too high, would leak out of the vector and crash the system!";
+        if (tidx < hc_transfer_struct.incoming_package_count)
+            m_hc_vec.replace(tidx,hc_tmp_iba_struct);
+        else
+        {
+            // We might show the devil
+            qWarning()<<"HC -> Received idx too high, would leak out of the vector and crash the system!";
+        }
+        if (tidx > hc_helper_struct.last_idx++)
+        {
+            qDebug()<<"HC -> Skipped !!! "<<hc_helper_struct.last_idx+1;
+        }
 
-    if (tidx > last_idx++)
-    {
-        qDebug()<<"HC -> Skipped !!! "<<last_idx+1;
-    }
-
-    if ( tidx == incoming_package_count - 1 )
-    {
-        //qDebug()<<"HC -> Last PKG!";
-        elapsed = debugTimer.elapsed();
-        kbyte_ps = 0;
-        kbit_ps = 0;
-        secs = (float) elapsed / 1000.0f;
-        kbyte_ps = incoming_byte_count /  secs / 1000  ;
-        kbit_ps = kbyte_ps * 8.0;
-        qInfo()<<"HC -> Transfer of"<<incoming_byte_count<<"bytes took"<< elapsed<<"ms";
-        qInfo()<<"HC -> Throughput of net data is" <<kbyte_ps<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
-        secs = (float) elapsed / 1000.0f;
-        kbyte_ps = ( incoming_byte_count + incoming_package_count ) /  secs / 1000  ;
-        kbit_ps = kbyte_ps * 8.0;
-        qInfo()<<"HC -> Throughput of raw data is" <<kbyte_ps<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
-
-    }
-    else if (tidx > incoming_package_count )
-    {
-        qWarning()<<"HC -> Too many?!";
+        if ( tidx == hc_transfer_struct.incoming_package_count - 1 )
+        {
+            qDebug()<<"HC -> Last PKG!";
+            printThroughput();
+        }
+        else if (tidx > hc_transfer_struct.incoming_package_count )
+        {
+            qWarning()<<"HC -> Too many?!";
+        }
     }
 }
-}
+
 
 void DeviceHandler::onAliveArrived(QByteArray value)
 {
@@ -287,10 +271,10 @@ void DeviceHandler::onReplyMissingPackageArrived(QByteArray value)
     huge_chunk_indexed_byterray_t tmp;
     tmp.barr.append( value.right(value.size() - 1) );
     tmp.received = 1;
-    m_hc_vec.replace( m_missed_in_request , tmp );
+    m_hc_vec.replace( hc_helper_struct.missed_in_request , tmp );
 
-    m_hc_missed.removeAt(m_missed_in_request); //added
-    m_missed_to_request--; // added
+    m_hc_missed.removeAt( hc_helper_struct.missed_in_request); //added
+    hc_helper_struct.missed_to_request--; // added
 
     if (m_hc_missed.size())
         requestMissingPackage();
@@ -307,15 +291,6 @@ void DeviceHandler::onReplyMissingPackageArrived(QByteArray value)
     }
 }
 
-
-
-struct huge_chunk_transfer_local_t
-{
-    quint8 first_multi_chunk;
-
-};
-
-huge_chunk_transfer_local_t hc_local;
 
 void DeviceHandler::onStartHugeChunkArrived()
 {
@@ -336,10 +311,11 @@ void DeviceHandler::onStartHugeChunkArrived()
 
     m_hc_vec = QVector<huge_chunk_indexed_byterray_t> ( hc_transfer_struct.incoming_package_count );
     qDebug()<<"HC -> Pkg Count"<< hc_transfer_struct.incoming_package_count;
-    hc_highest_index = 0;
-    hc_local.first_multi_chunk = true;
+    hc_helper_struct.hc_highest_index = 0;
+    hc_helper_struct.first_multi_chunk = true;
+    hc_helper_struct.missed_to_request = 0;
 
-    m_missed_to_request = 0;
+    // TODO this is not threadsafe..
     m_refToFileHandler->add_to_log_fil(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
     m_refToFileHandler->add_to_log_fil(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
     m_refToFileHandler->add_to_log_fil(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
@@ -369,7 +345,7 @@ void DeviceHandler::onTriggeredArrived(QByteArray value)
         m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "ACC");
     else
         m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "Things got messed up..");
-    //
+    // TODO this is not threadsafe
     m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger MSG Received", QString::number(m_refToTimeStampler->get_timestamp_us()));
 }
 
@@ -390,16 +366,16 @@ void DeviceHandler::onStartHugeChunkAckProcArrived(QByteArray value)
             if ( !m_hc_vec.at(i).received )
             {
                 qDebug()<<"Adding"<<i;
-                m_missed_to_request++;
+                hc_helper_struct.missed_to_request++;
                 m_hc_missed.append(i); //to rst later
             }
         }
         qDebug()<<"HUGE_CHUNK_ACK_PROC : need to request"<<m_hc_missed.size()<<"packages ;( ;";
     }
 
-    qDebug()<<"m_missed_to_request"<<m_missed_to_request;
+    qDebug()<<"m_missed_to_request"<<hc_helper_struct.missed_to_request;
 
-    if ( m_missed_to_request == 0 )
+    if ( hc_helper_struct.missed_to_request == 0 )
     {
         setInfo("All Received!");
         qDebug()<<"All Received";
@@ -415,9 +391,7 @@ void DeviceHandler::onStartHugeChunkAckProcArrived(QByteArray value)
     }
 }
 
-quint8 downloading_sensor_data_active;
 
-QTimer m_connParamTimer;
 void DeviceHandler::onConnParamInfoArrived()
 {
 
@@ -450,6 +424,16 @@ void DeviceHandler::onConnParamInfoArrived()
     }
 }
 
+void DeviceHandler::onConnParamTimerExpired()
+{
+    // TODO here it is
+}
 
-m_refToOtherDevice->setRequestedConnParamsOnDevice(SLOW);
-m_refToOtherDevice->setConnParamsOnCentral(SLOW);
+void DeviceHandler::onSensorDataAvailableArrived()
+{
+    // todo this is something qml could jump on again..
+}
+
+// TODO
+//m_refToOtherDevice->setRequestedConnParamsOnDevice(SLOW);
+//m_refToOtherDevice->setConnParamsOnCentral(SLOW);

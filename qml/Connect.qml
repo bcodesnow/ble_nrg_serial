@@ -167,7 +167,7 @@ AppPage {
                 if (state === "disconnected")
                 {
                     state = "connected"
-                    deviceFinder.connectToMultipleServices();
+                    deviceFinder.connectToSelectedDevices();
                     view.setCurrentIndex(1);
                 }
                 else

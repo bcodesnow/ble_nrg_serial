@@ -61,10 +61,12 @@
 #include "devicehandler.h"
 #include "deviceinfo.h"
 #include "QThread"
+#include <QDebug>
 
-DeviceFinder::DeviceFinder(DeviceHandler* handler, QObject *parent):
+DeviceFinder::DeviceFinder(QList<DeviceInterface*>* devicelist,ConnectionHandler* connHandler, QObject *parent):
     BluetoothBaseClass(parent),
-    m_deviceHandler(handler)
+    m_device_list(devicelist),
+    m_conn_handler_ptr(connHandler)
 {
     m_selectedDevicesCount = 0;
     //! [devicediscovery-1]
@@ -82,18 +84,18 @@ DeviceFinder::DeviceFinder(DeviceHandler* handler, QObject *parent):
 
 DeviceFinder::~DeviceFinder()
 {
-    qDeleteAll(m_devices);
-    m_devices.clear();
+    qDeleteAll(m_found_devices);
+    m_found_devices.clear();
 }
 
 void DeviceFinder::startSearch()
 {
+    qDebug()<<"DeviceFinder -> Starting Search";
     clearMessages();
-    m_deviceHandler[0].setDevice(nullptr);
-    m_deviceHandler[1].setDevice(nullptr);
+    if (m_device_list->size() != 0)
+        qDeleteAll(m_device_list->begin(), m_device_list->end());
 
-    qDeleteAll(m_devices);
-    m_devices.clear();
+    m_device_list->clear();
 
     emit devicesChanged();
 
@@ -102,6 +104,7 @@ void DeviceFinder::startSearch()
     //! [devicediscovery-2]
     emit scanningChanged();
     setInfo(tr("Scanning for devices..."));
+    qDebug()<<"DeviceFinder -> QBluetoothDeviceDiscoveryAgent searching LE";
 }
 
 //! [devicediscovery-3]
@@ -109,9 +112,9 @@ void DeviceFinder::addDevice(const QBluetoothDeviceInfo &device)
 {
     // If device is LowEnergy-device, add it to the list
     if (device.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
-        m_devices.append(new DeviceInfo(device));
+        m_found_devices.append(new DeviceInfo(device));
         setInfo(tr("Low Energy device found. Scanning more..."));
-        qDebug()<<"BLE DEV FOUND KEEP SCANNING"<<device.address().toString();
+        qDebug()<<"Low Energy device found. Scanning more..."<<device.address().toString();
 //! [devicediscovery-3]
         emit devicesChanged();
 //! [devicediscovery-4]
@@ -133,7 +136,7 @@ void DeviceFinder::scanError(QBluetoothDeviceDiscoveryAgent::Error error)
 
 void DeviceFinder::scanFinished()
 {
-    if (m_devices.size() == 0)
+    if (m_found_devices.size() == 0)
         setError(tr("No Low Energy devices found."));
     else
         setInfo(tr("Scanning done."));
@@ -141,75 +144,33 @@ void DeviceFinder::scanFinished()
     emit scanningChanged();
     emit devicesChanged();
 
-    qDebug()<<"Found BLE Devices Count:"<<m_devices.size();
-    /*
-    if (m_devices.size())
-        connectToService( ((DeviceInfo*)m_devices.at(0))->getAddress());
-    */
-//    //TESTCODE
-//    for (int i = 0; i < m_devices.size(); i++) {
-//        if (((DeviceInfo*)m_devices.at(i))->getAddress() == "CE:D4:6E:7C:0E:44" ) {
-//            qDebug()<<"Connecting to Service";
-//            connectToService( ((DeviceInfo*)m_devices.at(i))->getAddress());
-//            break;
-//        }
-//    }
+    qDebug()<<"Found BLE Devices Count:"<<m_found_devices.size();
 }
 
-void DeviceFinder::connectToService(const QString &address)
-{
-    m_deviceDiscoveryAgent->stop();
 
-    DeviceInfo *currentDevice = nullptr;
-    for (int i = 0; i < m_devices.size(); i++) {
-        if (((DeviceInfo*)m_devices.at(i))->getAddress() == address ) {
-            currentDevice = (DeviceInfo*)m_devices.at(i);
-            break;
+void DeviceFinder::connectToSelectedDevices()
+{
+    quint8 adapterListSize = m_conn_handler_ptr->m_adapterList.size();
+    qDebug()<<"We have "<< adapterListSize <<"adapters detected";
+
+    int k = 0;
+    for (int i = 0; i < m_found_devices.size(); i++)
+    {
+        if  (((DeviceInfo*)m_found_devices.at(i))->getDeviceFlags() & DEVICE_SELECTED )
+        {
+            m_device_list->append(new DeviceInterface);
+            m_device_list->last()->init_device( m_conn_handler_ptr->m_adapterList.at(k).address(), (DeviceInfo*) m_found_devices.at(i) );
+            k++;
+            if ( k >= adapterListSize)
+                k = 0;
+
         }
     }
-
-    if (currentDevice)
-    {
-        qInfo()<<"Handling over Device to Device Handler";
-        m_deviceHandler[0].setDevice(currentDevice);
-    }
+    qDebug()<<"Connection started to"<<m_selectedDevicesCount<<"from"<<m_found_devices.size()<<"found devices..";
     clearMessages();
 }
 
-void DeviceFinder::connectToMultipleServices()
-{
-    if (m_selectedDevicesCount)
-    {
-        if (m_selectedDevicesCount == 1)
-        {
-            qDebug()<<"Connecting to a Single SensorTile...";
-            for (int i = 0; i < m_devices.size(); i++)
-            {
-                if  (((DeviceInfo*)m_devices.at(i))->getDeviceFlags() & DEVICE_SELECTED )
-                    m_deviceHandler[0].setDevice((DeviceInfo*) m_devices.at(i));
-                    m_initializedDevicesList[0] = true;
-            }
-        }
-        else
-        {
-            int k = 0;
-            for (int i = 0; i < m_devices.size(); i++)
-            {
-                if  (((DeviceInfo*)m_devices.at(i))->getDeviceFlags() & DEVICE_SELECTED )
-                {
-                    qDebug()<<"Connecting to 2 SensorTiles...";
-                    m_deviceHandler[k].setDevice((DeviceInfo*) m_devices.at(i));
-                    k++;
-                }
-            }
-            m_deviceHandler[0].setRefToOtherDevice( & m_deviceHandler[1]);
-            m_initializedDevicesList[0] = true;
-            m_deviceHandler[1].setRefToOtherDevice( & m_deviceHandler[0]);
-            m_initializedDevicesList[1] = true;
 
-        }
-    }
-}
 
 bool DeviceFinder::scanning() const
 {
@@ -218,61 +179,67 @@ bool DeviceFinder::scanning() const
 
 QVariant DeviceFinder::devices()
 {
-    return QVariant::fromValue(m_devices);
+    return QVariant::fromValue(m_found_devices);
 }
 
 void DeviceFinder::addDeviceToSelection(const quint8 &idx)
 {
     if ( m_selectedDevicesCount < 2 )
     {
-        ((DeviceInfo*) m_devices.at(idx) )->setDeviceFlags( ( (DeviceInfo*) m_devices.at(idx) )->getDeviceFlags() | DEVICE_SELECTED);
+        ((DeviceInfo*) m_found_devices.at(idx) )->setDeviceFlags( ( (DeviceInfo*) m_found_devices.at(idx) )->getDeviceFlags() | DEVICE_SELECTED);
         m_selectedDevicesCount++;
-        emit ((DeviceInfo*) m_devices.at(idx) )->deviceChanged();
+        emit ((DeviceInfo*) m_found_devices.at(idx) )->deviceChanged();
     }
 }
 
 void DeviceFinder::removeDeviceFromSelection(const quint8 &idx)
 {
-    if ( idx < m_devices.size() )
+    if ( idx < m_found_devices.size() )
     {
-        ((DeviceInfo*) m_devices.at(idx) )->setDeviceFlags( 0 );
+        ((DeviceInfo*) m_found_devices.at(idx) )->setDeviceFlags( 0 );
         m_selectedDevicesCount--;
-        emit ((DeviceInfo*) m_devices.at(idx) )->deviceChanged();
+        emit ((DeviceInfo*) m_found_devices.at(idx) )->deviceChanged();
     }
 }
 
+// TODO
 void DeviceFinder::sendConfirmationToBothDevices(const quint8 &success)
 {
+    // TODO THIS IS NOT THREADSAFE
     QByteArray tba;
     tba.resize(2);
-    tba[0] = WRITE_CATCH_SUCCESS;
+    tba[0] = CMD_WRITE_CATCH_SUCCESS;
     tba[1] = success;
-    if (m_initializedDevicesList[0] == true)
-        m_deviceHandler[0].ble_uart_tx(tba);
-    if (m_initializedDevicesList[1] == true)
-        m_deviceHandler[1].ble_uart_tx(tba);
+
+    // there is no public method..
+//    if (m_initializedDevicesList[0] == true)
+//        m_deviceHandler[0].sendCMDStringFromTerminal(tba);
+//    if (m_initializedDevicesList[1] == true)
+//        m_deviceHandler[1].ble_uart_tx(tba);
 }
 
+// TODO
 void DeviceFinder::sendRestartToBothDevices()
 {
-    QByteArray tba;
-    tba.resize(1);
-    tba[0] = START;
-    if (m_initializedDevicesList[0] == true)
-        m_deviceHandler[0].ble_uart_tx(tba);
-    if (m_initializedDevicesList[1] == true)
-        m_deviceHandler[1].ble_uart_tx(tba);
+//    QByteArray tba;
+//    tba.resize(1);
+//    tba[0] = START;
+//    if (m_initializedDevicesList[0] == true)
+//        m_deviceHandler[0].ble_uart_tx(tba);
+//    if (m_initializedDevicesList[1] == true)
+//        m_deviceHandler[1].ble_uart_tx(tba);
 }
 
+// TODO
 void DeviceFinder::sendEnableSDtoBothDevices(bool enable)
 {
-    QByteArray tba;
-    tba.resize(2);
-    tba[0] = TURN_ON_SD_LOGGING;
-    tba[1] = enable;
-    if (m_initializedDevicesList[0] == true)
-        m_deviceHandler[0].ble_uart_tx(tba);
-    if (m_initializedDevicesList[1] == true)
-        m_deviceHandler[1].ble_uart_tx(tba);
+//    QByteArray tba;
+//    tba.resize(2);
+//    tba[0] = TURN_ON_SD_LOGGING;
+//    tba[1] = enable;
+//    if (m_initializedDevicesList[0] == true)
+//        m_deviceHandler[0].ble_uart_tx(tba);
+//    if (m_initializedDevicesList[1] == true)
+//        m_deviceHandler[1].ble_uart_tx(tba);
 }
 

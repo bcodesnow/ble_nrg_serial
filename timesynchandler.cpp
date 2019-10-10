@@ -1,11 +1,11 @@
-#include "timestampler.h"
+#include "timesynchandler.h"
 #include "devicehandler.h"
 #include <QTimer>
 #include <QObject>
 #include <algorithm> // min&max..
 #include <QThread>
 
-TimeStampler::TimeStampler(QObject *parent): m_deviceHandler(0)
+TimeSyncHandler::TimeSyncHandler(QObject *parent): m_deviceHandler(0)
 {
     Q_UNUSED(parent);
     connect(&m_timeout_timer, SIGNAL(timeout()), this, SLOT(timeout_timer_expired()) );
@@ -13,39 +13,39 @@ TimeStampler::TimeStampler(QObject *parent): m_deviceHandler(0)
     m_timeout_timer.setInterval(TS_TIMEOUT_DELAY_MS);
 }
 
-void TimeStampler::time_sync_msg_sent(const QByteArray &msg)
+void TimeSyncHandler::time_sync_msg_sent(const QByteArray &msg)
 {
     // toDo m_last_msg_ts is only relevant if we are mesuring...
     qInfo()<<"TS: Sync Msg. Sent!";
     m_last_msg_ts = get_timestamp_us();
 }
 
-uint32_t TimeStampler::get_diff_in_us_to_current_ts(uint32_t some_ts)
+uint32_t TimeSyncHandler::get_diff_in_us_to_current_ts(uint32_t some_ts)
 {
     return ( m_etimer.nsecsElapsed() / 1000 ) - some_ts;
 }
 
-void TimeStampler::setRefToDevHandlerArr(DeviceHandler *dev_handler_arr)
+void TimeSyncHandler::setRefToDevHandlerArr(DeviceHandler *dev_handler_arr)
 {
     m_deviceHandler = dev_handler_arr;
 }
 
-void TimeStampler::start_time_stamp()
+void TimeSyncHandler::start_time_stamp()
 {
     m_etimer.start();
 }
 
-uint32_t TimeStampler::get_timestamp_ms()
+uint32_t TimeSyncHandler::get_timestamp_ms()
 {
     return m_etimer.elapsed();
 }
 
-uint32_t TimeStampler::get_timestamp_us()
+uint32_t TimeSyncHandler::get_timestamp_us()
 {
     return ( m_etimer.nsecsElapsed() / 1000 );
 }
 
-void TimeStampler::send_time_sync_msg()
+void TimeSyncHandler::send_time_sync_msg()
 {
     m_send_repeat_count++;
 
@@ -65,7 +65,7 @@ void TimeStampler::send_time_sync_msg()
     m_timeout_timer.start();
 }
 
-void TimeStampler::send_compensated_time_sync_msg()
+void TimeSyncHandler::send_compensated_time_sync_msg()
 {
     m_send_repeat_count++;
 
@@ -87,7 +87,7 @@ void TimeStampler::send_compensated_time_sync_msg()
     qDebug()<<"TS: Amount of Compensation -> "<<( m_travelling_time_acceptance_trsh / 2 );
 }
 
-void TimeStampler::calculate_compensation()
+void TimeSyncHandler::calculate_compensation()
 {
     quint32 min = *std::min_element(travelling_times.constBegin(), travelling_times.constEnd());
     quint32 max = *std::max_element(travelling_times.constBegin(), travelling_times.constEnd());
@@ -107,7 +107,7 @@ void TimeStampler::calculate_compensation()
     send_compensated_time_sync_msg();
 }
 
-void TimeStampler::time_sync_msg_arrived(const QByteArray &msg)
+void TimeSyncHandler::time_sync_msg_arrived(const QByteArray &msg)
 {
     m_timeout_timer.stop();
     qDebug()<<"Arrived: "<<msg;
@@ -194,7 +194,7 @@ void TimeStampler::time_sync_msg_arrived(const QByteArray &msg)
     }
 }
 
-void TimeStampler::start_time_sync(quint8 devIdxToSync)
+void TimeSyncHandler::start_time_sync(quint8 devIdxToSync)
 {
     m_dev_idx_in_sync = devIdxToSync;
     m_sync_state = START_WAITS_FOR_ACK;
@@ -208,7 +208,7 @@ void TimeStampler::start_time_sync(quint8 devIdxToSync)
     m_timeout_timer.start();
 }
 
-void TimeStampler::timeout_timer_expired()
+void TimeSyncHandler::timeout_timer_expired()
 {
     qCritical()<<"TimeSync Failed - > Timeout! - > Current State : "<<m_sync_state;
     m_sync_state = STOPPED;

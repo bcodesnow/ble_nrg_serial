@@ -28,7 +28,7 @@
 
 class DeviceHandler;
 
-class TimeStampler : public QObject
+class TimeSyncHandler : public QObject
 {
     Q_OBJECT
 
@@ -53,7 +53,7 @@ signals:
     void time_sync_failed();
 
 public:
-    TimeStampler(QObject *parent = 0);
+    TimeSyncHandler(QObject *parent = 0);
 
     void setRefToDevHandlerArr(DeviceHandler* dev_handler_arr);
 

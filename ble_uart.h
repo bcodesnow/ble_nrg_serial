@@ -1,5 +1,5 @@
-#ifndef __ble_uart_h
-#define __ble_uart_h
+#ifndef _ble_uart_h
+#define _ble_uart_h
 
 #include "stdint.h"
 #include "ble_uart_types.h"
@@ -25,16 +25,16 @@
     #include <stdlib.h>
 
     /* Stack Init Modes:*/
-    #define DISCOVERY_MODE 		1u<<1u
-    #define	ADV_MODE			 		1u<<2u
-    #define BLE_UART_MODE 		1u<<3u
-    #define USE_TX_POOL				1u<<4u
-    #define BLE_UART_TX_TIMEOUT	1000
+    #define DISCOVERY_MODE               (1u<<1u)
+    #define	ADV_MODE                     (1u<<2u)
+    #define BLE_UART_MODE                (1u<<3u)
+    #define USE_TX_POOL                  (1u<<4u)
+    #define BLE_UART_TX_TIMEOUT           1000u
 
-    #define CHAR_MAX_PAYLOAD 20
-    #define INDEX_SIZE	1u
-    #define HC_USABLE_PAYLOAD ( CHAR_MAX_PAYLOAD - INDEX_SIZE )
-    #define POOLED_HUGE_CHUNK_TIMEOUT		10000
+    #define CHAR_MAX_PAYLOAD              20u
+    #define INDEX_SIZE                    1u
+    #define HC_USABLE_PAYLOAD            (CHAR_MAX_PAYLOAD - INDEX_SIZE)
+    #define POOLED_HUGE_CHUNK_TIMEOUT     0000
 
 #endif // USED ON MICRO
 
@@ -46,34 +46,37 @@
     CMD BYTE
 **/
 
-#define CMD_OK                          0x00
+#define CMD_OK                          0x01
 
-#define CMD_REQUEST_SENSORDATA          0x0A // available when data is in ram
-#define CMD_WRITE_CATCH_SUCCESS         0x09
-#define CMD_SET_SHUT_UP                 0x33 // when set on device it should not send any notifications
-#define CMD_SET_CONN_MODE   			0xBB // msg to receive conn period
+#define CMD_WRITE_CATCH_SUCCESS         0x03
+#define CMD_SET_SHUT_UP                 0x04 // when set on device it should not send any notifications
+#define CMD_SET_CONN_MODE   			0x05 // msg to receive conn period
 
-#define CMD_TURN_ON_SD_LOGGING          0x66
-#define CMD_TURN_ON_BLE_SENDING         0x55
+#define CMD_TURN_ON_SD_LOGGING          0x06
+#define CMD_TURN_ON_BLE_SENDING         0x07
 
-#define CMD_START_HUGE_CHUNK            0x77
-#define CMD_START_HUGE_CHUNK_ACK_PROC   0x0D
-#define CMD_REQUEST_MISSING_PACKAGE     0xC0 // modify to tx pool
-#define REPLY_MISSED_PACKAGE            0xC1
-#define CMD_HC_OK                       0xDD
+#define CMD_REQUEST_SENSORDATA          0x02 // available when data is in ram
+#define REPLY_START_HUGE_CHUNK          0x08 // this is the reply to requestsensordata
 
-#define TRIGGERED                       0x06
-#define DATA_SAVED_TO_SD                0x08 // used when data is saved to sd... DATA_COLLECTED
-#define SENDING_SENSORDATA_FINISHED     0x0B // emitted when all the files were sent
-#define SENSORDATA_AVAILABLE            0x0C // emitted wehn data can be requested.
-#define ALIVE                           0x10
+#define CMD_START_HUGE_CHUNK_ACK_PROC   0x09
+#define CMD_REQUEST_MISSING_PACKAGE     0x0A // modify to tx pool
+#define REPLY_MISSED_PACKAGE            0x0B
+#define CMD_HC_OK                       0x0C
+
+#define TRIGGERED                       0x0D
+#define DATA_SAVED_TO_SD                0x0E // used when data is saved to sd... DATA_COLLECTED
+#define SENDING_SENSORDATA_FINISHED     0x0F // emitted when all the files were sent
+#define SENSORDATA_AVAILABLE            0x10 // emitted wehn data can be requested.
+#define ALIVE                           0x11
 
 #define CONN_PARAM_INFO                 0x12
 
+#define CMD_SEND_RESTART                0x18 // to implement in qt
+
 /* Connection Modes: */
-#define SLOW 1
-#define MID  2
-#define FAST 3
+#define SLOW 1u
+#define MID  2u
+#define FAST 3u
 
 #define S_MIN   250
 #define S_MAX   500
@@ -92,13 +95,13 @@
 
 /* ------------------------------------------------------------------- */
 
-#define GET_STATE                       0x03
-#define STOP				  			0x02
-#define START				  			0x01
-#define IGNORE_LAST_X                   0x07 // not implemented yet
+#define GET_STATE                       0x13
+#define STOP				  			0x14
+#define START				  			0x15
+#define IGNORE_LAST_X                   0x16 // not implemented yet
 
-#define DIAG_INFO							0x0E
-#define DIAG_1_TYPE_LENGTH_TEST				3u
+#define DIAG_INFO						0x17
+#define DIAG_1_TYPE_LENGTH_TEST			3u
 
 /* ------------------------------------------------------------------- */
 
@@ -119,7 +122,7 @@
 #define TS_CMD_SYNC_FINISH                      6u
 
 
-// THIS BLOCK HAS NOTHING TO DO HERE
+// THIS BLOCK HAS NOTHING TO DO HERE is only specific to transmitted data.. move it to write file..
 #define TYPE_AUD 1u
 #define	TYPE_ACC 2u
 #define TYPE_GYR 3u

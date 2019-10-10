@@ -12,9 +12,10 @@
 #include "logfilehandler.h"
 #include <QQuickStyle>
 #include "ble_uart.h"
-#include "timestampler.h"
+#include "timesynchandler.h"
 #include "graphpainter.h"
 
+#include "deviceinterface.h"
 #include <QQmlContext>
 
 
@@ -30,7 +31,7 @@ int main(int argc, char *argv[])
     TerminalToQmlB term;
     term.setActive (false); // true
 
-    TimeStampler ts;
+    TimeSyncHandler ts;
     ts.start_time_stamp();
 
     LogFileHandler log_file_handler;
@@ -39,32 +40,38 @@ int main(int argc, char *argv[])
     //log_file_handler.set_last_type(TYPE_PRS);
 
     ConnectionHandler connection_handler; // keeps track of local ble interface
-    QBluetoothAddress leftAdapter, rightAdapter; // Local addresses for connection
-    // search for bt adapters and select an address for both devices
-    connection_handler.initBtAdapters(leftAdapter, rightAdapter);
+//    QBluetoothAddress leftAdapter, rightAdapter; // Local addresses for connection
+//    // search for bt adapters and select an address for both devices
+//    connection_handler.initBtAdapters(leftAdapter, rightAdapter);
+
+    qDebug()<<"MainThread"<<QThread::currentThreadId();
+    QList<DeviceInterface*> devices;
+    DeviceFinder device_finder(&devices, &connection_handler);
+    //device_finder = new DeviceFinder
+    //    devices.at(0).init_device(leftAdapter, );
 
     DeviceHandler device_handler[2];
-    device_handler[0].setRefToFileHandler(&log_file_handler);
-    device_handler[0].setIdentifier("LEFT", 0, leftAdapter);
-    device_handler[0].setRefToTimeStampler(&ts);
-    DeviceFinder device_finder(&device_handler[0]);
-    device_handler[1].setRefToFileHandler(&log_file_handler);
-    device_handler[1].setIdentifier("RIGHT", 1, rightAdapter);
-    device_handler[1].setRefToTimeStampler(&ts);
+    //    device_handler[0].setRefToFileHandler(&log_file_handler);
+    //    device_handler[0].setIdentifier("LEFT", 0, leftAdapter);
+    //    device_handler[0].setRefToTimeStampler(&ts);
+    //    DeviceFinder device_finder(&device_handler[0]);
+    //    device_handler[1].setRefToFileHandler(&log_file_handler);
+    //    device_handler[1].setIdentifier("RIGHT", 1, rightAdapter);
+    //    device_handler[1].setRefToTimeStampler(&ts);
 
-    ts.setRefToDevHandlerArr(device_handler);
+//    ts.setRefToDevHandlerArr(device_handler);
 
-    NetworkManager ntwMngr(&log_file_handler);
+    //NetworkManager ntwMngr(&log_file_handler);
 
     QQmlApplicationEngine engine;
     qmlRegisterUncreatableType<DeviceHandler>("Shared", 1, 0, "AddressType", "Enum is not a type");
     engine.rootContext()->setContextProperty("terminalToQml", &term);
     engine.rootContext()->setContextProperty("connectionHandler", &connection_handler);
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);
-    engine.rootContext()->setContextProperty("deviceHandler_0", &device_handler[0]);
-    engine.rootContext()->setContextProperty("deviceHandler_1", &device_handler[1]);
+    //engine.rootContext()->setContextProperty("deviceHandler_0", &device_handler[0]);
+    //engine.rootContext()->setContextProperty("deviceHandler_1", &device_handler[1]);
     engine.rootContext()->setContextProperty("fileHandler", &log_file_handler);
-    engine.rootContext()->setContextProperty("networkManager", &ntwMngr);
+    //engine.rootContext()->setContextProperty("networkManager", &ntwMngr);
 
 
 

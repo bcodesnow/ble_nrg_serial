@@ -20,14 +20,15 @@ SOURCES += main.cpp \
     devicehandler.cpp \
     devicehelper.cpp \
     deviceinfo.cpp \
+    deviceinterface.cpp \
     graphpainter.cpp \
     networkmanager.cpp \
     paintdata.cpp \
     terminaltoqmlb.cpp \
     connectionhandler.cpp \
-    timestampler.cpp \
     logfilehandler.cpp \
-    catchcontroller.cpp
+    catchcontroller.cpp \
+    timesynchandler.cpp
 
 RESOURCES += qml.qrc \
     common.qrc \
@@ -50,16 +51,17 @@ HEADERS += \
     bluetoothbaseclass.h \
     devicehandler.h \
     deviceinfo.h \
+    deviceinterface.h \
     graphpainter.h \
     networkmanager.h \
     paintdata.h \
     terminaltoqmlb.h \
     connectionhandler.h \
-    timestampler.h \
     ble_uart.h \
     logfilehandler.h \
     catchcontroller.h \
-    ble_uart_types.h
+    ble_uart_types.h \
+    timesynchandler.h
 
 DISTFILES += \
     android/AndroidManifest.xml \

@@ -50,7 +50,7 @@ DualAppPage {
             conatinerName: "LEFT"
             indicatorLeft: true
             sdEnabled: deviceHandler_0.sdEnabled
-            buttonsEnabled: deviceHandler_0.writeValid
+            //buttonsEnabled: deviceHandler_0.writeValid
             onButtonClicked:
             {
                     deviceHandler_0.requestBLESensorData();
@@ -64,7 +64,7 @@ DualAppPage {
             {
                 leftContainer.indicatorActive = !leftContainer.indicatorActive
             }
-            onSensorDataAvailable:
+            onSensorDataAvailableArrived:
             {
                 leftContainer.gdButtStartSlowBlinking();
             }
@@ -84,7 +84,7 @@ DualAppPage {
             indicatorColor: deviceHandler_1.alive ? AppConstants.infoColor : AppConstants.errorColor;
             conatinerName: "RIGHT"
             sdEnabled: deviceHandler_1.sdEnabled
-            buttonsEnabled: deviceHandler_1.writeValid
+            //buttonsEnabled: deviceHandler_1.writeValid
             onButtonClicked:
             {
                     deviceHandler_1.requestBLESensorData();
@@ -97,7 +97,7 @@ DualAppPage {
             {
                 rightContainer.indicatorActive = !rightContainer.indicatorActive
             }
-            onSensorDataAvailable:
+            onSensorDataAvailableArrived:
             {
                 rightContainer.gdButtStartSlowBlinking();
             }

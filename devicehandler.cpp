@@ -78,13 +78,13 @@
 
 DeviceHandler::DeviceHandler(QObject *parent) :
     BluetoothBaseClass(parent),
-    m_control(0),
-    m_service(0),
-    m_currentDevice(0),
-    m_refToOtherDevice(0),
-    m_refToFileHandler(0),
+    m_control(nullptr),
+    m_service(nullptr),
+    m_currentDevice(nullptr),
+    m_refToOtherDevice(nullptr),
     m_found_BLE_UART_Service(false),
     m_fileIndexOnDevice(0),
+    m_refToFileHandler(0),
     m_sdEnabled(0)
 {
 
@@ -120,7 +120,7 @@ void DeviceHandler::setRefToFileHandler(LogFileHandler *t_fil_helper)
     m_refToFileHandler = t_fil_helper;
 }
 
-void DeviceHandler::setRefToTimeStampler(TimeStampler *t_time_stampler)
+void DeviceHandler::setRefToTimeStampler(TimeSyncHandler *t_time_stampler)
 {
     m_refToTimeStampler = t_time_stampler;
 }
@@ -172,7 +172,7 @@ void DeviceHandler::setDevice(DeviceInfo *device)
         }
 
         m_control->setRemoteAddressType(QLowEnergyController::RandomAddress); //changed to Random Address
-
+        qDebug()<<"Devicehandler -> Before starting to connect signals..";
         connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceHandler::serviceDiscovered);
         connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceHandler::serviceScanDone);
 
@@ -249,6 +249,7 @@ void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
 
 void DeviceHandler::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value)
 {
+    qWarning()<<"confirmedDescriptorWrite.. if this needs to be used, we need to keep track of our m_notificationDescriptors..";
     if (d.isValid() && d == m_notificationDescriptor && value == QByteArray::fromHex("0000")) {
         //disabled notifications -> assume disconnect intent
         m_control->disconnectFromDevice();
@@ -256,6 +257,7 @@ void DeviceHandler::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, cons
         m_service = 0;
     }
 }
+
 
 void DeviceHandler::disconnectService()
 {
@@ -272,6 +274,11 @@ void DeviceHandler::disconnectService()
         delete m_service;
         m_service = 0;
     }
+}
+
+void DeviceHandler::onSensorDataRequested()
+{
+    requestSensorData();
 }
 
 void DeviceHandler::onConnectionParamUpdated(const QLowEnergyConnectionParameters &newParameters)
@@ -339,7 +346,7 @@ void DeviceHandler::update_currentService()
 }
 
 
-bool DeviceHandler::alive() const
+bool DeviceHandler::connectionAlive() const
 {
     if (m_service)
         return m_service->state() == QLowEnergyService::ServiceDiscovered;
@@ -423,22 +430,12 @@ void DeviceHandler::searchCharacteristic()
                 }
             }
         }
-
-        //        if(!m_test_timer && m_readCharacteristic.isValid() && m_writeCharacteristic.isValid())
-        //        {
-        //            qDebug()<<"Starting Test Timer";
-        //            this->m_test_timer = new QTimer(this);
-        //            connect(m_test_timer, &QTimer::timeout, this, &DeviceHandler::onTimerTriggered);
-        //            #define INTERVAL_MS 500
-        //            m_test_timer->start(INTERVAL_MS);
-        //        }
     }
 
 }
 
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DeviceHandler::requestSensorData()
 {
@@ -450,32 +447,24 @@ void DeviceHandler::requestSensorData()
 
 }
 
+void DeviceHandler::init_slot(QBluetoothAddress* adapterAddr, DeviceInfo *device)
+{
+    qDebug()<<"received adapter add"<<adapterAddr->QBluetoothAddress::toString();
+    setBtAdapter(*adapterAddr);
+    setDevice(device);
+
+}
+
 
 void DeviceHandler::ackHugeChunk()
 {
     // add timeout timer..
     QByteArray tba;
     tba.resize(2);
-    tba[0] = HUGE_CHUNK_ACK_PROC;
-    tba[1] = HC_1_ACK;
+    tba[0] = CMD_HC_OK;
     qInfo()<<"ackHugeChunk()";
-    this->ble_uart_tx(tba);
+    this->ble_uart_send_cmd_with_resp(tba);
 }
-
-//void DeviceHandler::update_conn_period()
-//{
-//    quint8 conn_min_max =  m_ident_idx ? 6 : 10;
-//    // add timeout timer..
-//    QByteArray tba;
-//    tba.resize(5);
-//    tba[0] = SET_CONN_PERIOD;
-//    tba[1] = conn_min_max;
-//    tba[2] = conn_min_max;
-//    tba[3] = (500u << 8) & 0xFF;
-//    tba[4] = 500u & 0xFF;
-//    qDebug()<<"Sending Conn Period!() min max = "<< conn_min_max << "default timeout = 500";
-//    this->ble_uart_tx(tba);
-//}
 
 void DeviceHandler::setRequestedConnParamsOnDevice(uint8_t mode)
 {
@@ -533,9 +522,9 @@ void DeviceHandler::setShutUp(bool mode)
     qDebug()<<"Turning DEV"<<m_ident_idx<<m_ident_str<<"in shutupMode:"<<mode;
     QByteArray tba;
     tba.resize(2);
-    tba[0] = SET_SHUT_UP;
+    tba[0] = CMD_SET_SHUT_UP;
     tba[1] = mode;
-    this->ble_uart_tx(tba);
+    this->ble_uart_send_cmd_with_resp(tba);
 }
 
 

@@ -57,6 +57,8 @@
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothDeviceInfo>
 #include <QVariant>
+#include "deviceinterface.h"
+#include "connectionhandler.h"
 
 class DeviceInfo;
 class DeviceHandler;
@@ -69,13 +71,16 @@ class DeviceFinder: public BluetoothBaseClass
     Q_PROPERTY(QVariant devices READ devices NOTIFY devicesChanged)
 
 public:
-    DeviceFinder(DeviceHandler* handler, QObject *parent = 0);
+    DeviceFinder(QList<DeviceInterface*>* devicelist, ConnectionHandler* connHandler, QObject *parent = 0);
     ~DeviceFinder();
 
     bool scanning() const;
     QVariant devices();
+
     Q_INVOKABLE void addDeviceToSelection(const quint8 &idx);
     Q_INVOKABLE void removeDeviceFromSelection(const quint8 &idx);
+
+    // TODO Move this to the Device Interface?!
     Q_INVOKABLE void sendConfirmationToBothDevices(const quint8 &success);
     Q_INVOKABLE void sendRestartToBothDevices();
     Q_INVOKABLE void sendEnableSDtoBothDevices(bool enable);
@@ -84,8 +89,8 @@ public:
 
 public slots:
     void startSearch();
-    void connectToService(const QString &address);
-    void connectToMultipleServices();
+    //void connectToService(const QString &address);
+    void connectToSelectedDevices(); // QML JUMP ON TODO
 
 
 private slots:
@@ -98,13 +103,12 @@ signals:
     void devicesChanged();
 
 private:
-    DeviceHandler* m_deviceHandler;
+    QList<DeviceInterface*>* m_device_list;
     QBluetoothDeviceDiscoveryAgent *m_deviceDiscoveryAgent;
-    QList<QObject*> m_devices;
+    QList<QObject*> m_found_devices;
     quint8 m_selectedDevicesCount;
     quint8 m_initializedDevicesList[2];
-
-
+    ConnectionHandler* m_conn_handler_ptr;
 };
 
 #endif // DEVICEFINDER_H

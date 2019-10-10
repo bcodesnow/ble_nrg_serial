@@ -1,61 +1,61 @@
 #include "devicehandler.h"
 
-
+// TODO: this is critical to add ts() message again -> this starts time sync.. we should also set the connections prior to syncing
 void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
 {
-    if (!alive())
-    {
-        qCritical()<<"Shit is fkd up";
-        return;
-    }
+    //    if (!connectionAlive())
+    //    {
+    //        qCritical()<<"Shit is fkd up";
+    //        return;
+    //    }
 
-    QByteArray tba;
-    if ( str == QString("get_state()"))
-    {
-        tba.resize(1);
-        tba[0] = GET_STATE;
-        qInfo()<<"Fetching State";
-    }
-    else if ( str == QString("start()"))
-    {
-        tba.resize(1);
-        tba[0] = START;
-        qInfo()<<"Sending Start";
-    }
-    else if ( str == QString("stop()"))
-    {
-        tba.resize(1);
-        tba[0] = STOP;
-        qInfo()<<"Sending Stop";
-    }
+    //    QByteArray tba;
+    //    if ( str == QString("get_state()"))
+    //    {
+    //        tba.resize(1);
+    //        tba[0] = GET_STATE;
+    //        qInfo()<<"Fetching State";
+    //    }
+    //    else if ( str == QString("start()"))
+    //    {
+    //        tba.resize(1);
+    //        tba[0] = START;
+    //        qInfo()<<"Sending Start";
+    //    }
+    //    else if ( str == QString("stop()"))
+    //    {
+    //        tba.resize(1);
+    //        tba[0] = STOP;
+    //        qInfo()<<"Sending Stop";
+    //    }
 
-    else if (str == "confirm(1)" )
-    {
-        tba.resize(2);
-        tba[0] = WRITE_CATCH_SUCCESS;
-        tba[1] = 1;
-        qInfo()<<"Sending Catch Configrm";
-    }
+    ////    else if (str == "confirm(1)" )
+    ////    {
+    ////        tba.resize(2);
+    ////        tba[0] = WRITE_CATCH_SUCCESS;
+    ////        tba[1] = 1;
+    ////        qInfo()<<"Sending Catch Configrm";
+    ////    }
 
-    else if (str == "confirm(0)" )
-    {
-        tba.resize(0);
-        tba[0] = WRITE_CATCH_SUCCESS;
-        tba[1] = 0;
-        qInfo()<<"Sending Catch Confrim";
-    }
-    else if (str == "ts()" )
-    {
-        m_refToTimeStampler->start_time_sync(m_ident_idx);
-        qInfo()<<"TimeSync in Test..";
-    }
-    else
-    {
-        qCritical()<<"Unknown Command!";
-    }
+    ////    else if (str == "confirm(0)" )
+    ////    {
+    ////        tba.resize(0);
+    ////        tba[0] = WRITE_CATCH_SUCCESS;
+    ////        tba[1] = 0;
+    ////        qInfo()<<"Sending Catch Confrim";
+    ////    }
+    //    else if (str == "ts()" )
+    //    {
+    //        m_refToTimeStampler->start_time_sync(m_ident_idx);
+    //        qInfo()<<"TimeSync in Test..";
+    //    }
+    //    else
+    //    {
+    //        qCritical()<<"Unknown Command!";
+    //    }
 
-    if (tba.size())
-        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+    //    if (tba.size())
+    //        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
 QString DeviceHandler::state_to_string(uint8_t tmp)
@@ -99,8 +99,23 @@ void DeviceHandler::printProperties(QLowEnergyCharacteristic::PropertyTypes prop
     if (props.testFlag(QLowEnergyCharacteristic::ExtendedProperty)) qDebug()<<"Property: Extended Property";
 }
 
-void transferStatistics()
-float kbyte_ps;
-float kbit_ps;
-float secs;
-quint64 elapsed;
+void  DeviceHandler::printThroughput()
+{
+    float kbyte_ps;
+    float kbit_ps;
+    float secs;
+    quint64 elapsed;
+
+    elapsed = m_debugTimer.elapsed();
+    kbyte_ps = 0;
+    kbit_ps = 0;
+    secs = (float) elapsed / 1000.0f;
+    kbyte_ps = hc_transfer_struct.incoming_byte_count /  secs / 1000  ;
+    kbit_ps = kbyte_ps * 8.0;
+    qInfo()<<"HC -> Transfer of"<<hc_transfer_struct.incoming_byte_count<<"bytes took"<< elapsed<<"ms";
+    qInfo()<<"HC -> Throughput of net data is" <<kbyte_ps<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
+    secs = (float) elapsed / 1000.0f;
+    kbyte_ps = ( hc_transfer_struct.incoming_byte_count + hc_transfer_struct.incoming_package_count ) /  secs / 1000  ;
+    kbit_ps = kbyte_ps * 8.0;
+    qInfo()<<"HC -> Throughput of raw data is" <<kbyte_ps<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
+}
