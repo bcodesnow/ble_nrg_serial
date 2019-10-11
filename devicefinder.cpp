@@ -63,10 +63,16 @@
 #include "QThread"
 #include <QDebug>
 
-DeviceFinder::DeviceFinder(QList<DeviceInterface*>* devicelist,ConnectionHandler* connHandler, QObject *parent):
+
+DeviceFinder::DeviceFinder(QList<DeviceInterface*>* devicelist, ConnectionHandler* connHandler, TimeSyncHandler* ts_handler,
+                           CatchController* catch_controller, LogFileHandler* logfile_handler, QObject *parent):
     BluetoothBaseClass(parent),
     m_device_list(devicelist),
-    m_conn_handler_ptr(connHandler)
+    m_conn_handler_ptr(connHandler),
+    m_timesync_handler_ptr(ts_handler),
+    m_logfile_handler_ptr(logfile_handler),
+    m_catch_controller_ptr(catch_controller)
+
 {
     m_selectedDevicesCount = 0;
     //! [devicediscovery-1]
@@ -115,9 +121,9 @@ void DeviceFinder::addDevice(const QBluetoothDeviceInfo &device)
         m_found_devices.append(new DeviceInfo(device));
         setInfo(tr("Low Energy device found. Scanning more..."));
         qDebug()<<"Low Energy device found. Scanning more..."<<device.address().toString();
-//! [devicediscovery-3]
+        //! [devicediscovery-3]
         emit devicesChanged();
-//! [devicediscovery-4]
+        //! [devicediscovery-4]
     }
     //...
 }
@@ -150,20 +156,22 @@ void DeviceFinder::scanFinished()
 
 void DeviceFinder::connectToSelectedDevices()
 {
-    quint8 adapterListSize = m_conn_handler_ptr->m_adapterList.size();
+    int adapterListSize = m_conn_handler_ptr->m_adapterList.size();
+    int deviceListSize = m_device_list->size();
+    int k = 0;
+
     qDebug()<<"We have "<< adapterListSize <<"adapters detected";
 
-    int k = 0;
     for (int i = 0; i < m_found_devices.size(); i++)
     {
         if  (((DeviceInfo*)m_found_devices.at(i))->getDeviceFlags() & DEVICE_SELECTED )
         {
-            m_device_list->append(new DeviceInterface);
-            m_device_list->last()->init_device( m_conn_handler_ptr->m_adapterList.at(k).address(), (DeviceInfo*) m_found_devices.at(i) );
+            m_device_list->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr, deviceListSize));
+            deviceListSize++;
+            m_device_list->last()->init_device( &m_conn_handler_ptr->m_adapterList[k], (DeviceInfo*) m_found_devices[i] );
             k++;
             if ( k >= adapterListSize)
                 k = 0;
-
         }
     }
     qDebug()<<"Connection started to"<<m_selectedDevicesCount<<"from"<<m_found_devices.size()<<"found devices..";
@@ -212,34 +220,34 @@ void DeviceFinder::sendConfirmationToBothDevices(const quint8 &success)
     tba[1] = success;
 
     // there is no public method..
-//    if (m_initializedDevicesList[0] == true)
-//        m_deviceHandler[0].sendCMDStringFromTerminal(tba);
-//    if (m_initializedDevicesList[1] == true)
-//        m_deviceHandler[1].ble_uart_tx(tba);
+    //    if (m_initializedDevicesList[0] == true)
+    //        m_deviceHandler[0].sendCMDStringFromTerminal(tba);
+    //    if (m_initializedDevicesList[1] == true)
+    //        m_deviceHandler[1].ble_uart_tx(tba);
 }
 
 // TODO
 void DeviceFinder::sendRestartToBothDevices()
 {
-//    QByteArray tba;
-//    tba.resize(1);
-//    tba[0] = START;
-//    if (m_initializedDevicesList[0] == true)
-//        m_deviceHandler[0].ble_uart_tx(tba);
-//    if (m_initializedDevicesList[1] == true)
-//        m_deviceHandler[1].ble_uart_tx(tba);
+    //    QByteArray tba;
+    //    tba.resize(1);
+    //    tba[0] = START;
+    //    if (m_initializedDevicesList[0] == true)
+    //        m_deviceHandler[0].ble_uart_tx(tba);
+    //    if (m_initializedDevicesList[1] == true)
+    //        m_deviceHandler[1].ble_uart_tx(tba);
 }
 
 // TODO
 void DeviceFinder::sendEnableSDtoBothDevices(bool enable)
 {
-//    QByteArray tba;
-//    tba.resize(2);
-//    tba[0] = TURN_ON_SD_LOGGING;
-//    tba[1] = enable;
-//    if (m_initializedDevicesList[0] == true)
-//        m_deviceHandler[0].ble_uart_tx(tba);
-//    if (m_initializedDevicesList[1] == true)
-//        m_deviceHandler[1].ble_uart_tx(tba);
+    //    QByteArray tba;
+    //    tba.resize(2);
+    //    tba[0] = TURN_ON_SD_LOGGING;
+    //    tba[1] = enable;
+    //    if (m_initializedDevicesList[0] == true)
+    //        m_deviceHandler[0].ble_uart_tx(tba);
+    //    if (m_initializedDevicesList[1] == true)
+    //        m_deviceHandler[1].ble_uart_tx(tba);
 }
 

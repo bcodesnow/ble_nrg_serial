@@ -61,7 +61,7 @@
 #include "connectionhandler.h"
 
 class DeviceInfo;
-class DeviceHandler;
+//class DeviceHandler;
 
 class DeviceFinder: public BluetoothBaseClass
 {
@@ -71,7 +71,8 @@ class DeviceFinder: public BluetoothBaseClass
     Q_PROPERTY(QVariant devices READ devices NOTIFY devicesChanged)
 
 public:
-    DeviceFinder(QList<DeviceInterface*>* devicelist, ConnectionHandler* connHandler, QObject *parent = 0);
+    DeviceFinder(QList<DeviceInterface*>* devicelist, ConnectionHandler* connHandler, TimeSyncHandler* ts_handler,
+                 CatchController* catch_controller, LogFileHandler* logfile_handler, QObject *parent = nullptr);
     ~DeviceFinder();
 
     bool scanning() const;
@@ -103,12 +104,16 @@ signals:
     void devicesChanged();
 
 private:
-    QList<DeviceInterface*>* m_device_list;
     QBluetoothDeviceDiscoveryAgent *m_deviceDiscoveryAgent;
     QList<QObject*> m_found_devices;
     quint8 m_selectedDevicesCount;
-    quint8 m_initializedDevicesList[2];
+    //quint8 m_initializedDevicesList[2];
     ConnectionHandler* m_conn_handler_ptr;
+    TimeSyncHandler* m_timesync_handler_ptr;
+    LogFileHandler* m_logfile_handler_ptr;
+    CatchController* m_catch_controller_ptr;
+    QList<DeviceInterface*>* m_device_list;
+
 };
 
 #endif // DEVICEFINDER_H

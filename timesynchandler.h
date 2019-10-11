@@ -1,7 +1,7 @@
 #ifndef TIMESTAMPLER_H
 #define TIMESTAMPLER_H
 
-#include "devicehandler.h"
+#include "deviceinterface.h"
 #include "ble_uart.h"
 
 #include <QTimer>
@@ -26,18 +26,19 @@
 #define SENDING_COMPENSATED         (1<<3)
 #define STOP_WAITS_FOR_ACK          (1<<4)
 
-class DeviceHandler;
+class DeviceInterface;
 
 class TimeSyncHandler : public QObject
 {
     Q_OBJECT
 
 private:
-    DeviceHandler* m_deviceHandler;
+//    DeviceHandler* m_deviceHandler;
     QElapsedTimer m_etimer;
     QTimer m_timeout_timer;
     quint16 m_send_repeat_count = 0;
     quint32 m_sync_state = 0;
+    QList<DeviceInterface*>* m_device_interfaces_ptr;
 
 
     QVector<quint32> travelling_times; //"the total delay minus remote processing time" in decimillisec;
@@ -53,9 +54,9 @@ signals:
     void time_sync_failed();
 
 public:
-    TimeSyncHandler(QObject *parent = 0);
+    TimeSyncHandler(QList<DeviceInterface*>* device_interfaces, QObject *parent = nullptr);
 
-    void setRefToDevHandlerArr(DeviceHandler* dev_handler_arr);
+    //void setRefToDevHandlerArr(DeviceHandler* dev_handler_arr);
 
     void start_time_stamp();
     uint32_t get_timestamp_ms();
@@ -65,8 +66,8 @@ public:
     void start_time_sync(quint8 devIdxToSync);
 
 public slots:
-    void time_sync_msg_sent(const QByteArray &msg);
-    void time_sync_msg_arrived(const QByteArray &msg);
+    void slot_time_sync_msg_sent(const QByteArray &msg);
+    void slot_time_sync_msg_arrived(const QByteArray &msg);
     void timeout_timer_expired();
 };
 

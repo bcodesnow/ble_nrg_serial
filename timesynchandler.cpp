@@ -5,15 +5,16 @@
 #include <algorithm> // min&max..
 #include <QThread>
 
-TimeSyncHandler::TimeSyncHandler(QObject *parent): m_deviceHandler(0)
+TimeSyncHandler::TimeSyncHandler(QList<DeviceInterface*>* device_interfaces, QObject *parent):
+    m_device_interfaces_ptr(device_interfaces)
 {
-    Q_UNUSED(parent);
+    Q_UNUSED(parent)
     connect(&m_timeout_timer, SIGNAL(timeout()), this, SLOT(timeout_timer_expired()) );
     m_timeout_timer.setSingleShot(true);
     m_timeout_timer.setInterval(TS_TIMEOUT_DELAY_MS);
 }
 
-void TimeSyncHandler::time_sync_msg_sent(const QByteArray &msg)
+void TimeSyncHandler::slot_time_sync_msg_sent(const QByteArray &msg)
 {
     // toDo m_last_msg_ts is only relevant if we are mesuring...
     qInfo()<<"TS: Sync Msg. Sent!";
@@ -25,10 +26,10 @@ uint32_t TimeSyncHandler::get_diff_in_us_to_current_ts(uint32_t some_ts)
     return ( m_etimer.nsecsElapsed() / 1000 ) - some_ts;
 }
 
-void TimeSyncHandler::setRefToDevHandlerArr(DeviceHandler *dev_handler_arr)
-{
-    m_deviceHandler = dev_handler_arr;
-}
+//void TimeSyncHandler::setRefToDevHandlerArr(DeviceHandler *dev_handler_arr)
+//{
+//    m_deviceHandler = dev_handler_arr;
+//}
 
 void TimeSyncHandler::start_time_stamp()
 {
@@ -61,7 +62,8 @@ void TimeSyncHandler::send_time_sync_msg()
     tba[6] =   tstamp & 0xFF ;
     qDebug()<<"TS: send_time_sync_msg() -> "<<tstamp;
 
-    m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
+    //m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
+    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->ble_uart_tx_sig(tba); // emit the signal directly in the interface..
     m_timeout_timer.start();
 }
 
@@ -79,7 +81,8 @@ void TimeSyncHandler::send_compensated_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
-    m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
+    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->ble_uart_tx_sig(tba); // emit the signal directly in the interface..
+
 
     m_timeout_timer.start();
 
@@ -107,7 +110,7 @@ void TimeSyncHandler::calculate_compensation()
     send_compensated_time_sync_msg();
 }
 
-void TimeSyncHandler::time_sync_msg_arrived(const QByteArray &msg)
+void TimeSyncHandler::slot_time_sync_msg_arrived(const QByteArray &msg)
 {
     m_timeout_timer.stop();
     qDebug()<<"Arrived: "<<msg;
@@ -157,7 +160,7 @@ void TimeSyncHandler::time_sync_msg_arrived(const QByteArray &msg)
             tba.resize(2);
             tba[0] = TS_MSG;
             tba[1] = TS_CMD_LAST_ONE_WAS_GOOD_ONE;
-            m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
+            m_device_interfaces_ptr->at(m_dev_idx_in_sync)->ble_uart_tx_sig(tba); // emit the signal directly in the interface..
             m_sync_state = STOP_WAITS_FOR_ACK;
             m_send_repeat_count = 0;
         }
@@ -203,7 +206,8 @@ void TimeSyncHandler::start_time_sync(quint8 devIdxToSync)
     tba.resize(2);
     tba[0] = TS_MSG;
     tba[1] = TS_CMD_SYNC_START;
-    m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
+    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->ble_uart_tx_sig(tba); // emit the signal directly in the interface..
+
 
     m_timeout_timer.start();
 }

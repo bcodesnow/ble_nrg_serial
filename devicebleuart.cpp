@@ -72,14 +72,16 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         case TRIGGERED:
         {
             //inform the other device
-            if (m_refToOtherDevice != NULL)
-                m_refToOtherDevice->ble_uart_tx(value); // 1-1 forward it! - Write with Response as a CMD?!
+            emit requestDispatchToOtherDevices(value, m_ident_idx); // TODO this will be received by the catch controller
+
+//            if (m_refToOtherDevice != NULL)
+//                m_refToOtherDevice->ble_uart_tx(value); // 1-1 forward it! - Write with Response as a CMD?!
             //
-            if (m_sdEnabled)
-                m_refToFileHandler->add_to_log_fil(m_ident_str,"File ID on Device", QString::number(data[1]));
+//            if (m_sdEnabled)
+//                m_refToFileHandler->add_to_log_fil(m_ident_str,"File ID on Device", QString::number(data[1]));
 
             //ble_uart_send_cmd_ok(); // Should we also ACK this to the device?!
-            emit triggeredArrived();
+            emit triggeredArrived(); // TODO this is handled by the deviceinterface
         }
             break;
 
@@ -128,7 +130,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         case TS_MSG:
         {
             emit timeSyncMessageArrived(value);
-            m_refToTimeStampler->time_sync_msg_arrived(value);
+            //m_refToTimeStampler->time_sync_msg_arrived(value);
         }
             break;
 
@@ -244,8 +246,8 @@ void DeviceHandler::onAliveArrived(QByteArray value)
 
     // TODO: if SD
     m_sdEnabled = data[5];
-    emit sdEnabledChanged();
-    emit fileIndexOnDeviceChanged();
+//    emit sdEnabledChanged();
+//    emit fileIndexOnDeviceChanged();
     emit deviceStateChanged();
     setInfo("Alive!");
 }
@@ -316,9 +318,9 @@ void DeviceHandler::onStartHugeChunkArrived()
     hc_helper_struct.missed_to_request = 0;
 
     // TODO this is not threadsafe..
-    m_refToFileHandler->add_to_log_fil(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
-    m_refToFileHandler->add_to_log_fil(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
-    m_refToFileHandler->add_to_log_fil(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
+    emit add_to_log_fil_sig(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
+    emit add_to_log_fil_sig(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
+    emit add_to_log_fil_sig(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
 
     ble_uart_send_cmd_ok();
 
@@ -326,28 +328,7 @@ void DeviceHandler::onStartHugeChunkArrived()
 
 }
 
-void DeviceHandler::onTriggeredArrived(QByteArray value)
-{
-    uint32_t rec_ts;
-    const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
 
-    rec_ts = 0;
-    rec_ts = ( (uint32_t) data[2] ) << 24;
-    rec_ts |=( (uint32_t) data[3] )<< 16;
-    rec_ts |=( (uint32_t) data[4] )<< 8;
-    rec_ts |= ( (uint32_t) data[5] );
-
-    m_refToFileHandler->add_to_log_fil(m_ident_str,"TS in Trigger MSG", QString::number(rec_ts));
-    //
-    if (data[6] == 1<<1)
-        m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "MAG");
-    else if (data[6] == 1<<2)
-        m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "ACC");
-    else
-        m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger Source", "Things got messed up..");
-    // TODO this is not threadsafe
-    m_refToFileHandler->add_to_log_fil(m_ident_str,"Trigger MSG Received", QString::number(m_refToTimeStampler->get_timestamp_us()));
-}
 
 void DeviceHandler::onStartHugeChunkAckProcArrived(QByteArray value)
 {
@@ -379,7 +360,7 @@ void DeviceHandler::onStartHugeChunkAckProcArrived(QByteArray value)
     {
         setInfo("All Received!");
         qDebug()<<"All Received";
-        m_refToFileHandler->add_to_log_fil(m_ident_str, QString("AllArrived"), QString("TRUE"));
+        emit add_to_log_fil_sig(m_ident_str, QString("AllArrived"), QString("TRUE"));
 
         ackHugeChunk();
         parse_n_write_received_pool( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type);

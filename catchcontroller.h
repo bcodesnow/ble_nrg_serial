@@ -2,6 +2,7 @@
 #define CATCHCONTROLLER_H
 
 #include <QObject>
+#include <timesynchandler.h>
 
 // this class should be known to both devicehandlers, and he should also know both of them.. should act as middleman, in timesync, appmainstate, sd turn onof etc things.
 

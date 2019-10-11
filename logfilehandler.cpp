@@ -316,22 +316,22 @@ void LogFileHandler::start_new_log_fil()
 
 #define SEP_CHAR " : "
 #define LINE_END ";\n"
-void LogFileHandler::add_to_log_fil(QString ident, QString key, QString val)
+void LogFileHandler::add_to_log_fil_slot(QString ident, QString key, QString val)
 {
     QString tmpString = ident + SEP_CHAR + key + SEP_CHAR + val + LINE_END;
-    m_log_fil_buf.append(tmpString);
+    m_log_fil_buf->append(tmpString);
 }
 
 void LogFileHandler::sendCatchSuccessFromQML(bool wasItCatched)
 {
-    add_to_log_fil("LR","SUCCESS", wasItCatched ? "CATCH" : "DROP");
+    add_to_log_fil_slot("LR","SUCCESS", wasItCatched ? "CATCH" : "DROP");
     fin_log_fil(QString("LR"));
 }
 
 void LogFileHandler::fin_log_fil(QString ident)
 {
-    write_type_to_file(ident, m_log_fil_buf.toUtf8(), TYPE_LOG, 0);
-    m_log_fil_buf.clear();
+    write_type_to_file(ident, m_log_fil_buf->toUtf8(), TYPE_LOG, 0);
+    m_log_fil_buf->clear();
 }
 
 QString LogFileHandler::getHomeLocation()

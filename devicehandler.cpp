@@ -81,10 +81,10 @@ DeviceHandler::DeviceHandler(QObject *parent) :
     m_control(nullptr),
     m_service(nullptr),
     m_currentDevice(nullptr),
-    m_refToOtherDevice(nullptr),
+//    m_refToOtherDevice(nullptr),
     m_found_BLE_UART_Service(false),
     m_fileIndexOnDevice(0),
-    m_refToFileHandler(0),
+//    m_refToFileHandler(0),
     m_sdEnabled(0)
 {
 
@@ -110,20 +110,20 @@ DeviceHandler::AddressType DeviceHandler::addressType() const
     return DeviceHandler::AddressType::PublicAddress;
 }
 
-void DeviceHandler::setRefToOtherDevice(DeviceHandler *t_dev_handler)
-{
-    m_refToOtherDevice = t_dev_handler;
-}
+//void DeviceHandler::setRefToOtherDevice(DeviceHandler *t_dev_handler)
+//{
+//    m_refToOtherDevice = t_dev_handler;
+//}
 
-void DeviceHandler::setRefToFileHandler(LogFileHandler *t_fil_helper)
-{
-    m_refToFileHandler = t_fil_helper;
-}
+//void DeviceHandler::setRefToFileHandler(LogFileHandler *t_fil_helper)
+//{
+//    m_refToFileHandler = t_fil_helper;
+//}
 
-void DeviceHandler::setRefToTimeStampler(TimeSyncHandler *t_time_stampler)
-{
-    m_refToTimeStampler = t_time_stampler;
-}
+//void DeviceHandler::setRefToTimeStampler(TimeSyncHandler *t_time_stampler)
+//{
+//    m_refToTimeStampler = t_time_stampler;
+//}
 
 void DeviceHandler::setBtAdapter(QBluetoothAddress addr)
 {
@@ -281,6 +281,20 @@ void DeviceHandler::onSensorDataRequested()
     requestSensorData();
 }
 
+//void DeviceHandler::adr_test_slo(QBluetoothAddress adapterAddr)
+//{
+//    qDebug()<<"MEGGY";
+//    if (adapterAddr == nullptr)
+//        qDebug()<<"shit is fkd up";
+//    qDebug()<<"ADRR"<<adapterAddr.toString();
+//}
+
+//void DeviceHandler::di_tst_slo(DeviceInfo *device)
+//{
+//qDebug()<<"_BO_R_SO";
+//qDebug()<<device->getName();
+//}
+
 void DeviceHandler::onConnectionParamUpdated(const QLowEnergyConnectionParameters &newParameters)
 {
     qDebug()<<"DeviceHandler::onConnectionParamUpdated!!"<<newParameters.latency()<<
@@ -312,8 +326,9 @@ void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, c
     // use the state instead of reading every byte first byte we send...
     if ( data[0] == TS_MSG)
     {
-        if (m_refToTimeStampler != 0)
-            m_refToTimeStampler->time_sync_msg_sent(value);
+        emit time_sync_msg_sent(value, m_ident_idx);
+//        if (m_refToTimeStampler != 0)
+//            m_refToTimeStampler->time_sync_msg_sent(value);
     }
 }
 
@@ -447,12 +462,12 @@ void DeviceHandler::requestSensorData()
 
 }
 
-void DeviceHandler::init_slot(QBluetoothAddress* adapterAddr, DeviceInfo *device)
+void DeviceHandler::init_slot(QBluetoothHostInfo* hostInfo, DeviceInfo* deviceInfo)
 {
-    qDebug()<<"received adapter add"<<adapterAddr->QBluetoothAddress::toString();
-    setBtAdapter(*adapterAddr);
-    setDevice(device);
-
+    qDebug()<<"received adapter add"<<hostInfo->address();
+    qDebug()<<"received device name"<<deviceInfo->getName();
+    m_adapterAddress = hostInfo->address();
+    this->setDevice(deviceInfo);
 }
 
 

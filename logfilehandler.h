@@ -22,7 +22,7 @@ private:
     QString m_last_path;
     quint32 m_fil_src_cnt; // file source count
     quint8  m_last_type; // and last type make out when it increments.
-    QString m_log_fil_buf;
+    QString* m_log_fil_buf;
     QString m_homeLocation;
     bool m_is_aut_incr_en;
 
@@ -58,8 +58,6 @@ public:
 
     void start_new_log_fil();
 
-    void add_to_log_fil(QString ident, QString key, QString val);
-
     void fin_log_fil(QString ident);
 
     QString getHomeLocation();
@@ -73,7 +71,7 @@ public:
     Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
     Q_INVOKABLE void confirm (QString ident, bool bcatch)
     {
-        add_to_log_fil(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
+        add_to_log_fil_slot(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
     }
 
     Q_INVOKABLE void rst_idx()
@@ -104,6 +102,8 @@ public:
     }
 
 public slots:
+    void add_to_log_fil_slot(QString ident, QString key, QString val);
+
 };
 
 #endif // LOGFILEHANDLER_H
