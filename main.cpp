@@ -10,7 +10,7 @@
 #include "connectionhandler.h"
 #include "terminaltoqmlb.h"
 #include "devicefinder.h"
-#include "devicehandler.h"
+#include "devicecontroller.h"
 #include "logfilehandler.h"
 #include "ble_uart.h"
 #include "timesynchandler.h"
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     //NetworkManager ntwMngr(&log_file_handler);
 
     QQmlApplicationEngine engine;
-    qmlRegisterUncreatableType<DeviceHandler>("Shared", 1, 0, "AddressType", "Enum is not a type");
+    qmlRegisterUncreatableType<DeviceController>("Shared", 1, 0, "AddressType", "Enum is not a type");
     engine.rootContext()->setContextProperty("terminalToQml", &term);
     engine.rootContext()->setContextProperty("connectionHandler", &connection_handler);
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);

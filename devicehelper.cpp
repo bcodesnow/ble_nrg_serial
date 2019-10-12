@@ -1,7 +1,8 @@
-#include "devicehandler.h"
+#include "devicecontroller.h"
+#include "mci_catch_detection.h"
 
 // TODO: this is critical to add ts() message again -> this starts time sync.. we should also set the connections prior to syncing
-void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
+void DeviceController::sendCMDStringFromTerminal(const QString &str)
 {
     //    if (!connectionAlive())
     //    {
@@ -58,7 +59,7 @@ void DeviceHandler::sendCMDStringFromTerminal(const QString &str)
     //        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
-QString DeviceHandler::state_to_string(uint8_t tmp)
+QString stateToString(uint8_t tmp)
 {
     switch (tmp)
     {
@@ -86,7 +87,7 @@ QString DeviceHandler::state_to_string(uint8_t tmp)
 }
 
 
-void DeviceHandler::printProperties(QLowEnergyCharacteristic::PropertyTypes props)
+void DeviceController::printProperties(QLowEnergyCharacteristic::PropertyTypes props)
 {
     if (props.testFlag(QLowEnergyCharacteristic::Unknown)) qDebug()<<"Property unknown";
     if (props.testFlag(QLowEnergyCharacteristic::Broadcasting)) qDebug()<<"Property: Broadcasting";
@@ -99,7 +100,7 @@ void DeviceHandler::printProperties(QLowEnergyCharacteristic::PropertyTypes prop
     if (props.testFlag(QLowEnergyCharacteristic::ExtendedProperty)) qDebug()<<"Property: Extended Property";
 }
 
-void  DeviceHandler::printThroughput()
+void  DeviceController::printThroughput()
 {
     float kbyte_ps;
     float kbit_ps;

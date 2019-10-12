@@ -15,9 +15,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp \
     adapterinfo.cpp \
     devicebleuart.cpp \
+    devicecontroller.cpp \
     devicefinder.cpp \
     bluetoothbaseclass.cpp \
-    devicehandler.cpp \
     devicehelper.cpp \
     deviceinfo.cpp \
     deviceinterface.cpp \
@@ -47,12 +47,14 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     adapterinfo.h \
+    devicecontroller.h \
     devicefinder.h \
     bluetoothbaseclass.h \
-    devicehandler.h \
+    devicehandler_types.h \
     deviceinfo.h \
     deviceinterface.h \
     graphpainter.h \
+    mci_catch_detection.h \
     networkmanager.h \
     paintdata.h \
     terminaltoqmlb.h \

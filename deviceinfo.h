@@ -73,7 +73,10 @@ public:
     QString getAddress() const;
     qint64 getDeviceFlags() const;
     QBluetoothDeviceInfo getDevice() const;
-    void setDeviceFlags(const qint64 &flags);
+    void setDeviceFlags(const qint64 &flags); // todo why is this qint64?D
+
+    bool deviceIsInRequiredConnectionState;
+    bool deviceIsTimeSynced;
 
 signals:
     void deviceChanged();

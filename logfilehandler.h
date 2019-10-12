@@ -50,11 +50,10 @@ public:
 
     int typeToIndex(uint8_t type);
 
-    void saveToCsv(QString location, QVector<QVariant> data);
+    //void saveToCsv(QString location, QVector<QVariant> data);
 
     QByteArray loadFromFile(QString ident, uint8_t type);
 
-    void write_type_to_file(QString ident, QByteArray data, uint8_t type, uint16_t wp);
 
     void start_new_log_fil();
 
@@ -103,6 +102,7 @@ public:
 
 public slots:
     void add_to_log_fil_slot(QString ident, QString key, QString val);
+    void write_type_to_file_slot(QString ident, QByteArray* data, uint8_t type, uint16_t wp);
 
 };
 

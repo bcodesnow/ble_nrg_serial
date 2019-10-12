@@ -6,7 +6,7 @@
 
 #include <QTimer>
 #include <QElapsedTimer>
-#include <devicehandler.h>
+#include <devicecontroller.h>
 #include <QObject>
 #include <QVector>
 
@@ -50,8 +50,9 @@ private:
     void calculate_compensation();
 
 signals:
-    void time_sync_completed();
-    void time_sync_failed();
+//    void time_sync_completed();
+//    void time_sync_failed();
+    void time_sync_finished(bool success, int id);
 
 public:
     TimeSyncHandler(QList<DeviceInterface*>* device_interfaces, QObject *parent = nullptr);

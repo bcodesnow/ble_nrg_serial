@@ -48,7 +48,7 @@
 **
 ****************************************************************************/
 
-#include "devicehandler.h"
+#include "devicecontroller.h"
 #include "ble_uart.h"
 #include "deviceinfo.h"
 #include <QtEndian>
@@ -76,77 +76,54 @@
  *  setDevice -> serviceDiscovered -> serviceScanDone
  */
 
-DeviceHandler::DeviceHandler(QObject *parent) :
-    BluetoothBaseClass(parent),
+DeviceController::DeviceController(int idx, QString identifier, QObject *parent) :
+    QObject(parent),
+    m_ident_idx(idx),
+    m_ident_str(identifier),
     m_control(nullptr),
     m_service(nullptr),
     m_currentDevice(nullptr),
-//    m_refToOtherDevice(nullptr),
-    m_found_BLE_UART_Service(false),
-    m_fileIndexOnDevice(0),
-//    m_refToFileHandler(0),
-    m_sdEnabled(0)
+    m_found_BLE_UART_Service(false)
 {
-
+    m_dev_conn_param_info.requested_mode = UNKNOWN;
 }
 
-void DeviceHandler::setAddressType(AddressType type)
+void DeviceController::setAddressType(AddressType type)
 {
     switch (type) {
-    case DeviceHandler::AddressType::PublicAddress:
+    case DeviceController::AddressType::PublicAddress:
         m_addressType = QLowEnergyController::PublicAddress;
         break;
-    case DeviceHandler::AddressType::RandomAddress:
+    case DeviceController::AddressType::RandomAddress:
         m_addressType = QLowEnergyController::RandomAddress;
         break;
     }
 }
 
-DeviceHandler::AddressType DeviceHandler::addressType() const
+DeviceController::AddressType DeviceController::addressType() const
 {
     if (m_addressType == QLowEnergyController::RandomAddress)
-        return DeviceHandler::AddressType::RandomAddress;
+        return DeviceController::AddressType::RandomAddress;
 
-    return DeviceHandler::AddressType::PublicAddress;
+    return DeviceController::AddressType::PublicAddress;
 }
 
-//void DeviceHandler::setRefToOtherDevice(DeviceHandler *t_dev_handler)
-//{
-//    m_refToOtherDevice = t_dev_handler;
-//}
-
-//void DeviceHandler::setRefToFileHandler(LogFileHandler *t_fil_helper)
-//{
-//    m_refToFileHandler = t_fil_helper;
-//}
-
-//void DeviceHandler::setRefToTimeStampler(TimeSyncHandler *t_time_stampler)
-//{
-//    m_refToTimeStampler = t_time_stampler;
-//}
-
-void DeviceHandler::setBtAdapter(QBluetoothAddress addr)
-{
-    m_adapterAddress = addr;
-    qDebug()<<m_ident_str<<"Received the Adapter:"<<addr.toString();
-}
-
-void DeviceHandler::setIdentifier(QString str, quint8 idx, QBluetoothAddress addr)
+void DeviceController::setIdentifier(QString str, quint8 idx, QBluetoothAddress addr)
 {
     m_ident_str = str;
     m_ident_idx = idx;
     m_adapterAddress = addr;
 }
 
-void DeviceHandler::setDevice(DeviceInfo *device)
+void DeviceController::connectToPeripheral(DeviceInfo *device)
 {
-    clearMessages();
+    //clearMessages();
     m_currentDevice = device;
-    if (device != nullptr)
-    {
-        m_deviceAddress = device->getAddress();
-        emit deviceAddressChanged();
-    }
+//    if (device != nullptr)
+//    {
+//        device->getAddress();
+//        emit deviceAddressChanged();
+//    }
 
     // Disconnect and delete old connection
     if (m_control) {
@@ -173,23 +150,22 @@ void DeviceHandler::setDevice(DeviceInfo *device)
 
         m_control->setRemoteAddressType(QLowEnergyController::RandomAddress); //changed to Random Address
         qDebug()<<"Devicehandler -> Before starting to connect signals..";
-        connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceHandler::serviceDiscovered);
-        connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceHandler::serviceScanDone);
+        connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceController::serviceDiscovered);
+        connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceController::serviceScanDone);
 
         connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error), this, [this](QLowEnergyController::Error error) {Q_UNUSED(error);setError("Cannot connect to remote device.");});
-        connect(m_control, &QLowEnergyController::connected, this, &DeviceHandler::onConnected);
-        connect(m_control, &QLowEnergyController::disconnected, this, [this]() { setError("BLE controller disconnected!");});
-        connect(m_control, &QLowEnergyController::connectionUpdated, this, &DeviceHandler::onConnectionParamUpdated);
+        connect(m_control, &QLowEnergyController::connected, this, &DeviceController::onConnected);
+        connect(m_control, &QLowEnergyController::disconnected, this, &DeviceController::onDisconnected);
+        connect(m_control, &QLowEnergyController::connectionUpdated, this, &DeviceController::onCentralConnectionUpdated);
 
         // Connect
         m_control->connectToDevice();
     }
 }
 
-void DeviceHandler::serviceDiscovered(const QBluetoothUuid &gatt)
+void DeviceController::serviceDiscovered(const QBluetoothUuid &gatt)
 {
     if (gatt == QBluetoothUuid(BLE_UART_SERVICE)) {
-        setInfo("BLE UART Service discovered...");
         qDebug()<<"BLE UART Service discovered...";
         m_found_BLE_UART_Service = true;
     }
@@ -197,9 +173,8 @@ void DeviceHandler::serviceDiscovered(const QBluetoothUuid &gatt)
 }
 
 
-void DeviceHandler::serviceScanDone()
+void DeviceController::serviceScanDone()
 {
-    setInfo("Service scan done.");
     qDebug("Service scan done.");
 
     // Delete old service if available
@@ -224,13 +199,12 @@ void DeviceHandler::serviceScanDone()
 }
 
 //! [Find BLE UART characteristic]
-void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
+void DeviceController::serviceStateChanged(QLowEnergyService::ServiceState s)
 {
     qDebug()<<"Service State changed...";
     switch (s) {
     case QLowEnergyService::DiscoveringServices:
         qDebug("Discovering services...");
-        setInfo(tr("Discovering services..."));
         break;
     case QLowEnergyService::ServiceDiscovered:
     {
@@ -247,7 +221,7 @@ void DeviceHandler::serviceStateChanged(QLowEnergyService::ServiceState s)
 }
 
 
-void DeviceHandler::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value)
+void DeviceController::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value)
 {
     qWarning()<<"confirmedDescriptorWrite.. if this needs to be used, we need to keep track of our m_notificationDescriptors..";
     if (d.isValid() && d == m_notificationDescriptor && value == QByteArray::fromHex("0000")) {
@@ -258,8 +232,7 @@ void DeviceHandler::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, cons
     }
 }
 
-
-void DeviceHandler::disconnectService()
+void DeviceController::disconnectService()
 {
     m_found_BLE_UART_Service = false;
 
@@ -272,81 +245,75 @@ void DeviceHandler::disconnectService()
             m_control->disconnectFromDevice();
 
         delete m_service;
-        m_service = 0;
+        m_service = nullptr;
     }
 }
 
-void DeviceHandler::onSensorDataRequested()
+void DeviceController::onSensorDataRequested()
 {
     requestSensorData();
 }
 
-//void DeviceHandler::adr_test_slo(QBluetoothAddress adapterAddr)
-//{
-//    qDebug()<<"MEGGY";
-//    if (adapterAddr == nullptr)
-//        qDebug()<<"shit is fkd up";
-//    qDebug()<<"ADRR"<<adapterAddr.toString();
-//}
-
-//void DeviceHandler::di_tst_slo(DeviceInfo *device)
-//{
-//qDebug()<<"_BO_R_SO";
-//qDebug()<<device->getName();
-//}
-
-void DeviceHandler::onConnectionParamUpdated(const QLowEnergyConnectionParameters &newParameters)
+void DeviceController::onCentralConnectionUpdated(const QLowEnergyConnectionParameters &newParameters)
 {
-    qDebug()<<"DeviceHandler::onConnectionParamUpdated!!"<<newParameters.latency()<<
+    qDebug()<<"QLowEnergyController::connectionUpdated!!"<<newParameters.latency()<<
               newParameters.minimumInterval()<<newParameters.maximumInterval()<<
               newParameters.supervisionTimeout();
 }
 
-
-void DeviceHandler::onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value)
-{
-    Q_UNUSED(c)
-    qDebug() << "SIGNAL: Characteristic Changed! " << value;
-}
-
-void DeviceHandler::onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value)
+//void DeviceHandler::onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value)
+//{
+//    Q_UNUSED(c)
+//    qDebug() << "SIGNAL: Characteristic Changed! " << value;
+//}
+// this should not happen..
+void DeviceController::onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
     Q_UNUSED(c)
     qDebug() << "SIGNAL: Characteristic Read Value! " << value << " UUID: "<< c.uuid();
 
 }
 
-void DeviceHandler::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
+void DeviceController::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
-    Q_UNUSED(c)
 #ifdef USE_DEBUG
     qInfo() << "Characteristic Written! - Payload: " << value;
 #endif
-    const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
-    // use the state instead of reading every byte first byte we send...
-    if ( data[0] == TS_MSG)
+    const quint8 *data;
+    Q_UNUSED(c)
+
+    if ( m_time_sync_in_action )
     {
-        emit time_sync_msg_sent(value, m_ident_idx);
-//        if (m_refToTimeStampler != 0)
-//            m_refToTimeStampler->time_sync_msg_sent(value);
+        data = reinterpret_cast<const quint8 *>(value.constData());
+        // use the state instead of reading every byte first byte we send...
+        if ( data[0] == TS_MSG)
+        {
+            emit time_sync_msg_sent(value, m_ident_idx);
+        }
     }
+
 }
 
 
-void DeviceHandler::onConnected()
+void DeviceController::onConnected()
 {
 
-    setInfo("Controller connected. Search services...");
+    //setInfo("Controller connected. Search services...");
     m_control->discoverServices();
 
 }
 
-void DeviceHandler::update_currentService()
+void DeviceController::onDisconnected()
+{
+    emit connectionAlive( false );
+}
+
+void DeviceController::update_currentService()
 {
     // connect(m_connParamTimer, &QTimer::timeout, this, &DeviceHandler::onConnParamTimerExpired);
-    connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceHandler::serviceStateChanged);
-    connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceHandler::ble_uart_rx);
-    connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceHandler::confirmedDescriptorWrite);
+    connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceController::serviceStateChanged);
+    connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceController::ble_uart_rx);
+    connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceController::confirmedDescriptorWrite);
     connect(m_service, QOverload<QLowEnergyService::ServiceError>::of(&QLowEnergyService::error),
             [=](QLowEnergyService::ServiceError newError){ qCritical()<<"ERR - QlowEnergyServiceError!"; Q_UNUSED(newError);});
     connect(m_service, SIGNAL(characteristicRead(QLowEnergyCharacteristic,QByteArray)), this, SLOT(onCharacteristicRead(QLowEnergyCharacteristic,QByteArray)));
@@ -361,7 +328,7 @@ void DeviceHandler::update_currentService()
 }
 
 
-bool DeviceHandler::connectionAlive() const
+bool DeviceController::connectionAlive() const
 {
     if (m_service)
         return m_service->state() == QLowEnergyService::ServiceDiscovered;
@@ -369,7 +336,7 @@ bool DeviceHandler::connectionAlive() const
     return false;
 }
 
-void DeviceHandler::searchCharacteristic()
+void DeviceController::searchCharacteristic()
 {
     if(m_service){
         foreach (QLowEnergyCharacteristic c, m_service->characteristics())
@@ -446,13 +413,9 @@ void DeviceHandler::searchCharacteristic()
             }
         }
     }
-
 }
 
-
-
-
-void DeviceHandler::requestSensorData()
+void DeviceController::requestSensorData()
 {
     QByteArray tba;
     tba.resize(2);
@@ -462,16 +425,36 @@ void DeviceHandler::requestSensorData()
 
 }
 
-void DeviceHandler::init_slot(QBluetoothHostInfo* hostInfo, DeviceInfo* deviceInfo)
+void DeviceController::set_peri_conn_mode(quint8 mode)
 {
+
+    m_dev_requested_conn_mode = mode;
+
+    if (isDeviceInRequestedConnState())
+    {
+        emit requestedConnModeReached(true, m_dev_conn_param_info.requested_mode);
+    }
+    else
+    {
+        retries_remaining = 3;
+        setRequestedConnParamsOnDevice(m_dev_requested_conn_mode);
+        setConnParamsOnCentral(m_dev_requested_conn_mode);
+        m_connParamTimer.singleShot(200, this, &DeviceController::onConnParamTimerExpired);
+    }
+}
+
+// modify to pass only a reference to Qbluetoothdevinfo.. use the deviceinfo oconstruct later to store the dev related data..
+void DeviceController::deviceInitializationSlot(QBluetoothHostInfo* hostInfo, DeviceInfo* deviceInfo)
+{
+    qDebug()<<"device will be initialized";
     qDebug()<<"received adapter add"<<hostInfo->address();
     qDebug()<<"received device name"<<deviceInfo->getName();
     m_adapterAddress = hostInfo->address();
-    this->setDevice(deviceInfo);
+    this->connectToPeripheral(deviceInfo);
 }
 
 
-void DeviceHandler::ackHugeChunk()
+void DeviceController::sendAckHugeChunk()
 {
     // add timeout timer..
     QByteArray tba;
@@ -481,7 +464,7 @@ void DeviceHandler::ackHugeChunk()
     this->ble_uart_send_cmd_with_resp(tba);
 }
 
-void DeviceHandler::setRequestedConnParamsOnDevice(uint8_t mode)
+void DeviceController::setRequestedConnParamsOnDevice(uint8_t mode)
 {
     QByteArray tba;
     tba.resize(2);
@@ -505,34 +488,24 @@ void DeviceHandler::setRequestedConnParamsOnDevice(uint8_t mode)
 }
 
 
-void DeviceHandler::parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type )
+void DeviceController::parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type )
 {
-    QByteArray tba;
+
+    if (m_last_hc_payload_ptr != nullptr)
+        m_last_hc_payload_ptr->~QByteArray();
+    m_last_hc_payload_ptr = new QByteArray();
+
     for (int i = 0; i < m_hc_vec.size(); i++)
     {
-        tba.append( m_hc_vec.at(i).barr );
-
+        m_last_hc_payload_ptr->append( m_hc_vec.at(i).barr);
     }
-    qDebug()<<"PARSER FINISHED, gathered:"<<tba.size();
-    //m_refToFileHandler->write_type_to_file(m_ident_str, m_huge_chunk, type, tmp_write_pointer);
+    qDebug()<<"Received" << m_last_hc_payload_ptr->size() <<"bytes raw data after filling it to a qbyterray:";
+
+    emit write_type_to_file_sig(m_ident_str, m_last_hc_payload_ptr, type, tmp_write_pointer);
 }
 
-//void DeviceHandler::setConnParams(double min_peri, double max_peri, int supervision_timeout, quint8 latency)
-//{
-//    QLowEnergyConnectionParameters para;
-//    para.setLatency(latency);
-//    para.setIntervalRange(min_peri, max_peri);
-//    para.setSupervisionTimeout(supervision_timeout);
-//    m_control->requestConnectionUpdate(para);
-//}
 
-
-//void  DeviceHandler::onConnParamTimerExpired()
-//{
-
-//}
-
-void DeviceHandler::setShutUp(bool mode)
+void DeviceController::setShutUp(bool mode)
 {
     qDebug()<<"Turning DEV"<<m_ident_idx<<m_ident_str<<"in shutupMode:"<<mode;
     QByteArray tba;
@@ -544,7 +517,7 @@ void DeviceHandler::setShutUp(bool mode)
 
 
 
-void DeviceHandler::setConnParamsOnCentral(uint8_t mode)
+void DeviceController::setConnParamsOnCentral(uint8_t mode)
 {
     QLowEnergyConnectionParameters para;
     m_dev_requested_conn_mode = mode;
@@ -570,6 +543,5 @@ void DeviceHandler::setConnParamsOnCentral(uint8_t mode)
         break;
     }
 
-    //m_connParamTimer.singleShot(100, this, SLOT(onConnParamTimerExpired()));
     m_control->requestConnectionUpdate(para);
 }

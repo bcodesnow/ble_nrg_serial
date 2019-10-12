@@ -58,7 +58,7 @@
 
 #include "devicefinder.h"
 #include "ble_uart.h"
-#include "devicehandler.h"
+#include "devicecontroller.h"
 #include "deviceinfo.h"
 #include "QThread"
 #include <QDebug>
@@ -168,7 +168,7 @@ void DeviceFinder::connectToSelectedDevices()
         {
             m_device_list->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr, deviceListSize));
             deviceListSize++;
-            m_device_list->last()->init_device( &m_conn_handler_ptr->m_adapterList[k], (DeviceInfo*) m_found_devices[i] );
+            m_device_list->last()->initializeDevice(&m_conn_handler_ptr->m_adapterList[k], (DeviceInfo*) m_found_devices[i] );
             k++;
             if ( k >= adapterListSize)
                 k = 0;

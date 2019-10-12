@@ -23,9 +23,19 @@ typedef struct huge_chunk_start_s {
 typedef struct request_missing_pkg_s {
     uint16_t pkg_id;
 } __attribute__((packed)) request_missing_pkg_t;
-#endif
 
 typedef struct ble_uart_cmd_s {
     uint8_t  cmd_code;
     uint8_t  payload[19];
 } __attribute__((packed)) ble_uart_cmd_t;
+
+typedef struct alive_msg_s {
+    uint8_t main_state;
+    uint8_t sub_state; // interface && controller
+    uint8_t last_error; // interface && controller
+    uint8_t sendingOverBleEnabled; // Q_PROPERTY
+    uint8_t sdEnabled; // Q_PROPERTY
+    uint16_t fileIndexOnDevice; // Q_PROPERTY
+}__attribute__((packed)) alive_msg_t;
+
+#endif

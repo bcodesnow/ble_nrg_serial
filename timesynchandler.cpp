@@ -1,5 +1,5 @@
 #include "timesynchandler.h"
-#include "devicehandler.h"
+#include "devicecontroller.h"
 #include <QTimer>
 #include <QObject>
 #include <algorithm> // min&max..
@@ -171,7 +171,7 @@ void TimeSyncHandler::slot_time_sync_msg_arrived(const QByteArray &msg)
                 // last msg sent
                 m_send_repeat_count = 0;
                 qCritical()<<"TS: Max retry reached, failed!";
-                emit time_sync_failed();
+                emit time_sync_finished(false, m_dev_idx_in_sync);
             }
             else
             {
@@ -190,7 +190,7 @@ void TimeSyncHandler::slot_time_sync_msg_arrived(const QByteArray &msg)
         {
             // we did it!
             qInfo()<<"TS: Sync completed! Current TS: " << get_timestamp_us();
-            emit time_sync_completed();
+            emit time_sync_finished(true, m_dev_idx_in_sync);
         }
         break;
         //

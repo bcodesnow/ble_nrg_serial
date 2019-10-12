@@ -57,6 +57,7 @@
 
 #define CMD_REQUEST_SENSORDATA          0x02 // available when data is in ram
 #define REPLY_START_HUGE_CHUNK          0x08 // this is the reply to requestsensordata
+#define REPLY_NO_CHUNK_AVAILABLE        0x80 // this is the reply to requestsensordata
 
 #define CMD_START_HUGE_CHUNK_ACK_PROC   0x09
 #define CMD_REQUEST_MISSING_PACKAGE     0x0A // modify to tx pool
@@ -77,6 +78,7 @@
 #define SLOW 1u
 #define MID  2u
 #define FAST 3u
+#define UNKNOWN 4u
 
 #define S_MIN   250
 #define S_MAX   500

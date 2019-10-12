@@ -48,6 +48,8 @@
 **
 ****************************************************************************/
 
+// todo: detect the name of the device and if its a Catch?! than set wearable flag
+
 #ifndef DEVICEFINDER_H
 #define DEVICEFINDER_H
 

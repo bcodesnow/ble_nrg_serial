@@ -1,6 +1,6 @@
-#include "devicehandler.h"
+#include "devicecontroller.h"
 
-bool DeviceHandler::ble_uart_send_cmd_with_resp(const QByteArray &value, quint16 timeout, quint8 retry)
+bool DeviceController::ble_uart_send_cmd_with_resp(const QByteArray &value, quint16 timeout, quint8 retry)
 {
     if (cmd_resp_struct.cmd_timer.isActive())
         return true;
@@ -17,7 +17,7 @@ bool DeviceHandler::ble_uart_send_cmd_with_resp(const QByteArray &value, quint16
     return false;
 }
 
-void DeviceHandler::onCmdTimerExpired()
+void DeviceController::onCmdTimerExpired()
 {
     if ( cmd_resp_struct.retry )
     {
@@ -32,7 +32,7 @@ void DeviceHandler::onCmdTimerExpired()
     }
 }
 
-void DeviceHandler::ble_uart_send_cmd_ok()
+void DeviceController::ble_uart_send_cmd_ok()
 {
     QByteArray tba;
     tba.resize(2);
@@ -41,18 +41,18 @@ void DeviceHandler::ble_uart_send_cmd_ok()
     ble_uart_send_cmd_with_resp(tba);
 }
 
-void DeviceHandler::ble_uart_tx(const QByteArray &value)
+void DeviceController::ble_uart_tx(const QByteArray &value)
 {
     if (value.size())
         m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 }
 
-inline bool DeviceHandler::isDeviceInRequestedConnState()
+inline bool DeviceController::isDeviceInRequestedConnState()
 {
     return ( ( m_dev_conn_param_info.current_mode == m_dev_requested_conn_mode ) && ( m_dev_conn_param_info.requested_mode == m_dev_requested_conn_mode ));
 }
 
-void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
+void DeviceController::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
     // it would have been the best to only move the send receive functions to an own thread.. with this solution we will have a bit faster dispatch of time sync and receive..
 
@@ -90,7 +90,7 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
             // confirm if it was a catch or drop -> we should give it to a class "above" -> catch controller
             qDebug()<<"Writing data to SD finished, waiting for confimation!";
             // send CMD_WRITE_CATCH_SUCC
-            setInfo("Waiting for Confirmation!");
+            //setInfo("Waiting for Confirmation!");
         }
             break;
 
@@ -112,25 +112,22 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
         case SENSORDATA_AVAILABLE:
         {
             qDebug()<<"Sensor Data avialable for download!";
-            setInfo("Sensordata available!");
             emit sensorDataAvailableArrived();
         }
             break;
             //
         case SENDING_SENSORDATA_FINISHED:
         {
-            emit sensorDataReceived(); // qml uses this..to stop blinking the button..change name later!
+//            emit sensorDataReceived(); // qml uses this..to stop blinking the button..change name later!
 
-            qDebug()<<"SENDING_SENSORDATA_FINISHED && allowing device to speak -> setShutUp(0) -> commented out";
-            //                setShutUp(0);
-            //                m_refToOtherDevice->setShutUp(0);
-            setInfo("Sensordata Received!");
+//            qDebug()<<"SENDING_SENSORDATA_FINISHED && allowing device to speak -> setShutUp(0) -> commented out";
+//            //                setShutUp(0);
+//            //                m_refToOtherDevice->setShutUp(0);
         }
             break;
         case TS_MSG:
         {
             emit timeSyncMessageArrived(value);
-            //m_refToTimeStampler->time_sync_msg_arrived(value);
         }
             break;
 
@@ -231,28 +228,8 @@ void DeviceHandler::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteAr
 }
 
 
-void DeviceHandler::onAliveArrived(QByteArray value)
-{
-    const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
-    m_deviceState = state_to_string(data[1]);
-    m_fileIndexOnDevice = data[3];
-    m_deviceSubState = data[2];
-    m_deviceLastError = data[4];
 
-    if (m_deviceLastError)
-        m_refToFileHandler->add_to_log_fil(m_ident_str,"Last Error", QString(data[4]));
-
-    qDebug()<<m_ident_str<<" --- ALIVE: -STATE- "<<m_deviceState<<" -SUB STATE- "<<m_deviceSubState<<" -LAST ERROR- "<<m_deviceLastError;
-
-    // TODO: if SD
-    m_sdEnabled = data[5];
-//    emit sdEnabledChanged();
-//    emit fileIndexOnDeviceChanged();
-    emit deviceStateChanged();
-    setInfo("Alive!");
-}
-
-void DeviceHandler::requestMissingPackage()
+void DeviceController::requestMissingPackage()
 {
     request_missing_pkg_t req;
     req.pkg_id = m_hc_missed.at(0);
@@ -265,7 +242,7 @@ void DeviceHandler::requestMissingPackage()
 }
 
 
-void DeviceHandler::onReplyMissingPackageArrived(QByteArray value)
+void DeviceController::onReplyMissingPackageArrived(QByteArray value)
 {
     qDebug()<<"Missed Package arived";
     m_timeoutTimer.stop();
@@ -287,14 +264,14 @@ void DeviceHandler::onReplyMissingPackageArrived(QByteArray value)
     }
     else
     {
-        this->ackHugeChunk();
+        this->sendAckHugeChunk();
         parse_n_write_received_pool( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type );
         // reset variables
     }
 }
 
 
-void DeviceHandler::onStartHugeChunkArrived()
+void DeviceController::onStartHugeChunkArrived()
 {
     quint8 val = 0;
 
@@ -324,13 +301,11 @@ void DeviceHandler::onStartHugeChunkArrived()
 
     ble_uart_send_cmd_ok();
 
-    setInfo("Incoming!");
-
 }
 
 
 
-void DeviceHandler::onStartHugeChunkAckProcArrived(QByteArray value)
+void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 {
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
 
@@ -358,11 +333,10 @@ void DeviceHandler::onStartHugeChunkAckProcArrived(QByteArray value)
 
     if ( hc_helper_struct.missed_to_request == 0 )
     {
-        setInfo("All Received!");
         qDebug()<<"All Received";
         emit add_to_log_fil_sig(m_ident_str, QString("AllArrived"), QString("TRUE"));
 
-        ackHugeChunk();
+        sendAckHugeChunk();
         parse_n_write_received_pool( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type);
     }
     else
@@ -373,48 +347,39 @@ void DeviceHandler::onStartHugeChunkAckProcArrived(QByteArray value)
 }
 
 
-void DeviceHandler::onConnParamInfoArrived()
+void DeviceController::onConnParamInfoArrived()
 {
 
     qDebug()<<"PARA_INFO_MSG:"<<m_ident_idx<<m_ident_str<<"from dev"<<
               m_dev_conn_param_info.latency<<m_dev_conn_param_info.interval<<
               m_dev_conn_param_info.current_mode<<m_dev_conn_param_info.requested_mode;
 
-    if (isDeviceInRequestedConnState())
+    if (isDeviceInRequestedConnState() && m_connParamTimer.isActive())
+
     {
         m_connParamTimer.stop();
-
-        //make the necessary shutup!!
-        qDebug()<<"Dev also made the necessary changes and switched!";
-
-        //continue with requesting sensor data.. if the second device also reached its requested state..
-        // todo replace checking the connection mode flag with checking app state...
-        // MODIFY AND TEST IF ITS ENOUGH IF ONE DEV HAS IDEAL CONDITIONS
-        if (downloading_sensor_data_active && m_refToOtherDevice->isDeviceInRequestedConnState() )
-        {
-            qDebug()<<"Other device is also ready -> go on!";
+        emit requestedConnModeReached(true, m_dev_conn_param_info.current_mode);
+    }
+}
 
 
-            requestSensorData();
-        }
-
+void DeviceController::onConnParamTimerExpired()
+{
+    if ( retries_remaining )
+    {
+        retries_remaining--;
+        setConnParamsOnCentral(m_dev_requested_conn_mode);
+        m_connParamTimer.singleShot(150, this, SLOT(onConnParamTimerExpired()));
     }
     else
     {
-        setConnParamsOnCentral(m_dev_requested_conn_mode);
+        emit requestedConnModeReached(false, m_dev_conn_param_info.current_mode);
+        qDebug()<<"connparamupdate failed after x retries..";
+        //show the devil or reply back to catch controller that the action failed
     }
 }
 
-void DeviceHandler::onConnParamTimerExpired()
-{
-    // TODO here it is
-}
-
-void DeviceHandler::onSensorDataAvailableArrived()
+void DeviceController::onSensorDataAvailableArrived()
 {
     // todo this is something qml could jump on again..
 }
-
-// TODO
-//m_refToOtherDevice->setRequestedConnParamsOnDevice(SLOW);
-//m_refToOtherDevice->setConnParamsOnCentral(SLOW);
