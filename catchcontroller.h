@@ -4,9 +4,11 @@
 #include <QObject>
 #include <timesynchandler.h>
 #include <logfilehandler.h>
+#include <deviceinterface.h>
 
 class LogFileHandler;
 class TimeSyncHandler;
+class DeviceInterface;
 
 // this class should be known to both devicehandlers, and he should also know both of them.. should act as middleman, in timesync, appmainstate, sd turn onof etc things.
 
@@ -23,6 +25,7 @@ private:
     bool m_sdEnabled;
 
     QTimer m_timesyncTimer;
+    QTimer m_downloadTimer;
 
     LogFileHandler* m_logfile_handler_ptr;
     TimeSyncHandler* m_timesync_handler_ptr;
@@ -43,15 +46,23 @@ signals:
 
     void timeSyncOfAllDevFinished(bool success);
 
+    //    void transferProgressChanged(uint8_t percentage);
+    //    void showProgressMessage(QString mainText, QString subText, int percent, uint8_t flag);
+    //    void progressFinished();
+
 
 public slots:
     void startTimesyncAllDevices();
     void onTimeSyncTimerExpired();
     void onTimeSyncOfDevXfinished(bool success, int id);
-    void onConnUpdateOfDevXfinished(bool success, int id); // todo connect both of them
     void startTimeSyncOfDevX(int id);
 
    void startDownloadFromAllDevices();
+   void onDownloadTimerExpired();
+   void onDownloadOfDeviceXfinished(bool success, int id);
+   void startDownloadOfDevX(int id);
+
+   void onConnUpdateOfDevXfinished(bool success, int id); // todo connect both of them
 
 //#define WAITING_FOR_CONNECTION_TO_COMPLETE 1u
 //#define

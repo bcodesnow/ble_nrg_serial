@@ -19,8 +19,16 @@ bool CatchController::sdEnabled() const
 quint8 time_sync_state;
 int    remaining_c;
 int    id_in_sync;
+bool change_conn_of_other_devices;
 #define SETTING_CONN_MODE 1u
 #define SYNCING           2u
+#define DOWNLOADING       2u
+#define NOT_RUNNING       3u
+
+/* TIME SYNC MULTIMPLE DEVICES */
+//
+//
+//
 
 void CatchController::onTimeSyncTimerExpired()
 {
@@ -34,7 +42,6 @@ void CatchController::onTimeSyncTimerExpired()
     // show the devil..
 }
 
-
 void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
 {
     if ( success )
@@ -46,16 +53,52 @@ void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
         qDebug()<<"CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
     }
     if ( id++ < m_device_list->size() )
-    {
-        m_timesync_handler_ptr->startTimeSyncOfDevX(id++);
+    {   // this relies on it that we started with 0 and continue upwards..
+        this->startTimeSyncOfDevX(id++);
     }
     else
     {
         m_timesyncTimer.stop();
+        time_sync_state = NOT_RUNNING;
         emit timeSyncOfAllDevFinished(true);
     }
 }
 
+void CatchController::startTimeSyncOfDevX(int id)
+{
+    m_device_list->at(id)->set_peri_conn_mode_sig(FAST);
+
+    if ( change_conn_of_other_devices)
+    {
+         for (int i = 0; i< m_device_list->size(); i++)
+         {
+             if ( i != id)
+                 m_device_list->at(id)->set_peri_conn_mode_sig(SLOW);
+         }
+         remaining_c = m_device_list->size();
+    }
+    else
+    {
+        remaining_c = 1;
+    }
+    time_sync_state = SETTING_CONN_MODE;
+
+    m_timesyncTimer.singleShot(2000, this, &CatchController::onTimeSyncTimerExpired);
+}
+
+void CatchController::startTimesyncAllDevices()
+{
+    id_in_sync = 0;
+    startTimeSyncOfDevX(id_in_sync);
+}
+
+//
+//
+//
+/* SHARED BY TS AND DL */
+//
+//
+//
 
 void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
 {
@@ -71,30 +114,72 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
     remaining_c--;
     if ( !remaining_c )
     {
-        m_timesyncTimer.stop();
-        m_timesyncTimer.singleShot(2000, this, &CatchController::onTimeSyncTimerExpired);
-        time_sync_state = SYNCING;
-        m_timesync_handler_ptr->start_time_sync(id_in_sync);
+        if (time_sync_state == SETTING_CONN_MODE)
+        {
+            m_timesyncTimer.stop();
+            m_timesyncTimer.singleShot(4000, this, &CatchController::onTimeSyncTimerExpired);
+            time_sync_state = SYNCING;
+            m_timesync_handler_ptr->start_time_sync(id_in_sync);
+        }
+        if ( dl_state == SETTING_CONN_MODE )
+        {
+            m_downloadTimer.stop();
+            m_downloadTimer.singleShot(20000, this, &CatchController::onTimeSyncTimerExpired);
+            dl_state = DOWNLOADING;
+            m_device_list-->request_sensordata...        }
     }
 }
 
+//
+//
+//
+/* DOWNLOAD DATA FROM MULTIPLE DEVICES */
+//
+//
+//
 
-void CatchController::startTimeSyncOfDevX(int id)
+int id_in_dl;
+
+
+void CatchController::startDownloadFromAllDevices()
+{
+    id_in_dl = 0;
+    startDownloadOfDevX(id_in_dl)
+}
+
+void CatchController::startDownloadOfDevX(int id)
 {
     m_device_list->at(id)->set_peri_conn_mode_sig(FAST);
-    for (int i = 0; i< m_device_list->size(); i++)
+
+    if ( change_conn_of_other_devices)
     {
-        if ( i != id)
-            m_device_list->at(id)->set_peri_conn_mode_sig(SLOW);
+         for (int i = 0; i< m_device_list->size(); i++)
+         {
+             if ( i != id)
+                 m_device_list->at(id)->set_peri_conn_mode_sig(SLOW);
+         }
+         remaining_c = m_device_list->size();
+    }
+    else
+    {
+        remaining_c = 1;
     }
     time_sync_state = SETTING_CONN_MODE;
-    remaining_c = m_device_list->size();
-    m_timesyncTimer.singleShot(2000, this, &CatchController::onTimeSyncTimerExpired);
+
+    m_downloadTimer.singleShot(2000, this, &CatchController::onDownloadTimerExpired);
+
 }
 
-void CatchController::startTimesyncAllDevices()
+void CatchController::onDownloadTimerExpired()
 {
-    remaining_s = m_device_list->size();
-    id_in_sync = 0;
-    startTimeSyncOfDevX(id_in_sync);
+
 }
+
+void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
+{
+
+}
+
+//
+//
+//

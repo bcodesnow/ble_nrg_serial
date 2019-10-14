@@ -153,7 +153,7 @@ void DeviceController::connectToPeripheral(DeviceInfo *device)
         connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceController::serviceDiscovered);
         connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceController::serviceScanDone);
 
-        connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error), this, [this](QLowEnergyController::Error error) {Q_UNUSED(error);setError("Cannot connect to remote device.");});
+        connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error), this, [this](QLowEnergyController::Error error) {Q_UNUSED(error); qDebug()<<"Cannot connect to remote device.";});
         connect(m_control, &QLowEnergyController::connected, this, &DeviceController::onConnected);
         connect(m_control, &QLowEnergyController::disconnected, this, &DeviceController::onDisconnected);
         connect(m_control, &QLowEnergyController::connectionUpdated, this, &DeviceController::onCentralConnectionUpdated);
@@ -192,7 +192,6 @@ void DeviceController::serviceScanDone()
         update_currentService();
         qDebug("SERVICE CREATED, SIGNALS Connected");
     } else {
-        setError("BLE UART NOT FOUND");
         qCritical()<<"BLE UART NOT FOUND";
     }
 
@@ -249,11 +248,6 @@ void DeviceController::disconnectService()
     }
 }
 
-void DeviceController::onSensorDataRequested()
-{
-    requestSensorData();
-}
-
 void DeviceController::onCentralConnectionUpdated(const QLowEnergyConnectionParameters &newParameters)
 {
     qDebug()<<"QLowEnergyController::connectionUpdated!!"<<newParameters.latency()<<
@@ -308,6 +302,15 @@ void DeviceController::onDisconnected()
     emit connectionAlive( false );
 }
 
+bool DeviceController::connectionAlive() const
+{
+    if (m_service)
+        return m_service->state() == QLowEnergyService::ServiceDiscovered;
+
+    return false;
+}
+
+
 void DeviceController::update_currentService()
 {
     // connect(m_connParamTimer, &QTimer::timeout, this, &DeviceHandler::onConnParamTimerExpired);
@@ -328,13 +331,6 @@ void DeviceController::update_currentService()
 }
 
 
-bool DeviceController::connectionAlive() const
-{
-    if (m_service)
-        return m_service->state() == QLowEnergyService::ServiceDiscovered;
-
-    return false;
-}
 
 void DeviceController::searchCharacteristic()
 {
@@ -415,6 +411,14 @@ void DeviceController::searchCharacteristic()
     }
 }
 
+
+
+void DeviceController::onSensorDataRequested()
+{
+    requestSensorData();
+}
+
+
 void DeviceController::requestSensorData()
 {
     QByteArray tba;
@@ -441,6 +445,11 @@ void DeviceController::set_peri_conn_mode(quint8 mode)
         setConnParamsOnCentral(m_dev_requested_conn_mode);
         m_connParamTimer.singleShot(200, this, &DeviceController::onConnParamTimerExpired);
     }
+}
+
+void DeviceController::peri_download_all_sensordata()
+{
+    requestSensorData();
 }
 
 // modify to pass only a reference to Qbluetoothdevinfo.. use the deviceinfo oconstruct later to store the dev related data..

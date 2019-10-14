@@ -17,7 +17,7 @@ class TimeSyncHandler;
 class LogFileHandler;
 class CatchController;
 
-// add baseclass!!!
+// todo: add baseclass ..or remove it completely and give this properties only to the catch controller.. it will be finally unused..!!!
 class DeviceInterface : public BluetoothBaseClass
 {
     Q_OBJECT

@@ -50,19 +50,19 @@
 
 #define CMD_WRITE_CATCH_SUCCESS         0x03
 #define CMD_SET_SHUT_UP                 0x04 // when set on device it should not send any notifications
-#define CMD_SET_CONN_MODE   			0x05 // msg to receive conn period
+#define CMD_SET_CONN_MODE   			0x05 // from central msg to receive conn period
 
-#define CMD_TURN_ON_SD_LOGGING          0x06
-#define CMD_TURN_ON_BLE_SENDING         0x07
+#define CMD_TURN_ON_SD_LOGGING          0x06 // from central
+#define CMD_TURN_ON_BLE_SENDING         0x07 // from central
 
-#define CMD_REQUEST_SENSORDATA          0x02 // available when data is in ram
-#define REPLY_START_HUGE_CHUNK          0x08 // this is the reply to requestsensordata
-#define REPLY_NO_CHUNK_AVAILABLE        0x80 // this is the reply to requestsensordata
+#define CMD_REQUEST_SENSORDATA          0x02 // from central
+#define REPLY_START_HUGE_CHUNK          0x08 // from device this is the reply to requestsensordata
+#define REPLY_NO_CHUNK_AVAILABLE        0x80 // from device this is the reply to requestsensordata
 
-#define CMD_START_HUGE_CHUNK_ACK_PROC   0x09
-#define CMD_REQUEST_MISSING_PACKAGE     0x0A // modify to tx pool
-#define REPLY_MISSED_PACKAGE            0x0B
-#define CMD_HC_OK                       0x0C
+#define CMD_START_HUGE_CHUNK_ACK_PROC   0x09 // from device
+#define CMD_REQUEST_MISSING_PACKAGE     0x0A // from central
+#define REPLY_MISSED_PACKAGE            0x0B // from device
+#define CMD_HC_OK                       0x0C // from central
 
 #define TRIGGERED                       0x0D
 #define DATA_SAVED_TO_SD                0x0E // used when data is saved to sd... DATA_COLLECTED

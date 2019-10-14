@@ -334,7 +334,7 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 
     if ( hc_helper_struct.missed_to_request == 0 )
     {
-        hugeChunkDownlaodFinished();
+        hugeChunkDownloadFinished();
     }
     else
     {
@@ -343,7 +343,7 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
     }
 }
 
-void hugeChunkDownlaodFinished()
+void hugeChunkDownloadFinished()
 {
     qDebug()<<"All Received";
     emit add_to_log_fil_sig(m_ident_str, QString("AllArrived"), QString("TRUE"));

@@ -57,7 +57,7 @@ private:
 
     QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
     QList<quint16> m_hc_missed; // list of missed package ids
-    QByteArray* m_last_hc_payload_ptr;
+    QByteArray* m_last_hc_payload_ptr; // last huge chunk - it gets passed as ref to the file handler in the different thread and will be always created here and destroyed there..
 
 
     huge_chunk_start_t hc_transfer_struct; // ble uart package type
@@ -107,23 +107,6 @@ private:
 
     void setConnParamMode(uint8_t mode);
 
-//    void connect_rx_sigs_to_slots()
-//    {
-//        connect(this, &DeviceHandler::startHugeChunkAckProcArrived, this, &DeviceHandler::onStartHugeChunkAckProcArrived);
-//        connect(this, &DeviceHandler::startHugeChunkArrived, this, &DeviceHandler::onStartHugeChunkArrived);
-
-//        connect(this, &DeviceHandler::triggeredArrived, this, &DeviceHandler::onTriggeredArrived); // connect to catch ControllerWith Queued!!
-
-//        //connect(this, &DeviceHandler::timeSyncMessageArrived, this, &DeviceHandler::onTimeSyncMessageArrived);
-
-//        connect(this, &DeviceHandler::connParamInfoArrived, this, &DeviceHandler::onConnParamInfoArrived);
-
-//        connect(this, &DeviceHandler::sensorDataAvailableArrived, this, &DeviceHandler::onSensorDataAvailableArrived);
-
-//        connect(this, &DeviceHandler::replyMissingPackageArrived, this, &DeviceHandler::onReplyMissingPackageArrived);
-//    }
-
-
 
 public:
     DeviceController(int idx, QString identifier, QObject *parent = nullptr);
@@ -139,10 +122,6 @@ public:
     void setAddressType(AddressType type);
     AddressType addressType() const;
 
-/*    void setRefToOtherDevice (DeviceHandler* t_dev_handler);
-    void setRefToFileHandler (LogFileHandler* t_fil_helper);
-    void setRefToTimeStampler (TimeSyncHandler* t_time_stampler)*/
-    //void setBtAdapter(QBluetoothAddress addr); // modify to pass the pointer
 
     void setIdentifier(QString str, quint8 idx, QBluetoothAddress addr);
 
@@ -181,12 +160,10 @@ signals:
     void requestDispatchToOtherDevices(QByteArray value, quint8 ident_idx );
     void time_sync_msg_sent(QByteArray value, int idx);
 
-    void requestedConnModeReached(bool success, quint8 mode);
+    void requestedConnModeReached(bool success, quint8 mode); // ?!?!
+    void noChunkAvailableArrived(); // Ext - Download Completed
 
 //    void writeValidChanged();
-//    void transferProgressChanged(uint8_t percentage);
-//    void showProgressMessage(QString mainText, QString subText, int percent, uint8_t flag);
-//    void progressFinished();
 
     // Log File Handler Connections
     void write_type_to_file_sig(QString ident, QByteArray* data, uint8_t type, uint16_t wp);
@@ -200,7 +177,7 @@ public slots:
 
     void disconnectService();
 
-    void onSensorDataRequested(void); // start download
+    //void onSensorDataRequested(void); // start download
 
     void slot_printThreadId() { qDebug()<<"Thread id of device:"<<QThread::currentThreadId(); }
 
@@ -232,6 +209,8 @@ private slots:
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void set_peri_conn_mode(quint8 mode);
+
+    void peri_download_all_sensordata();
 
     // relevant to qml..
 

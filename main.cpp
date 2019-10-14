@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     TimeSyncHandler* time_sync_handler = new TimeSyncHandler(&device_interfaces);
     time_sync_handler->start_time_stamp();
 
-    CatchController* catch_controller = new CatchController(); // should have acc to list of interfaces!
+    CatchController* catch_controller = new CatchController(&device_interfaces, time_sync_handler,log_file_handler);
 
     //log_file_handler.set_fil_src_cnt(2);
     //log_file_handler.set_last_type(TYPE_PRS);
