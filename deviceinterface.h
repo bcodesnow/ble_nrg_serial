@@ -21,13 +21,17 @@ class CatchController;
 class DeviceInterface : public BluetoothBaseClass
 {
     Q_OBJECT
-    Q_PROPERTY(bool connectionAlive READ connectionAlive NOTIFY aliveChanged)
-    Q_PROPERTY(AddressType addressType READ addressType WRITE setAddressType)
-    Q_PROPERTY(QString deviceAddress MEMBER m_deviceAddress NOTIFY deviceAddressChanged)
-    Q_PROPERTY(QString deviceState MEMBER m_deviceState NOTIFY deviceStateChanged)
-    Q_PROPERTY(bool sdEnabled MEMBER m_sdEnabled NOTIFY sdEnabledChanged)
-    Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
-    Q_PROPERTY(bool sendingOverBleEnabled MEMBER m_sendingOverBleEnabled NOTIFY sendingOverBleEnabledChanged)
+    //Q_PROPERTY(QString deviceAddress MEMBER m_deviceAddress NOTIFY deviceAddressChanged)
+
+    //Q_PROPERTY(bool heartBeat MEMBER m_heartBeat NOTIFY deviceAddressChanged)
+
+
+    //Q_PROPERTY(bool connectionAlive READ connectionAlive NOTIFY aliveChanged)
+    //Q_PROPERTY(AddressType addressType READ addressType WRITE setAddressType)
+    //Q_PROPERTY(QString deviceState MEMBER m_deviceState NOTIFY deviceStateChanged)
+    //Q_PROPERTY(bool sdEnabled MEMBER m_sdEnabled NOTIFY sdEnabledChanged)
+    //Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
+    //Q_PROPERTY(bool sendingOverBleEnabled MEMBER m_sendingOverBleEnabled NOTIFY sendingOverBleEnabledChanged)
 
 private:
     QThread m_thread_controller;
@@ -37,7 +41,7 @@ private:
     LogFileHandler* m_logfile_handler_ptr;
     TimeSyncHandler* m_timesync_handler_ptr;
     CatchController* m_catch_controller_ptr;
-
+    QString m_deviceAddress;
 
     alive_msg_t alive_msg;
 
@@ -47,7 +51,7 @@ public:
     DeviceInterface(TimeSyncHandler* ts_handler, CatchController* catch_controller,
                     LogFileHandler* logfile_handler, BluetoothBaseClass *parent = nullptr );
 
-    ~DeviceInterface(); // they get destroyed in the list, always start with the last
+    ~DeviceInterface(){} // they get destroyed in the list, always start with the last
 
     void initializeDevice( QBluetoothHostInfo* hostInfo, DeviceInfo* deviceInfo );
     //bool connectionAlive() const; // this is a connection state..
@@ -57,15 +61,17 @@ public:
 
     void sendCmdStart();
     void sendCmdStop();
+    void sendCmdWriteCatchSuccessToSd(const quint8 &success);
+
 signals:
-    void invokeInitializeDevice( QBluetoothHostInfo* hostInfo, DeviceInfo* device );
+    void invokeInitializeDevice( QBluetoothHostInfo* hostInfo, QBluetoothDeviceInfo* deviceInfo );
     void invokePrintThreadId();
     //
     void deviceAddressChanged();
-    void deviceStateChanged();
-    void fileIndexOnDeviceChanged();
-    void sensorDataReceived();
-    void sdEnabledChanged();
+//    void deviceStateChanged();
+//    void fileIndexOnDeviceChanged();
+//    void sensorDataReceived();
+//    void sdEnabledChanged();
     //
     void invokeBleUartTx(const QByteArray &value);
     bool invokeBleUartSendCmdWithResp(const QByteArray &value, quint16 timeout = 200, quint8 retry = 5);
@@ -80,7 +86,6 @@ public slots:
     void onDeviceThreadStarted();
     void onTriggeredArrived(QByteArray value);
     void onAliveArrived(QByteArray value);
-    void onSensorDataAvailableArrived();
 };
 
 #endif // DEVICEINTERFACE_H

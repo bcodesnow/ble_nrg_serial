@@ -13,11 +13,6 @@
 #define CDSM_STATE_COLLECT_DATA                                         ( CDSM_STATE_RUNNING | CDSM_STATE_READY_TO_BE_TRIGGERED | CDSM_STATE_TRIGGERED )
 
 #define CDSM_SUBSTATE_STOPPING                                            0u
-#define	CDSM_SUBSTATE_SAVING_AUDIO                                        1u
-#define CDSM_SUBSTATE_SAVING_MAGNETO                                      2u
-#define CDSM_SUBSTATE_SAVING_PRESSURE                                     3u
-#define CDSM_SUBSTATE_SAVING_ACC                                          4u
-#define CDSM_SUBSTATE_SAVING_GYRO                                         5u
 #define CDSM_SUBSTATE_SENDING_DATA_COLLECTED                              6u
 
 #endif // MCI_CATCH_DETECTION_H

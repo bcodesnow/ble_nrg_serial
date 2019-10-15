@@ -2,6 +2,7 @@
 #define CATCHCONTROLLER_H
 
 #include <QObject>
+#include <QTimer>
 #include <timesynchandler.h>
 #include <logfilehandler.h>
 #include <deviceinterface.h>
@@ -34,7 +35,7 @@ private:
 public:
     CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHandler* ts_handler,
                     LogFileHandler* logfile_handler, QObject *parent = nullptr);
-    ~CatchController();
+    ~CatchController(){} // todo we need to destroy this safely
 
 
     //bool sdEnabled() const;
@@ -71,18 +72,7 @@ public slots:
     void sendStartToAllDevices();
     void sendStopToAllDevices();
 
-    void onSensorDataAvailableArrived(int idx)
-    {
-        int notReady = 0;
-        m_device_list->at(idx)->m_deviceInfo->m_sensorDataWaitingForDownload = true;
-
-        foreach (DeviceInterface* it, m_device_list)
-            if ( it->m_deviceInfo->getDeviceType() == DeviceInfo::Wearable )
-                if (it->m_deviceInfo->m_sensorDataWaitingForDownload != true  )
-                    notReady++;
-        if ( !notReady )
-            emit allWearablesAreWaitingForDownload();
-    }
+    void onSensorDataAvailableArrived(int idx);
 
 
 

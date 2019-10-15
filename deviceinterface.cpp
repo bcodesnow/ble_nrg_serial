@@ -39,15 +39,15 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo, DeviceInfo 
 
     connect(&m_thread_controller, &QThread::started, this, &DeviceInterface::onDeviceThreadStarted); // new syntax
 
-
-    qDebug()<<"is adapterAddr here ok?!?!?!?"<<hostInfo;
     m_thread_controller.start();
 
     m_deviceInfo = deviceInfo;
 
+    QBluetoothDeviceInfo tdi = deviceInfo->getDevice(); // todo test if we cann pass it directly
+    qDebug()<<"The nam is there"<<deviceInfo->getName();
     emit invokePrintThreadId();
 
-    emit invokeInitializeDevice(hostInfo, deviceInfo);
+    emit invokeInitializeDevice(hostInfo, &tdi);
 }
 
 void DeviceInterface::onDeviceThreadStarted()
@@ -100,8 +100,6 @@ void DeviceInterface::onAliveArrived(QByteArray value)
     setInfo("Alive!");
 }
 
-
-
 void DeviceInterface::sendCmdStart()
 {
         QByteArray tba;
@@ -118,14 +116,24 @@ void DeviceInterface::sendCmdStop()
         invokeBleUartSendCmdWithResp(tba);
 }
 
+void DeviceInterface::sendCmdWriteCatchSuccessToSd(const quint8 &success)
+{
+    // todo this is just thrown in
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = CMD_WRITE_CATCH_SUCCESS;
+    tba[1] = success;
+    invokeBleUartSendCmdWithResp(tba);
+}
+
 //void DeviceInterface::sendCmdEnableSdLogging(bool enable)
 //{
-    //    QByteArray tba;
-    //    tba.resize(2);
-    //    tba[0] = TURN_ON_SD_LOGGING;
-    //    tba[1] = enable;
-    //    if (m_initializedDevicesList[0] == true)
-    //        m_deviceHandler[0].ble_uart_tx(tba);
+//    QByteArray tba;
+//    tba.resize(2);
+//    tba[0] = TURN_ON_SD_LOGGING;
+//    tba[1] = enable;
+//    if (m_initializedDevicesList[0] == true)
+//        m_deviceHandler[0].ble_uart_tx(tba);
     //    if (m_initializedDevicesList[1] == true)
     //        m_deviceHandler[1].ble_uart_tx(tba);
 //}

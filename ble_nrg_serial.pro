@@ -52,7 +52,6 @@ HEADERS += \
     devicecontroller.h \
     devicefinder.h \
     bluetoothbaseclass.h \
-    devicehandler_types.h \
     deviceinfo.h \
     deviceinterface.h \
     graphpainter.h \

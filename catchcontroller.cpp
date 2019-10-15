@@ -11,10 +11,10 @@ CatchController::CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHa
 
 }
 
-bool CatchController::sdEnabled() const
-{
-    return m_sdEnabled;
-}
+//bool CatchController::sdEnabled() const
+//{
+//    return m_sdEnabled;
+//}
 
 quint8 time_sync_state;
 int    remaining_c;
@@ -187,16 +187,30 @@ void CatchController::sendStopToAllDevices()
         emit m_device_list->at(i)->sendCmdStop();
 }
 
+void CatchController::onSensorDataAvailableArrived(int idx)
+{
+    emit m_device_list->at(idx)->invokeBleUartSendCmdOk();
+    int notReady = 0;
+    m_device_list->at(idx)->m_deviceInfo->m_sensorDataWaitingForDownload = true;
+
+    for (int i = 0; i < m_device_list->size(); i++)
+        if ( m_device_list->at(i)->m_deviceInfo->getDeviceType() == DeviceInfo::Wearable )
+            if (m_device_list->at(i)->m_deviceInfo->m_sensorDataWaitingForDownload != true  )
+                notReady++;
+    if ( !notReady )
+        emit allWearablesAreWaitingForDownload();
+}
+
 void CatchController::onDownloadTimerExpired()
 {
     switch (download_state)
     {
-        case SETTING_CONN_MODE:
-            qDebug()<<"CC-DL-> Setting Conn Mode failed!"; // show the devil..
-            break;
-        case DOWNLOADING:
-            qDebug()<<"CC-DL-> Download failed!"; // show the devil..
-            break;
+    case SETTING_CONN_MODE:
+        qDebug()<<"CC-DL-> Setting Conn Mode failed!"; // show the devil..
+        break;
+    case DOWNLOADING:
+        qDebug()<<"CC-DL-> Download failed!"; // show the devil..
+        break;
     }
 }
 

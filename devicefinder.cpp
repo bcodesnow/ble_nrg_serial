@@ -216,19 +216,3 @@ void DeviceFinder::removeDeviceFromSelection(const quint8 &idx)
         emit ((DeviceInfo*) m_found_devices.at(idx) )->deviceChanged();
     }
 }
-
-// TODO
-void DeviceFinder::sendConfirmationToBothDevices(const quint8 &success)
-{
-    // TODO THIS IS NOT THREADSAFE
-    QByteArray tba;
-    tba.resize(2);
-    tba[0] = CMD_WRITE_CATCH_SUCCESS;
-    tba[1] = success;
-
-    // there is no public method..
-    //    if (m_initializedDevicesList[0] == true)
-    //        m_deviceHandler[0].sendCMDStringFromTerminal(tba);
-    //    if (m_initializedDevicesList[1] == true)
-    //        m_deviceHandler[1].ble_uart_tx(tba);
-}

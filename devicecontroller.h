@@ -1,7 +1,6 @@
 #ifndef DEVICEHANDLER_H
 #define DEVICEHANDLER_H
 
-#include "devicehandler_types.h"
 #include "logfilehandler.h"
 #include "timesynchandler.h"
 #include <QElapsedTimer>
@@ -21,6 +20,29 @@ class DeviceInfo;
 class TimeSyncHandler;
 
 extern QString stateToString(uint8_t tmp);
+
+struct huge_chunk_indexed_byterray_t
+{
+    quint16 received;
+    QByteArray barr;
+};
+
+struct huge_chunk_helper_t
+{
+    uint16_t hc_highest_index;
+    bool first_multi_chunk;
+    uint16_t last_idx;
+    uint16_t missed_to_request;
+    uint16_t missed_in_request;
+};
+
+struct cmd_resp_struct_t
+{
+    QTimer cmd_timer;
+    QByteArray last_cmd;
+    quint8 retry;
+    quint16 timeout;
+};
 
 class DeviceController : public QObject
 {
@@ -144,7 +166,7 @@ signals:
 
     void connParamInfoArrived();
 
-    void sensorDataAvailableArrived();
+    void sensorDataAvailableArrived(int idx);
     void replyMissingPackageArrived();
 
     void noChunkAvailableArrived(); // Ext - Download Completed

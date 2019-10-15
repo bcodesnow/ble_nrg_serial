@@ -75,9 +75,9 @@
 #define CMD_SEND_RESTART                0x18 // to implement in qt
 
 /* Connection Modes: */
-#define SLOW 1u
-#define MID  2u
-#define FAST 3u
+#define SLOW    1u
+#define MID     2u
+#define FAST    3u
 #define UNKNOWN 4u
 
 #define S_MIN   250
