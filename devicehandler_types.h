@@ -27,12 +27,12 @@ struct cmd_resp_struct_t
     quint16 timeout;
 };
 
-struct device_helper_struct_t
-{
-    int idx;
-    QString ident_str; // Q_PROPERTY
-    QString address; // Q_PROPERTY
-    QString mainState; // Q_PROPERTY
-};
+//struct device_helper_struct_t
+//{
+//    int idx;
+//    QString ident_str; // Q_PROPERTY
+//    QString address; // Q_PROPERTY
+//    QString mainState; // Q_PROPERTY
+//};
 
 #endif // DEVICEHANDLER_TYPES_H

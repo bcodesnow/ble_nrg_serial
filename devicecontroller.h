@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QLowEnergyController>
 #include <QLowEnergyService>
+#include <QBluetoothDeviceInfo>
 #include <QThread>
 #include <QBluetoothHostInfo>
 
@@ -46,11 +47,12 @@ private:
     QTimer m_timeoutTimer;
     QTimer m_connParamTimer;
 
-    bool m_found_BLE_UART_Service;
+    bool m_bleUartServiceFound;
 
     QBluetoothAddress m_adapterAddress;
     int m_ident_idx; //
     QString m_ident_str;
+    QTimer m_nextRequestTimer;
 
     quint8 downloading_sensor_data_active;
 
@@ -64,49 +66,61 @@ private:
     huge_chunk_helper_t hc_helper_struct;
     cmd_resp_struct_t cmd_resp_struct;
 
-    uint32_t rec_ts; // interface
-
-
 
     quint8 m_dev_requested_conn_mode; // stay
     conn_param_info_t m_dev_conn_param_info; // ble uart package type
-    quint8 m_conn_param_operation;
-
     quint8 retries_remaining;
+
     QLowEnergyController *m_control;
     QLowEnergyService *m_service;
     QLowEnergyController::RemoteAddressType m_addressType = QLowEnergyController::PublicAddress;
 
-    DeviceInfo *m_currentDevice;
-    QLowEnergyDescriptor m_notificationDescriptor;
+    QBluetoothDeviceInfo* m_currentDevice;
+    QLowEnergyDescriptor m_notificationDescriptor; // do we need to remember him?
 
-    QLowEnergyCharacteristic m_writeCharacteristic;
-    QLowEnergyService::WriteMode m_writeMode;
-    QLowEnergyCharacteristic m_readCharacteristic;
-    QLowEnergyCharacteristic m_rxCharacteriscitPool[9];
+    QLowEnergyCharacteristic m_writeCharacteristic; // BLE UART RX
+    QLowEnergyCharacteristic m_readCharacteristic; // BLE UART TX
+    QLowEnergyService::WriteMode m_writeMode; // todo unused!
+
+    QLowEnergyCharacteristic m_rxCharacteriscitPool[9]; // todo maybe a define for this
     QLowEnergyDescriptor m_rxCharacteriscitPoolDescriptors[9];
 
     //QLowEnergyController
+    void connectToPeripheral(QBluetoothDeviceInfo *device);
     void serviceDiscovered(const QBluetoothUuid &);
     void serviceScanDone();
 
     //QLowEnergyService
     void serviceStateChanged(QLowEnergyService::ServiceState s);
     void searchCharacteristic();
+
+    void updateCurrentService();
+
     void confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value);
-    void update_currentService();
 
     // Helper Functions
-    void printProperties(QLowEnergyCharacteristic::PropertyTypes);
-    Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str); // TODO -> this would not work..
-    void printThroughput();
+    void printProperties(QLowEnergyCharacteristic::PropertyTypes); // make it to a be a friend..
 
+    //Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str); // TODO -> this would not work..
+    void printThroughput();
     // BLE UART Functions
     void ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value);
-    void parse_n_write_received_pool (uint16_t tmp_write_pointer, uint8_t type );
 
+    void writeReceivedChunkToFile (uint16_t tmp_write_pointer, uint8_t type );
     void setConnParamMode(uint8_t mode);
 
+    inline bool isDeviceInRequestedConnState();
+
+    void sendSetShutUp(bool shutUp);
+    void setRequestedConnParamsOnDevice(uint8_t mode);
+    void sendRequestMissingPackage();
+    void sendAckHugeChunk();
+    void sendRequestSensorData();
+
+    void setConnParamsOnCentral(uint8_t mode);
+    void hugeChunkDownloadFinished();
+
+    friend  QString stateToString(uint8_t tmp);
 
 public:
     DeviceController(int idx, QString identifier, QObject *parent = nullptr);
@@ -117,69 +131,51 @@ public:
     };
     Q_ENUM(AddressType)
 
-    friend     QString stateToString(uint8_t tmp);
-    void connectToPeripheral(DeviceInfo *device);
-    void setAddressType(AddressType type);
-    AddressType addressType() const;
-
-
-    void setIdentifier(QString str, quint8 idx, QBluetoothAddress addr);
-
-    bool connectionAlive() const; // this is a connection state..
-
-
-    //    bool getWriteValid(void)
-    //    {
-    //        return m_writeCharacteristic.isValid();
-    //    }
-
-
-    inline bool isDeviceInRequestedConnState();
-
-    void setShutUp(bool shutUp);
-    void setConnParamsOnCentral(uint8_t mode);
-    void setRequestedConnParamsOnDevice(uint8_t mode);
-    void requestMissingPackage();
-    void sendAckHugeChunk();
-    void requestSensorData();
+    void setIdentifier(QString str, quint8 idx); // make this only changeable through public member -> deviceInfo
 
 signals:
-    void sendingOverBleEnabledChanged();
-    void aliveChanged(); // alive information gets notified to handler ... rename it to connectionAlive or sth...
+    // Connection
+    void connectionAlive(bool isItAlive);
 
+    // Message Signals
     void aliveArrived(QByteArray value); // alive msg arrives
-    void startHugeChunkAckProcArrived(QByteArray value);
-    void startHugeChunkArrived();
-    void triggeredArrived();
+    void triggeredArrived(QByteArray value); // todo connect it
     void timeSyncMessageArrived(QByteArray value);
 
     void connParamInfoArrived();
 
     void sensorDataAvailableArrived();
     void replyMissingPackageArrived();
-    void requestDispatchToOtherDevices(QByteArray value, quint8 ident_idx );
-    void time_sync_msg_sent(QByteArray value, int idx);
 
-    void requestedConnModeReached(bool success, quint8 mode); // ?!?!
     void noChunkAvailableArrived(); // Ext - Download Completed
 
-//    void writeValidChanged();
+    // Procedures (TS,HC,CONN,LF)
+    void timeSyncMsgSent(QByteArray value, int idx); // todo , the device doesnt know about ongoing tsync
+    void requestDispatchToOtherDevices(QByteArray value, quint8 ident_idx );
+
+    void startHugeChunkAckProcArrived(QByteArray value);
+    void startHugeChunkArrived();
+
+    void allDataDownloaded(bool success, int idx); // Used By Catch Controller
+
+    void requestedConnModeReached(bool success, quint8 mode); // ?!?!
 
     // Log File Handler Connections
-    void write_type_to_file_sig(QString ident, QByteArray* data, uint8_t type, uint16_t wp);
-    void add_to_log_fil_sig(QString ident, QString key, QString val);
+    void invokeWriteTypeToFile(QString ident, QByteArray* data, uint8_t type, uint16_t wp);
+    void invokeAddToLogFile(QString ident, QString key, QString val);
 
 public slots:
-    void ble_uart_tx(const QByteArray &value);
-    bool ble_uart_send_cmd_with_resp(const QByteArray &value, quint16 timeout = 200, quint8 retry = 5);
-    void ble_uart_send_cmd_ok();
-    void deviceInitializationSlot(QBluetoothHostInfo* hostInfo, DeviceInfo* deviceInfo);
+    void bleUartTx(const QByteArray &value);
+    bool bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout = 200, quint8 retry = 5);
+    void bleUartSendCmdOk();
 
+    void initializeDevice(QBluetoothHostInfo* hostInfo, QBluetoothDeviceInfo* deviceInfo);
     void disconnectService();
 
-    //void onSensorDataRequested(void); // start download
+    void printThreadId() { qDebug()<<"Thread id of device:"<<QThread::currentThreadId(); }
 
-    void slot_printThreadId() { qDebug()<<"Thread id of device:"<<QThread::currentThreadId(); }
+    void startConnModeChangeProcedure(quint8 mode);
+    void startDownloadAllDataProcedure();
 
 private slots:
     void onCentralConnectionUpdated(const QLowEnergyConnectionParameters &newParameters);
@@ -187,36 +183,21 @@ private slots:
     void onConnParamInfoArrived();
     void onConnParamTimerExpired();
 
-
-    //void onAliveArrived(QByteArray value); // alive msg gets handled
-    //void onTriggeredArrived(QByteArray value);
-
     void onStartHugeChunkArrived();
     void onStartHugeChunkAckProcArrived(QByteArray value);
-
-    //void onTimeSyncMessageArrived(QByteArra value); //unimplemented.. we need to use the same instanz to keep it simple.
-
-
-    void onSensorDataAvailableArrived();
-
+    void onNoChunkAvailableArrived();
     void onReplyMissingPackageArrived(QByteArray value);
 
     void onCmdTimerExpired();
+    void onNextRequestTimerExpired();
 
     void onConnected(void);
     void onDisconnected(void);
-//    void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &value);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value);
-    void set_peri_conn_mode(quint8 mode);
-
-    void peri_download_all_sensordata();
-
-    // relevant to qml..
+    //    void onCharacteristicChanged(const QLowEnergyCharacteristic &c, const QByteArray &value);
 
 
 };
 
 #endif // DEVICEHANDLER_H
-
-

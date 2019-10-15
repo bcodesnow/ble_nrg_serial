@@ -1,6 +1,6 @@
 #include "devicecontroller.h"
 
-bool DeviceController::ble_uart_send_cmd_with_resp(const QByteArray &value, quint16 timeout, quint8 retry)
+bool DeviceController::bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout, quint8 retry)
 {
     if (cmd_resp_struct.cmd_timer.isActive())
         return true;
@@ -28,20 +28,25 @@ void DeviceController::onCmdTimerExpired()
     else
     {
         // ERROR
+        // is this a moment where the devil should appear?
         qWarning()<<"CMD Timeout!";
+        if (cmd_resp_struct.last_cmd.at(0) == CMD_REQUEST_SENSORDATA)
+            emit allDataDownloaded(false, m_ident_idx);
     }
 }
 
-void DeviceController::ble_uart_send_cmd_ok()
+
+
+void DeviceController::bleUartSendCmdOk()
 {
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_OK;
     tba[1] = 0xFF;
-    ble_uart_send_cmd_with_resp(tba);
+    bleUartSendCmdWithResp(tba);
 }
 
-void DeviceController::ble_uart_tx(const QByteArray &value)
+void DeviceController::bleUartTx(const QByteArray &value)
 {
     if (value.size())
         m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
@@ -73,20 +78,14 @@ void DeviceController::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByt
         {
             //inform the other device
             emit requestDispatchToOtherDevices(value, m_ident_idx); // TODO this will be received by the catch controller
-
-//            if (m_refToOtherDevice != NULL)
-//                m_refToOtherDevice->ble_uart_tx(value); // 1-1 forward it! - Write with Response as a CMD?!
-            //
-//            if (m_sdEnabled)
-//                m_refToFileHandler->add_to_log_fil(m_ident_str,"File ID on Device", QString::number(data[1]));
-
             //ble_uart_send_cmd_ok(); // Should we also ACK this to the device?!
-            emit triggeredArrived(); // TODO this is handled by the deviceinterface
+            emit triggeredArrived(value); // TODO this is handled by the deviceinterface
         }
             break;
 
         case DATA_SAVED_TO_SD:
         {
+            // todo!!!
             // confirm if it was a catch or drop -> we should give it to a class "above" -> catch controller
             qDebug()<<"Writing data to SD finished, waiting for confimation!";
             // send CMD_WRITE_CATCH_SUCC
@@ -118,7 +117,7 @@ void DeviceController::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByt
         case SENSORDATA_AVAILABLE:
         {
             qDebug()<<"Sensor Data avialable for download!";
-            emit sensorDataAvailableArrived();
+            emit sensorDataAvailableArrived(m_ident_idx);
         }
             break;
             //
@@ -172,6 +171,8 @@ void DeviceController::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByt
             qWarning()<<"Unknown MSG: "<<value;
             break; //technically not needed
         }
+
+        // todo if cmd id -> send ack.. this could save us from some headache
     }
 
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) -> One of the TX_POOL Characteristics
@@ -202,7 +203,7 @@ void DeviceController::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByt
         }
         //  qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
 
-        hc_tmp_iba_struct.barr.append(value.size()-1, data[1]);
+        hc_tmp_iba_struct.barr.append(value.size()-1, data[1]); // add the 19 bytes
         hc_tmp_iba_struct.received = 1;
 
         if (tidx < hc_transfer_struct.incoming_package_count)
@@ -231,7 +232,7 @@ void DeviceController::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByt
 
 
 
-void DeviceController::requestMissingPackage()
+void DeviceController::sendRequestMissingPackage()
 {
     request_missing_pkg_t req;
     req.pkg_id = m_hc_missed.at(0);
@@ -240,14 +241,14 @@ void DeviceController::requestMissingPackage()
     QByteArray tba;
     tba.append((const char*) &req, sizeof(request_missing_pkg_t));
     qDebug()<<"HC -> Requesting missed : "<<req.pkg_id;
-    this->ble_uart_send_cmd_with_resp(tba);
+    this->bleUartSendCmdWithResp(tba);
 }
 
 
 void DeviceController::onReplyMissingPackageArrived(QByteArray value)
 {
-    qDebug()<<"Missed Package arived";
-    m_timeoutTimer.stop();
+    qDebug()<<"Missed Package arrived";
+    cmd_resp_struct.cmd_timer.stop();
 
     huge_chunk_indexed_byterray_t tmp;
     tmp.barr.append( value.right(value.size() - 1) );
@@ -258,16 +259,14 @@ void DeviceController::onReplyMissingPackageArrived(QByteArray value)
     hc_helper_struct.missed_to_request--; // added
 
     if (m_hc_missed.size())
-        requestMissingPackage();
-
-    if (m_hc_missed.size())
     {
-        requestMissingPackage();
+        sendRequestMissingPackage();
     }
     else
     {
         this->sendAckHugeChunk();
-        parse_n_write_received_pool( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type );
+        writeReceivedChunkToFile( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type );
+        hugeChunkDownloadFinished();
         // reset variables
     }
 }
@@ -296,11 +295,11 @@ void DeviceController::onStartHugeChunkArrived()
     hc_helper_struct.first_multi_chunk = true;
     hc_helper_struct.missed_to_request = 0;
 
-    emit add_to_log_fil_sig(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
-    emit add_to_log_fil_sig(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
-    emit add_to_log_fil_sig(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
+    emit invokeAddToLogFile(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
+    emit invokeAddToLogFile(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
+    emit invokeAddToLogFile(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
 
-    ble_uart_send_cmd_ok();
+    bleUartSendCmdOk();
 
 }
 
@@ -334,32 +333,54 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 
     if ( hc_helper_struct.missed_to_request == 0 )
     {
-        hugeChunkDownlaodFinished();
+        hugeChunkDownloadFinished();
     }
     else
     {
         qDebug()<<"Requesting missed";
-        requestMissingPackage();
+        sendRequestMissingPackage();
     }
 }
 
-void hugeChunkDownlaodFinished()
+void DeviceController::onNoChunkAvailableArrived()
+{
+    cmd_resp_struct.cmd_timer.stop(); //todo dont forget to add this on all replies!
+    bleUartSendCmdOk();
+    emit allDataDownloaded(true, m_ident_idx);
+}
+
+void DeviceController::startDownloadAllDataProcedure()
+{
+    hc_chopchop_mode = true;
+    sendRequestSensorData();
+}
+
+void DeviceController::sendAckHugeChunk()
+{
+    // add timeout timer..
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = CMD_HC_OK;
+    qInfo()<<"ackHugeChunk()";
+    this->bleUartSendCmdWithResp(tba);
+}
+
+void DeviceController::hugeChunkDownloadFinished()
 {
     qDebug()<<"All Received";
-    emit add_to_log_fil_sig(m_ident_str, QString("AllArrived"), QString("TRUE"));
+
+    emit invokeAddToLogFile("TODOSTRING", QString("AllArrived"), QString("TRUE"));
 
     sendAckHugeChunk();
-    parse_n_write_received_pool( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type);
-    //
-    //
-    // HC DID IT, start next one.
-    if (hc_chopchop_mode)
-    {
+    writeReceivedChunkToFile( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type);
 
-    }
-    //
-    //
-    //
+    if (hc_chopchop_mode)
+        m_nextRequestTimer.singleShot(50, this, &DeviceController::onNextRequestTimerExpired );
+}
+
+void DeviceController::onNextRequestTimerExpired()
+{
+    sendRequestSensorData();
 }
 
 void DeviceController::onConnParamInfoArrived()
@@ -394,7 +415,4 @@ void DeviceController::onConnParamTimerExpired()
     }
 }
 
-void DeviceController::onSensorDataAvailableArrived()
-{
-    // todo this is something qml could jump on again..
-}
+

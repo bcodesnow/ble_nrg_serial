@@ -63,20 +63,39 @@ class DeviceInfo: public QObject
     Q_PROPERTY(QString deviceName READ getName NOTIFY deviceChanged)
     Q_PROPERTY(QString deviceAddress READ getAddress NOTIFY deviceChanged)
     Q_PROPERTY(qint64 deviceFlags READ getDeviceFlags NOTIFY deviceChanged)
-
+    Q_PROPERTY(qint32 deviceIndex READ getDeviceIndex NOTIFY deviceChanged)
+    Q_PROPERTY(QString deviceIdentifier READ getDeviceIdentifier NOTIFY deviceChanged)
+    Q_PROPERTY(QString deviceMainState READ getDeviceMainState NOTIFY deviceChanged)
+    Q_PROPERTY(DeviceType deviceType READ getDeviceType NOTIFY deviceChanged)
 
 public:
     DeviceInfo(const QBluetoothDeviceInfo &device);
+    enum DeviceType {
+        Wearable,
+        Stationary
+    };
+    Q_ENUM(DeviceType)
 
     void setDevice(const QBluetoothDeviceInfo &device);
     QString getName() const;
     QString getAddress() const;
     qint64 getDeviceFlags() const;
+    qint32 getDeviceIndex() const;
+    QString getDeviceIdentifier() const;
+    QString getDeviceMainState() const;
+    DeviceType getDeviceType() const;
     QBluetoothDeviceInfo getDevice() const;
-    void setDeviceFlags(const qint64 &flags); // todo why is this qint64?D
+
+    void setDeviceFlags(const qint64 &flags); // todo why is this qint64?
+    void setDeviceIndex(qint32 idx);
+    void setDeviceIdentifier(QString ident);
+    void setDeviceMainState(QString state);
+    void setDeviceType( DeviceType type);
 
     bool deviceIsInRequiredConnectionState;
     bool deviceIsTimeSynced;
+    bool m_sensorDataWaitingForDownload;
+
 
 signals:
     void deviceChanged();
@@ -84,6 +103,10 @@ signals:
 private:
     QBluetoothDeviceInfo m_device;
     qint64 m_deviceFlags;
+    qint32 m_deviceIdx;
+    QString m_deviceIdentifier;
+    QString m_deviceMainState;
+    DeviceType m_deviceType;
 };
 
 #endif // DEVICEINFO_H

@@ -98,8 +98,8 @@
 /* ------------------------------------------------------------------- */
 
 #define GET_STATE                       0x13
-#define STOP				  			0x14
-#define START				  			0x15
+#define CMD_STOP			  			0x14
+#define CMD_START   		  			0x15
 #define IGNORE_LAST_X                   0x16 // not implemented yet
 
 #define DIAG_INFO						0x17
@@ -124,7 +124,7 @@
 #define TS_CMD_SYNC_FINISH                      6u
 
 
-// THIS BLOCK HAS NOTHING TO DO HERE is only specific to transmitted data.. move it to write file..
+// TODO BOERGI THIS BLOCK HAS NOTHING TO DO HERE is only specific to transmitted data.. move it to write file..
 #define TYPE_AUD 1u
 #define	TYPE_ACC 2u
 #define TYPE_GYR 3u

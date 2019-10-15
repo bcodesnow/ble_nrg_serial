@@ -20,6 +20,9 @@ quint8 time_sync_state;
 int    remaining_c;
 int    id_in_sync;
 bool change_conn_of_other_devices;
+int id_in_dl;
+int download_state;
+
 #define SETTING_CONN_MODE 1u
 #define SYNCING           2u
 #define DOWNLOADING       2u
@@ -35,26 +38,29 @@ void CatchController::onTimeSyncTimerExpired()
     switch (time_sync_state)
     {
         case SETTING_CONN_MODE:
+            qDebug()<<"TS-> Setting Conn Mode failed!"; // show the devil..
             break;
         case SYNCING:
+            qDebug()<<"TS-> Sync failed!"; // show the devil..
             break;
     }
-    // show the devil..
 }
 
 void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
 {
     if ( success )
     {
-        m_device_list->at(id)->deviceInfo->deviceIsTimeSynced = true;
+        m_device_list->at(id)->m_deviceInfo->deviceIsTimeSynced = true;
     }
     else
     {
         qDebug()<<"CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
     }
-    if ( id++ < m_device_list->size() )
+    if ( (id + 1) < m_device_list->size() )
     {   // this relies on it that we started with 0 and continue upwards..
-        this->startTimeSyncOfDevX(id++);
+        id_in_sync = id + 1;
+        this->startTimeSyncOfDevX( id_in_sync );
+
     }
     else
     {
@@ -66,14 +72,14 @@ void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
 
 void CatchController::startTimeSyncOfDevX(int id)
 {
-    m_device_list->at(id)->set_peri_conn_mode_sig(FAST);
+    m_device_list->at(id)->invokeStartConnModeChangeProcedure(FAST);
 
     if ( change_conn_of_other_devices)
     {
          for (int i = 0; i< m_device_list->size(); i++)
          {
              if ( i != id)
-                 m_device_list->at(id)->set_peri_conn_mode_sig(SLOW);
+                 m_device_list->at(id)->invokeStartConnModeChangeProcedure(SLOW);
          }
          remaining_c = m_device_list->size();
     }
@@ -104,7 +110,7 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
 {
     if (success)
     {
-        m_device_list->at(id)->deviceInfo->deviceIsInRequiredConnectionState = true;
+        m_device_list->at(id)->m_deviceInfo->deviceIsInRequiredConnectionState = true;
     }
     else
     {
@@ -121,12 +127,13 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
             time_sync_state = SYNCING;
             m_timesync_handler_ptr->start_time_sync(id_in_sync);
         }
-        if ( dl_state == SETTING_CONN_MODE )
+        if ( download_state == SETTING_CONN_MODE )
         {
             m_downloadTimer.stop();
             m_downloadTimer.singleShot(20000, this, &CatchController::onTimeSyncTimerExpired);
-            dl_state = DOWNLOADING;
-            m_device_list-->request_sensordata...        }
+            download_state = DOWNLOADING;
+            emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure();
+        }
     }
 }
 
@@ -138,25 +145,23 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
 //
 //
 
-int id_in_dl;
-
 
 void CatchController::startDownloadFromAllDevices()
 {
     id_in_dl = 0;
-    startDownloadOfDevX(id_in_dl)
+    startDownloadOfDevX(id_in_dl);
 }
 
 void CatchController::startDownloadOfDevX(int id)
 {
-    m_device_list->at(id)->set_peri_conn_mode_sig(FAST);
+    m_device_list->at(id)->invokeStartConnModeChangeProcedure(FAST);
 
     if ( change_conn_of_other_devices)
     {
          for (int i = 0; i< m_device_list->size(); i++)
          {
              if ( i != id)
-                 m_device_list->at(id)->set_peri_conn_mode_sig(SLOW);
+                 m_device_list->at(id)->invokeStartConnModeChangeProcedure(SLOW);
          }
          remaining_c = m_device_list->size();
     }
@@ -164,20 +169,55 @@ void CatchController::startDownloadOfDevX(int id)
     {
         remaining_c = 1;
     }
-    time_sync_state = SETTING_CONN_MODE;
+    download_state = SETTING_CONN_MODE;
 
     m_downloadTimer.singleShot(2000, this, &CatchController::onDownloadTimerExpired);
 
 }
 
+void CatchController::sendStartToAllDevices()
+{
+    for(int i=0; i<m_device_list->size(); i++)
+        emit m_device_list->at(i)->sendCmdStart();
+}
+
+void CatchController::sendStopToAllDevices()
+{
+    for(int i=0; i<m_device_list->size(); i++)
+        emit m_device_list->at(i)->sendCmdStop();
+}
+
 void CatchController::onDownloadTimerExpired()
 {
-
+    switch (download_state)
+    {
+        case SETTING_CONN_MODE:
+            qDebug()<<"CC-DL-> Setting Conn Mode failed!"; // show the devil..
+            break;
+        case DOWNLOADING:
+            qDebug()<<"CC-DL-> Download failed!"; // show the devil..
+            break;
+    }
 }
 
 void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
 {
-
+    if ( !success )
+    {
+        qDebug()<<"CC-DL --> onDownloadOfDeviceXfinished"<<success<<id; // show the devil they must have a look at it...
+    }
+    // todo -> modify this to differentiate by dev type, wearable or not../add this property to deviceinfo in deviceinterface
+    if ( (id + 1) < m_device_list->size() )
+    {   // this relies on it that we started with 0 and continue upwards..
+        id_in_dl = id + 1;
+        this->startDownloadOfDevX( id_in_dl );
+    }
+    else
+    {
+        m_downloadTimer.stop();
+        download_state = NOT_RUNNING;
+        emit downloadOfAllDevFinished(true);
+    }
 }
 
 //

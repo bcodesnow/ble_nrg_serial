@@ -2,8 +2,8 @@
 #include "mci_catch_detection.h"
 
 // TODO: this is critical to add ts() message again -> this starts time sync.. we should also set the connections prior to syncing
-void DeviceController::sendCMDStringFromTerminal(const QString &str)
-{
+//void DeviceController::sendCMDStringFromTerminal(const QString &str)
+//{
     //    if (!connectionAlive())
     //    {
     //        qCritical()<<"Shit is fkd up";
@@ -57,7 +57,7 @@ void DeviceController::sendCMDStringFromTerminal(const QString &str)
 
     //    if (tba.size())
     //        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
-}
+//}
 
 QString stateToString(uint8_t tmp)
 {
@@ -87,7 +87,7 @@ QString stateToString(uint8_t tmp)
 }
 
 
-void DeviceController::printProperties(QLowEnergyCharacteristic::PropertyTypes props)
+void printProperties(QLowEnergyCharacteristic::PropertyTypes props)
 {
     if (props.testFlag(QLowEnergyCharacteristic::Unknown)) qDebug()<<"Property unknown";
     if (props.testFlag(QLowEnergyCharacteristic::Broadcasting)) qDebug()<<"Property: Broadcasting";

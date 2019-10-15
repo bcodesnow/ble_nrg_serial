@@ -63,7 +63,7 @@ void TimeSyncHandler::send_time_sync_msg()
     qDebug()<<"TS: send_time_sync_msg() -> "<<tstamp;
 
     //m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
-    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->ble_uart_tx_sig(tba); // emit the signal directly in the interface..
+    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->invokeBleUartTx(tba); // emit the signal directly in the interface..
     m_timeout_timer.start();
 }
 
@@ -81,7 +81,7 @@ void TimeSyncHandler::send_compensated_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
-    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->ble_uart_tx_sig(tba); // emit the signal directly in the interface..
+    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->invokeBleUartTx(tba); // emit the signal directly in the interface..
 
 
     m_timeout_timer.start();
@@ -160,7 +160,7 @@ void TimeSyncHandler::slot_time_sync_msg_arrived(const QByteArray &msg)
             tba.resize(2);
             tba[0] = TS_MSG;
             tba[1] = TS_CMD_LAST_ONE_WAS_GOOD_ONE;
-            m_device_interfaces_ptr->at(m_dev_idx_in_sync)->ble_uart_tx_sig(tba); // emit the signal directly in the interface..
+            m_device_interfaces_ptr->at(m_dev_idx_in_sync)->invokeBleUartTx(tba); // emit the signal directly in the interface..
             m_sync_state = STOP_WAITS_FOR_ACK;
             m_send_repeat_count = 0;
         }
@@ -206,7 +206,7 @@ void TimeSyncHandler::start_time_sync(quint8 devIdxToSync)
     tba.resize(2);
     tba[0] = TS_MSG;
     tba[1] = TS_CMD_SYNC_START;
-    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->ble_uart_tx_sig(tba); // emit the signal directly in the interface..
+    m_device_interfaces_ptr->at(m_dev_idx_in_sync)->invokeBleUartTx(tba); // emit the signal directly in the interface..
 
 
     m_timeout_timer.start();

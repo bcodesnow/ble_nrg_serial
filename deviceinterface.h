@@ -40,25 +40,26 @@ private:
 
 
     alive_msg_t alive_msg;
-    device_helper_struct_t m_dev_nfo;
 
+    uint32_t rec_ts;
 
 public:
     DeviceInterface(TimeSyncHandler* ts_handler, CatchController* catch_controller,
-                    LogFileHandler* logfile_handler, int idx, QObject *parent = nullptr );
+                    LogFileHandler* logfile_handler, BluetoothBaseClass *parent = nullptr );
 
     ~DeviceInterface(); // they get destroyed in the list, always start with the last
-    void initializeDevice( QBluetoothHostInfo* hostInfo, DeviceInfo* deviceInfo );
 
+    void initializeDevice( QBluetoothHostInfo* hostInfo, DeviceInfo* deviceInfo );
+    //bool connectionAlive() const; // this is a connection state..
     friend QString stateToString(uint8_t tmp);
 
-    DeviceInfo*      deviceInfo;
+    DeviceInfo* m_deviceInfo;
 
-
+    void sendCmdStart();
+    void sendCmdStop();
 signals:
-    void deviceInitializationSignal( QBluetoothHostInfo* hostInfo, DeviceInfo* device );
-
-    void signal_printThreadId();
+    void invokeInitializeDevice( QBluetoothHostInfo* hostInfo, DeviceInfo* device );
+    void invokePrintThreadId();
     //
     void deviceAddressChanged();
     void deviceStateChanged();
@@ -66,17 +67,20 @@ signals:
     void sensorDataReceived();
     void sdEnabledChanged();
     //
-    void ble_uart_tx_sig(const QByteArray &value);
-    bool ble_uart_send_cmd_with_resp_sig(const QByteArray &value, quint16 timeout = 200, quint8 retry = 5);
-    void ble_uart_send_cmd_ok_sig();
+    void invokeBleUartTx(const QByteArray &value);
+    bool invokeBleUartSendCmdWithResp(const QByteArray &value, quint16 timeout = 200, quint8 retry = 5);
+    void invokeBleUartSendCmdOk();
 
-    void set_peri_conn_mode_sig(quint8 mode);
+    void invokeStartConnModeChangeProcedure(quint8 mode);
+
+    void invokeStartDownloadAllDataProcedure();
 
 
 public slots:
     void onDeviceThreadStarted();
     void onTriggeredArrived(QByteArray value);
     void onAliveArrived(QByteArray value);
+    void onSensorDataAvailableArrived();
 };
 
 #endif // DEVICEINTERFACE_H

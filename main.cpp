@@ -69,7 +69,8 @@ int main(int argc, char *argv[])
     //NetworkManager ntwMngr(&log_file_handler);
 
     QQmlApplicationEngine engine;
-    qmlRegisterUncreatableType<DeviceController>("Shared", 1, 0, "AddressType", "Enum is not a type");
+    qRegisterMetaType<DeviceInfo::DeviceType>("DeviceType");
+    qRegisterMetaType<DeviceController::AddressType>("AddressType");
     engine.rootContext()->setContextProperty("terminalToQml", &term);
     engine.rootContext()->setContextProperty("connectionHandler", &connection_handler);
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);

@@ -164,11 +164,18 @@ void DeviceFinder::connectToSelectedDevices()
 
     for (int i = 0; i < m_found_devices.size(); i++)
     {
-        if  (((DeviceInfo*)m_found_devices.at(i))->getDeviceFlags() & DEVICE_SELECTED )
+        if  ( ((DeviceInfo*) m_found_devices.at(i) )->getDeviceFlags() & DEVICE_SELECTED )
         {
-            m_device_list->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr, deviceListSize));
+            m_device_list->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr));
+
+            ( (DeviceInfo*) m_found_devices.at(i) )->setDeviceIndex( deviceListSize );
+            if ( ( ( (DeviceInfo*) m_found_devices.at(i) )->getName() == "bluenrg" ) ||
+                ( ( (DeviceInfo*) m_found_devices.at(i) )->getName() == "Catch?!" ) )
+            {
+                ((DeviceInfo*) m_found_devices.at(i) )->setDeviceType(DeviceInfo::Wearable);
+            }
+            m_device_list->last()->initializeDevice( &m_conn_handler_ptr->m_adapterList[k], (DeviceInfo*) m_found_devices[i] );
             deviceListSize++;
-            m_device_list->last()->initializeDevice(&m_conn_handler_ptr->m_adapterList[k], (DeviceInfo*) m_found_devices[i] );
             k++;
             if ( k >= adapterListSize)
                 k = 0;
@@ -225,29 +232,3 @@ void DeviceFinder::sendConfirmationToBothDevices(const quint8 &success)
     //    if (m_initializedDevicesList[1] == true)
     //        m_deviceHandler[1].ble_uart_tx(tba);
 }
-
-// TODO
-void DeviceFinder::sendRestartToBothDevices()
-{
-    //    QByteArray tba;
-    //    tba.resize(1);
-    //    tba[0] = START;
-    //    if (m_initializedDevicesList[0] == true)
-    //        m_deviceHandler[0].ble_uart_tx(tba);
-    //    if (m_initializedDevicesList[1] == true)
-    //        m_deviceHandler[1].ble_uart_tx(tba);
-}
-
-// TODO
-void DeviceFinder::sendEnableSDtoBothDevices(bool enable)
-{
-    //    QByteArray tba;
-    //    tba.resize(2);
-    //    tba[0] = TURN_ON_SD_LOGGING;
-    //    tba[1] = enable;
-    //    if (m_initializedDevicesList[0] == true)
-    //        m_deviceHandler[0].ble_uart_tx(tba);
-    //    if (m_initializedDevicesList[1] == true)
-    //        m_deviceHandler[1].ble_uart_tx(tba);
-}
-

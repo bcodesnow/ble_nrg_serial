@@ -63,7 +63,6 @@
 #include "connectionhandler.h"
 
 class DeviceInfo;
-//class DeviceHandler;
 
 class DeviceFinder: public BluetoothBaseClass
 {
