@@ -47,13 +47,14 @@ signals:
 
 private:
     QBluetoothDeviceDiscoveryAgent *m_deviceDiscoveryAgent;
-    QList<QObject*> m_found_devices;
+    QList<QObject*> m_foundDevices;
     quint8 m_selectedDevicesCount;
 
     ConnectionHandler* m_conn_handler_ptr;
     TimeSyncHandler* m_timesync_handler_ptr;
     LogFileHandler* m_logfile_handler_ptr;
     CatchController* m_catch_controller_ptr;
+
     QList<DeviceInterface*>* m_device_list;
 
 };

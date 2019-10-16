@@ -90,18 +90,18 @@ DeviceFinder::DeviceFinder(QList<DeviceInterface*>* devicelist, ConnectionHandle
 
 DeviceFinder::~DeviceFinder()
 {
-    qDeleteAll(m_found_devices);
-    m_found_devices.clear();
+    qDeleteAll(m_foundDevices);
+    m_foundDevices.clear();
 }
 
 void DeviceFinder::startSearch()
 {
     qDebug()<<"DeviceFinder -> Starting Search";
     clearMessages();
-    if (m_device_list->size() != 0)
-        qDeleteAll(m_device_list->begin(), m_device_list->end());
+    if (m_foundDevices.size() != 0)
+        qDeleteAll(m_foundDevices.begin(), m_foundDevices.end());
 
-    m_device_list->clear();
+    m_foundDevices.clear();
 
     emit devicesChanged();
 
@@ -118,7 +118,7 @@ void DeviceFinder::addDevice(const QBluetoothDeviceInfo &device)
 {
     // If device is LowEnergy-device, add it to the list
     if (device.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
-        m_found_devices.append(new DeviceInfo(device));
+        m_foundDevices.append(new DeviceInfo(device));
         setInfo(tr("Low Energy device found. Scanning more..."));
         qDebug()<<"Low Energy device found. Scanning more..."<<device.address().toString();
         //! [devicediscovery-3]
@@ -142,7 +142,7 @@ void DeviceFinder::scanError(QBluetoothDeviceDiscoveryAgent::Error error)
 
 void DeviceFinder::scanFinished()
 {
-    if (m_found_devices.size() == 0)
+    if (m_foundDevices.size() == 0)
         setError(tr("No Low Energy devices found."));
     else
         setInfo(tr("Scanning done."));
@@ -150,7 +150,7 @@ void DeviceFinder::scanFinished()
     emit scanningChanged();
     emit devicesChanged();
 
-    qDebug()<<"Found BLE Devices Count:"<<m_found_devices.size();
+    qDebug()<<"Found BLE Devices Count:"<<m_foundDevices.size();
 }
 
 
@@ -162,26 +162,27 @@ void DeviceFinder::connectToSelectedDevices()
 
     qDebug()<<"We have "<< adapterListSize <<"adapters detected";
 
-    for (int i = 0; i < m_found_devices.size(); i++)
+    for (int i = 0; i < m_foundDevices.size(); i++)
     {
-        if  ( ((DeviceInfo*) m_found_devices.at(i) )->getDeviceFlags() & DEVICE_SELECTED )
+        if  ( ((DeviceInfo*) m_foundDevices.at(i) )->getDeviceFlags() & DEVICE_SELECTED )
         {
-            m_device_list->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr));
-
-            ( (DeviceInfo*) m_found_devices.at(i) )->setDeviceIndex( deviceListSize );
-            if ( ( ( (DeviceInfo*) m_found_devices.at(i) )->getName() == "bluenrg" ) ||
-                ( ( (DeviceInfo*) m_found_devices.at(i) )->getName() == "Catch?!" ) )
+            ( (DeviceInfo*) m_foundDevices.at(i) )->setDeviceIndex( deviceListSize );
+            if ( ( ( (DeviceInfo*) m_foundDevices.at(i) )->getName() == "bluenrg" ) ||
+                ( ( (DeviceInfo*) m_foundDevices.at(i) )->getName() == "Catch?!" ) )
             {
-                ((DeviceInfo*) m_found_devices.at(i) )->setDeviceType(DeviceInfo::Wearable);
+                qDebug()<<"wearable found..";
+                ((DeviceInfo*) m_foundDevices.at(i) )->setDeviceType(DeviceInfo::Wearable);
             }
-            m_device_list->last()->initializeDevice( &m_conn_handler_ptr->m_adapterList[k], (DeviceInfo*) m_found_devices[i] );
+
+            m_device_list->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr, (DeviceInfo*) m_foundDevices[i]));
+            m_device_list->last()->initializeDevice( &m_conn_handler_ptr->m_adapterList[k]);
             deviceListSize++;
             k++;
             if ( k >= adapterListSize)
                 k = 0;
         }
     }
-    qDebug()<<"Connection started to"<<m_selectedDevicesCount<<"from"<<m_found_devices.size()<<"found devices..";
+    qDebug()<<"Connection started to"<<m_selectedDevicesCount<<"from"<<m_foundDevices.size()<<"found devices..";
     clearMessages();
 }
 
@@ -194,25 +195,25 @@ bool DeviceFinder::scanning() const
 
 QVariant DeviceFinder::devices()
 {
-    return QVariant::fromValue(m_found_devices);
+    return QVariant::fromValue(m_foundDevices);
 }
 
 void DeviceFinder::addDeviceToSelection(const quint8 &idx)
 {
     if ( m_selectedDevicesCount < 2 )
     {
-        ((DeviceInfo*) m_found_devices.at(idx) )->setDeviceFlags( ( (DeviceInfo*) m_found_devices.at(idx) )->getDeviceFlags() | DEVICE_SELECTED);
+        ((DeviceInfo*) m_foundDevices.at(idx) )->setDeviceFlags( ( (DeviceInfo*) m_foundDevices.at(idx) )->getDeviceFlags() | DEVICE_SELECTED);
         m_selectedDevicesCount++;
-        emit ((DeviceInfo*) m_found_devices.at(idx) )->deviceChanged();
+        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
     }
 }
 
 void DeviceFinder::removeDeviceFromSelection(const quint8 &idx)
 {
-    if ( idx < m_found_devices.size() )
+    if ( idx < m_foundDevices.size() )
     {
-        ((DeviceInfo*) m_found_devices.at(idx) )->setDeviceFlags( 0 );
+        ((DeviceInfo*) m_foundDevices.at(idx) )->setDeviceFlags( 0 );
         m_selectedDevicesCount--;
-        emit ((DeviceInfo*) m_found_devices.at(idx) )->deviceChanged();
+        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
     }
 }

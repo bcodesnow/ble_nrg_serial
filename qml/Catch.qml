@@ -5,7 +5,6 @@ import "."
 
 
 DualAppPage {
-
     errorMessageL: deviceHandler_0.error
     infoMessageL: deviceHandler_0.info
 

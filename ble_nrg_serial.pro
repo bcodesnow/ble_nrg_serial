@@ -1,6 +1,6 @@
 QT += quick quickwidgets qml bluetooth quickcontrols2 network networkauth
 CONFIG += c++11
-#QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
+QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
 #QMAKE_CXXFLAGS += "-Wno-old-style-cast"
 
 # The following define makes your compiler emit warnings if you use
@@ -26,6 +26,7 @@ SOURCES += main.cpp \
     graphpainter.cpp \
     networkmanager.cpp \
     paintdata.cpp \
+    qmllistadapter.cpp \
     terminaltoqmlb.cpp \
     connectionhandler.cpp \
     logfilehandler.cpp \
@@ -58,6 +59,7 @@ HEADERS += \
     mci_catch_detection.h \
     networkmanager.h \
     paintdata.h \
+    qmllistadapter.h \
     terminaltoqmlb.h \
     connectionhandler.h \
     ble_uart.h \

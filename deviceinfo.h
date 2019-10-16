@@ -54,10 +54,11 @@
 #include <QString>
 #include <QObject>
 #include <QBluetoothDeviceInfo>
+#include "bluetoothbaseclass.h"
 
 #define DEVICE_SELECTED 0x01
 
-class DeviceInfo: public QObject
+class DeviceInfo: public BluetoothBaseClass
 {
     Q_OBJECT
     Q_PROPERTY(QString deviceName READ getName NOTIFY deviceChanged)
@@ -70,6 +71,7 @@ class DeviceInfo: public QObject
 
 public:
     DeviceInfo(const QBluetoothDeviceInfo &device);
+    DeviceInfo(DeviceInfo* t);
     enum DeviceType {
         Wearable,
         Stationary
@@ -95,13 +97,12 @@ public:
     bool deviceIsInRequiredConnectionState;
     bool deviceIsTimeSynced;
     bool m_sensorDataWaitingForDownload;
-
+    QBluetoothDeviceInfo m_device;
 
 signals:
     void deviceChanged();
 
 private:
-    QBluetoothDeviceInfo m_device;
     qint64 m_deviceFlags;
     qint32 m_deviceIdx;
     QString m_deviceIdentifier;

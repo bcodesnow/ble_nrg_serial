@@ -50,7 +50,7 @@ void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
 {
     if ( success )
     {
-        m_device_list->at(id)->m_deviceInfo->deviceIsTimeSynced = true;
+        m_device_list->at(id)->deviceIsTimeSynced = true;
     }
     else
     {
@@ -110,7 +110,7 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
 {
     if (success)
     {
-        m_device_list->at(id)->m_deviceInfo->deviceIsInRequiredConnectionState = true;
+        m_device_list->at(id)->deviceIsInRequiredConnectionState = true;
     }
     else
     {
@@ -191,11 +191,11 @@ void CatchController::onSensorDataAvailableArrived(int idx)
 {
     emit m_device_list->at(idx)->invokeBleUartSendCmdOk();
     int notReady = 0;
-    m_device_list->at(idx)->m_deviceInfo->m_sensorDataWaitingForDownload = true;
+    m_device_list->at(idx)->m_sensorDataWaitingForDownload = true;
 
     for (int i = 0; i < m_device_list->size(); i++)
-        if ( m_device_list->at(i)->m_deviceInfo->getDeviceType() == DeviceInfo::Wearable )
-            if (m_device_list->at(i)->m_deviceInfo->m_sensorDataWaitingForDownload != true  )
+        if ( m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable )
+            if (m_device_list->at(i)->m_sensorDataWaitingForDownload != true  )
                 notReady++;
     if ( !notReady )
         emit allWearablesAreWaitingForDownload();

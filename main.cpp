@@ -16,6 +16,7 @@
 #include "timesynchandler.h"
 #include "graphpainter.h"
 #include "deviceinterface.h"
+#include "qmllistadapter.h"
 
 
 int main(int argc, char *argv[])
@@ -27,18 +28,19 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<GraphPainter>("GraphPainterCpp",1,0,"GraphPainterCpp");
 
+    QmlListAdapter* ladapter = new QmlListAdapter();
     TerminalToQmlB term;
     term.setActive (false); // true
 
     LogFileHandler* log_file_handler = new LogFileHandler();
     log_file_handler->set_aut_incr(false);
 
-    QList<DeviceInterface*> device_interfaces;
+//    QList<DeviceInterface*> device_interfaces;
 
-    TimeSyncHandler* time_sync_handler = new TimeSyncHandler(&device_interfaces);
+    TimeSyncHandler* time_sync_handler = new TimeSyncHandler(ladapter->getList());
     time_sync_handler->start_time_stamp();
 
-    CatchController* catch_controller = new CatchController(&device_interfaces, time_sync_handler,log_file_handler);
+    CatchController* catch_controller = new CatchController(ladapter->getList(), time_sync_handler,log_file_handler);
 
     //log_file_handler.set_fil_src_cnt(2);
     //log_file_handler.set_last_type(TYPE_PRS);
@@ -49,7 +51,7 @@ int main(int argc, char *argv[])
 //    // search for bt adapters and select an address for both devices
 //    connection_handler.initBtAdapters(leftAdapter, rightAdapter);
 
-    DeviceFinder device_finder(&device_interfaces, &connection_handler, time_sync_handler,catch_controller,log_file_handler);
+    DeviceFinder device_finder(ladapter->getList(), &connection_handler, time_sync_handler,catch_controller,log_file_handler);
     qDebug()<<"MainThread"<<QThread::currentThreadId();
 
     //device_finder = new DeviceFinder
@@ -79,7 +81,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("connectionHandler", &connection_handler);
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);
     engine.rootContext()->setContextProperty("catchController", catch_controller);
+//    engine.rootContext()->setContextProperty("deviceInterfaces", QVariant::fromValue(device_interfaces));
     engine.rootContext()->setContextProperty("deviceInterfaces", QVariant::fromValue(device_interfaces));
+
     engine.rootContext()->setContextProperty("fileHandler", log_file_handler);
 
     //engine.rootContext()->setContextProperty("networkManager", &ntwMngr);

@@ -4,8 +4,8 @@
 #include <QBluetoothHostInfo>
 
 DeviceInterface::DeviceInterface (TimeSyncHandler* ts_handler, CatchController* catch_controller,
-                                  LogFileHandler* logfile_handler, BluetoothBaseClass *parent):
-    BluetoothBaseClass(parent),
+                                  LogFileHandler* logfile_handler, DeviceInfo *parent):
+    DeviceInfo(parent),
     m_timesync_handler_ptr(ts_handler),
     m_logfile_handler_ptr(logfile_handler),
     m_catch_controller_ptr(catch_controller)
@@ -13,9 +13,9 @@ DeviceInterface::DeviceInterface (TimeSyncHandler* ts_handler, CatchController* 
 }
 
 // TODO we can add relevant information to deviceinfo also - or just keep it general
-void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo, DeviceInfo *deviceInfo)
+void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
 {
-    m_dev_handler_ptr = new DeviceController(deviceInfo->getDeviceIndex() , deviceInfo->getDeviceIdentifier()); // we have allocate this dinamically, there is no other way to pass it like this to a thread
+    m_dev_handler_ptr = new DeviceController(this->getDeviceIndex() , this->getDeviceIdentifier()); // we have allocate this dinamically, there is no other way to pass it like this to a thread
 
 
     m_dev_handler_ptr->moveToThread(&m_thread_controller);
@@ -41,13 +41,11 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo, DeviceInfo 
 
     m_thread_controller.start();
 
-    m_deviceInfo = deviceInfo;
-
-    QBluetoothDeviceInfo tdi = deviceInfo->getDevice(); // todo test if we cann pass it directly
-    qDebug()<<"The nam is there"<<deviceInfo->getName();
+    QBluetoothDeviceInfo tdi = this->getDevice(); // todo test if we cann pass it directly
+    qDebug()<<"The nam is there"<<this->getName();
     emit invokePrintThreadId();
 
-    emit invokeInitializeDevice(hostInfo, &tdi);
+    emit invokeInitializeDevice(hostInfo, &m_device);
 }
 
 void DeviceInterface::onDeviceThreadStarted()
@@ -70,16 +68,16 @@ void DeviceInterface::onTriggeredArrived(QByteArray value)
     rec_ts |=( (uint32_t) data[4] )<< 8;
     rec_ts |= ( (uint32_t) data[5] );
 
-    m_logfile_handler_ptr->add_to_log_fil_slot(m_deviceInfo->getDeviceIdentifier(),"TS in Trigger MSG", QString::number(rec_ts));
+    m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"TS in Trigger MSG", QString::number(rec_ts));
     //
     if (data[6] == 1<<1)
-        m_logfile_handler_ptr->add_to_log_fil_slot(m_deviceInfo->getDeviceIdentifier(),"Trigger Source", "MAG");
+        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Trigger Source", "MAG");
     else if (data[6] == 1<<2)
-        m_logfile_handler_ptr->add_to_log_fil_slot(m_deviceInfo->getDeviceIdentifier(),"Trigger Source", "ACC");
+        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Trigger Source", "ACC");
     else
-        m_logfile_handler_ptr->add_to_log_fil_slot(m_deviceInfo->getDeviceIdentifier(),"Trigger Source", "Things got messed up..");
+        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Trigger Source", "Things got messed up..");
 
-    m_logfile_handler_ptr->add_to_log_fil_slot(m_deviceInfo->getDeviceIdentifier(),"Trigger MSG Received", QString::number(m_timesync_handler_ptr->get_timestamp_us()));
+    m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Trigger MSG Received", QString::number(m_timesync_handler_ptr->get_timestamp_us()));
 }
 
 void DeviceInterface::onAliveArrived(QByteArray value)
@@ -88,12 +86,12 @@ void DeviceInterface::onAliveArrived(QByteArray value)
     alive_msg_t * tptr;
     tptr =  (alive_msg_t *) &data[0];
     alive_msg = *tptr;
-    m_deviceInfo->setDeviceMainState( stateToString(alive_msg.main_state) );
+    this->setDeviceMainState( stateToString(alive_msg.main_state) );
 
     if (alive_msg.last_error)
-        m_logfile_handler_ptr->add_to_log_fil_slot(m_deviceInfo->getDeviceIdentifier(),"Last Error", QString(data[4]));
+        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Last Error", QString(data[4]));
 
-    qDebug()<<m_deviceInfo->getDeviceIdentifier()<<" --- ALIVE: -STATE- "<<m_deviceInfo->getDeviceMainState()<<" -SUB STATE- "<<alive_msg.sub_state<<" -LAST ERROR- "<<alive_msg.last_error;
+    qDebug()<<this->getDeviceIdentifier()<<" --- ALIVE: -STATE- "<<this->getDeviceMainState()<<" -SUB STATE- "<<alive_msg.sub_state<<" -LAST ERROR- "<<alive_msg.last_error;
 
     // TODO: SD!
 

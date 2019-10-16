@@ -53,9 +53,22 @@
 #include <QBluetoothUuid>
 
 DeviceInfo::DeviceInfo(const QBluetoothDeviceInfo &info):
-    QObject(), m_device(info)
+    BluetoothBaseClass(), m_device(info)
 {
     m_deviceFlags = 0;
+}
+
+DeviceInfo::DeviceInfo(DeviceInfo *t)
+{
+    deviceIsInRequiredConnectionState = t-> deviceIsInRequiredConnectionState;
+    deviceIsTimeSynced  = t->deviceIsTimeSynced;
+    m_sensorDataWaitingForDownload = t-> m_sensorDataWaitingForDownload;
+    m_device = t->getDevice();
+    m_deviceFlags = t->getDeviceFlags();
+    m_deviceIdx = t->getDeviceIndex();
+    m_deviceIdentifier = t->getDeviceIdentifier();
+    m_deviceMainState = t->getDeviceMainState();
+    m_deviceType = t->getDeviceType();
 }
 
 QBluetoothDeviceInfo DeviceInfo::getDevice() const

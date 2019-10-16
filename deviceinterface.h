@@ -18,17 +18,11 @@ class LogFileHandler;
 class CatchController;
 
 // todo: add baseclass ..or remove it completely and give this properties only to the catch controller.. it will be finally unused..!!!
-class DeviceInterface : public BluetoothBaseClass
+class DeviceInterface : public DeviceInfo
 {
     Q_OBJECT
-    //Q_PROPERTY(QString deviceAddress MEMBER m_deviceAddress NOTIFY deviceAddressChanged)
-
     //Q_PROPERTY(bool heartBeat MEMBER m_heartBeat NOTIFY deviceAddressChanged)
-
-
     //Q_PROPERTY(bool connectionAlive READ connectionAlive NOTIFY aliveChanged)
-    //Q_PROPERTY(AddressType addressType READ addressType WRITE setAddressType)
-    //Q_PROPERTY(QString deviceState MEMBER m_deviceState NOTIFY deviceStateChanged)
     //Q_PROPERTY(bool sdEnabled MEMBER m_sdEnabled NOTIFY sdEnabledChanged)
     //Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
     //Q_PROPERTY(bool sendingOverBleEnabled MEMBER m_sendingOverBleEnabled NOTIFY sendingOverBleEnabledChanged)
@@ -49,16 +43,13 @@ private:
 
 public:
     DeviceInterface(TimeSyncHandler* ts_handler, CatchController* catch_controller,
-                    LogFileHandler* logfile_handler, BluetoothBaseClass *parent = nullptr );
+                    LogFileHandler* logfile_handler, DeviceInfo *parent = nullptr );
 
     ~DeviceInterface(){} // they get destroyed in the list, always start with the last
 
-    void initializeDevice( QBluetoothHostInfo* hostInfo, DeviceInfo* deviceInfo );
+    void initializeDevice( QBluetoothHostInfo* hostInfo );
     //bool connectionAlive() const; // this is a connection state..
     friend QString stateToString(uint8_t tmp);
-
-    DeviceInfo* m_deviceInfo;
-
     void sendCmdStart();
     void sendCmdStop();
     void sendCmdWriteCatchSuccessToSd(const quint8 &success);

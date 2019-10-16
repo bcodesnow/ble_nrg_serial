@@ -111,6 +111,7 @@ AppPage {
                     else
                     {
                         index % 2 === 0 ? AppConstants.delegate1Color : AppConstants.delegate2Color
+
                     }
                 }
                 MouseArea {
@@ -124,7 +125,6 @@ AppPage {
                         {
                             deviceFinder.addDeviceToSelection(index);
                         }
-                        //deviceFinder.connectToService(modelData.deviceAddress);
                     }
                 }
 
@@ -203,7 +203,9 @@ AppPage {
         width: viewContainer.width
         height: AppConstants.fieldHeight
         enabled: !deviceFinder.scanning
-        onClicked: deviceFinder.startSearch()
+        onClicked: {
+            deviceFinder.startSearch()
+        }
 
         Text {
             anchors.centerIn: parent
