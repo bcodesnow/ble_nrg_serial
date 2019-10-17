@@ -42,7 +42,7 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     m_thread_controller.start();
 
     QBluetoothDeviceInfo tdi = this->getDevice(); // todo test if we cann pass it directly
-    qDebug()<<"The nam is there"<<this->getName();
+    qDebug()<<"The name is there"<<this->getName();
     emit invokePrintThreadId();
 
     emit invokeInitializeDevice(hostInfo, &m_device);
@@ -95,7 +95,7 @@ void DeviceInterface::onAliveArrived(QByteArray value)
 
     // TODO: SD!
 
-    setInfo("Alive!");
+    //setInfo("Alive!");
 }
 
 void DeviceInterface::sendCmdStart()

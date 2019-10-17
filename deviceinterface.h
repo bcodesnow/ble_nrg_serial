@@ -78,5 +78,6 @@ public slots:
     void onTriggeredArrived(QByteArray value);
     void onAliveArrived(QByteArray value);
 };
+Q_DECLARE_METATYPE(DeviceInterface)
 
 #endif // DEVICEINTERFACE_H

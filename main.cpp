@@ -19,6 +19,7 @@
 #include "qmllistadapter.h"
 
 
+
 int main(int argc, char *argv[])
 {
     //QLoggingCategory::setFilterRules(QStringLiteral("qt.bluetooth* = true"));
@@ -74,15 +75,15 @@ int main(int argc, char *argv[])
     qRegisterMetaType<DeviceInfo::DeviceType>("DeviceType");
     qRegisterMetaType<DeviceController::AddressType>("AddressType");
 
-    qmlRegisterUncreatableType<DeviceInfo>("com.dev", 1, 0, "DeviceInfo",  QStringLiteral("We do handle object creation only on c++ side in this project") );
-    qmlRegisterUncreatableType<DeviceInterface>("com.dev", 1, 0, "DeviceInterface",  QStringLiteral("We do handle object creation only on c++ side in this project") );
+//    qmlRegisterUncreatableType<DeviceInfo>("com.dev", 1, 0, "DeviceInfo",  QStringLiteral("We do handle object creation only on c++ side in this project") );
+//    qmlRegisterUncreatableType<DeviceInterface>("com.dev", 1, 0, "DeviceInterface",  QStringLiteral("We do handle object creation only on c++ side in this project") );
 
     //engine.rootContext()->setContextProperty("terminalToQml", &term);
     engine.rootContext()->setContextProperty("connectionHandler", &connection_handler);
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);
     engine.rootContext()->setContextProperty("catchController", catch_controller);
-//    engine.rootContext()->setContextProperty("deviceInterfaces", QVariant::fromValue(device_interfaces));
-    engine.rootContext()->setContextProperty("deviceInterfaces", QVariant::fromValue(device_interfaces));
+    engine.rootContext()->setContextProperty("ladApter", ladapter);
+    //engine.rootContext()->setContextProperty("deviceInterfaces", QVariant::fromValue(device_interfaces));
 
     engine.rootContext()->setContextProperty("fileHandler", log_file_handler);
 

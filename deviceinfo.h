@@ -58,7 +58,7 @@
 
 #define DEVICE_SELECTED 0x01
 
-class DeviceInfo: public BluetoothBaseClass
+class DeviceInfo :public QObject//: public BluetoothBaseClass
 {
     Q_OBJECT
     Q_PROPERTY(QString deviceName READ getName NOTIFY deviceChanged)

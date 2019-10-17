@@ -205,6 +205,7 @@ AppPage {
         enabled: !deviceFinder.scanning
         onClicked: {
             deviceFinder.startSearch()
+
         }
 
         Text {

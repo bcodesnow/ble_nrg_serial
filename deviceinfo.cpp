@@ -53,7 +53,7 @@
 #include <QBluetoothUuid>
 
 DeviceInfo::DeviceInfo(const QBluetoothDeviceInfo &info):
-    BluetoothBaseClass(), m_device(info)
+    QObject(), m_device(info)
 {
     m_deviceFlags = 0;
 }
