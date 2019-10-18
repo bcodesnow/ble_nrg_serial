@@ -11,6 +11,7 @@
 #include "connectionhandler.h"
 
 class DeviceInfo;
+class QmlListAdapter;
 
 class DeviceFinder: public BluetoothBaseClass
 {
@@ -20,7 +21,7 @@ class DeviceFinder: public BluetoothBaseClass
     Q_PROPERTY(QVariant devices READ devices NOTIFY devicesChanged)
 
 public:
-    DeviceFinder(QList<DeviceInterface*>* devicelist, ConnectionHandler* connHandler, TimeSyncHandler* ts_handler,
+    DeviceFinder(QmlListAdapter* deviceListAdapter, ConnectionHandler* connHandler, TimeSyncHandler* ts_handler,
                  CatchController* catch_controller, LogFileHandler* logfile_handler, QObject *parent = nullptr);
     ~DeviceFinder();
 
@@ -55,7 +56,8 @@ private:
     LogFileHandler* m_logfile_handler_ptr;
     CatchController* m_catch_controller_ptr;
 
-    QList<DeviceInterface*>* m_device_list;
+    QList<DeviceInterface*>* m_deviceList;
+    QmlListAdapter* m_deviceListAdapter;
 
 };
 

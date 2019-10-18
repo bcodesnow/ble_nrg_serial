@@ -7,6 +7,11 @@
 #include <logfilehandler.h>
 #include <deviceinterface.h>
 
+#define SETTING_CONN_MODE 1u
+#define SYNCING           2u
+#define DOWNLOADING       2u
+#define NOT_RUNNING       3u
+
 class LogFileHandler;
 class TimeSyncHandler;
 class DeviceInterface;
@@ -16,7 +21,7 @@ class DeviceInterface;
 class CatchController : public QObject
 {
     Q_OBJECT
-    //    Q_PROPERTY(quint8 appState MEMBER m_appState NOTIFY appStateChanged)
+    Q_PROPERTY(QString devicesMainState MEMBER m_devicesMainState NOTIFY mainStateOfAllDevicesChanged)
     //    Q_PROPERTY(bool sdEnabled READ sdEnabled NOTIFY sdEnabledChanged)
 
     //Q_PROPERTY(QString lastPath MEMBER m_last_path NOTIFY lastPathChanged)
@@ -31,6 +36,20 @@ private:
     LogFileHandler* m_logfile_handler_ptr;
     TimeSyncHandler* m_timesync_handler_ptr;
     QList<DeviceInterface*>* m_device_list;
+
+    QString m_devicesMainState;
+    ///
+    /// todo: is it final like this? group?
+    ///
+    quint8 time_sync_state;
+    int    remaining_c;
+    int    id_in_sync;
+    bool change_conn_of_other_devices;
+    int id_in_dl;
+    int download_state;
+    ///
+    /// todo: is it final like this? group?
+    ///
 
 public:
     CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHandler* ts_handler,
@@ -49,11 +68,12 @@ signals:
     void downloadOfAllDevFinished(bool success);
 
     void allWearablesAreWaitingForDownload();
-
     //    void transferProgressChanged(uint8_t percentage);
     //    void showProgressMessage(QString mainText, QString subText, int percent, uint8_t flag);
     //    void progressFinished();
 
+    //void mainStateOfAllDevicesChanged(const QString& devicesMainState);
+    void mainStateOfAllDevicesChanged(QString devicesMainState);
 
 public slots:
 
@@ -73,6 +93,8 @@ public slots:
     void sendStopToAllDevices();
 
     void onSensorDataAvailableArrived(int idx);
+
+    void onMainStateOfDevXChanged(quint8 state, int idx);
 
 
 

@@ -21,6 +21,7 @@ class CatchController;
 class DeviceInterface : public DeviceInfo
 {
     Q_OBJECT
+    //Q_PROPERTY(QString text MEMBER m_text NOTIFY textChanged)
     //Q_PROPERTY(bool heartBeat MEMBER m_heartBeat NOTIFY deviceAddressChanged)
     //Q_PROPERTY(bool connectionAlive READ connectionAlive NOTIFY aliveChanged)
     //Q_PROPERTY(bool sdEnabled MEMBER m_sdEnabled NOTIFY sdEnabledChanged)
@@ -28,18 +29,20 @@ class DeviceInterface : public DeviceInfo
     //Q_PROPERTY(bool sendingOverBleEnabled MEMBER m_sendingOverBleEnabled NOTIFY sendingOverBleEnabledChanged)
 
 private:
+    QString m_text;
     QThread m_thread_controller;
-    DeviceController* m_dev_handler_ptr;
+    DeviceController* m_deviceController;
 
 
     LogFileHandler* m_logfile_handler_ptr;
     TimeSyncHandler* m_timesync_handler_ptr;
     CatchController* m_catch_controller_ptr;
-    QString m_deviceAddress;
+    //QString m_deviceAddress;
 
     alive_msg_t alive_msg;
 
-    uint32_t rec_ts;
+    //uint32_t rec_ts;
+    QTimer m_textTimer;
 
 public:
     DeviceInterface(TimeSyncHandler* ts_handler, CatchController* catch_controller,
@@ -53,12 +56,15 @@ public:
     void sendCmdStart();
     void sendCmdStop();
     void sendCmdWriteCatchSuccessToSd(const quint8 &success);
+    quint8 getLastMainState();
 
 signals:
     void invokeInitializeDevice( QBluetoothHostInfo* hostInfo, QBluetoothDeviceInfo* deviceInfo );
     void invokePrintThreadId();
     //
-    void deviceAddressChanged();
+    void mainStateOfDevXChanged(quint8 state, int idx);
+
+    //void deviceAddressChanged();
 //    void deviceStateChanged();
 //    void fileIndexOnDeviceChanged();
 //    void sensorDataReceived();
@@ -73,11 +79,24 @@ signals:
     void invokeStartDownloadAllDataProcedure();
 
 
+    //void textChanged(QString text);
+
 public slots:
+//    void onTextTimerTrig(){
+//        static quint8 idx;
+//        idx++;
+//        auto printable = QStringLiteral("My magic number is %1. That's all!").arg(idx);
+//        emit deviceChanged();
+//        m_text = printable;
+//        this->setDeviceIdentifier(printable);
+
+//        emit textChanged(m_text);
+//        qDebug()<<"timer expl"<<m_text;
+//    }
     void onDeviceThreadStarted();
     void onTriggeredArrived(QByteArray value);
     void onAliveArrived(QByteArray value);
 };
-Q_DECLARE_METATYPE(DeviceInterface)
+//Q_DECLARE_METATYPE(DeviceInterface)
 
 #endif // DEVICEINTERFACE_H

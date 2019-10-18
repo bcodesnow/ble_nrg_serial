@@ -60,20 +60,22 @@
 #include "ble_uart.h"
 #include "devicecontroller.h"
 #include "deviceinfo.h"
+#include "qmllistadapter.h"
 #include "QThread"
 #include <QDebug>
 
 
-DeviceFinder::DeviceFinder(QList<DeviceInterface*>* devicelist, ConnectionHandler* connHandler, TimeSyncHandler* ts_handler,
+DeviceFinder::DeviceFinder(QmlListAdapter* deviceListAdapter, ConnectionHandler* connHandler, TimeSyncHandler* ts_handler,
                            CatchController* catch_controller, LogFileHandler* logfile_handler, QObject *parent):
     BluetoothBaseClass(parent),
-    m_device_list(devicelist),
+    m_deviceListAdapter(deviceListAdapter),
     m_conn_handler_ptr(connHandler),
     m_timesync_handler_ptr(ts_handler),
     m_logfile_handler_ptr(logfile_handler),
     m_catch_controller_ptr(catch_controller)
 
 {
+    m_deviceList = m_deviceListAdapter->getList();
     m_selectedDevicesCount = 0;
     //! [devicediscovery-1]
     m_deviceDiscoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
@@ -157,7 +159,7 @@ void DeviceFinder::scanFinished()
 void DeviceFinder::connectToSelectedDevices()
 {
     int adapterListSize = m_conn_handler_ptr->m_adapterList.size();
-    int deviceListSize = m_device_list->size();
+    int deviceListSize = m_deviceList->size();
     int k = 0;
 
     qDebug()<<"We have "<< adapterListSize <<"adapters detected";
@@ -174,8 +176,9 @@ void DeviceFinder::connectToSelectedDevices()
                 ((DeviceInfo*) m_foundDevices.at(i) )->setDeviceType(DeviceInfo::Wearable);
             }
 
-            m_device_list->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr, (DeviceInfo*) m_foundDevices[i]));
-            m_device_list->last()->initializeDevice( &m_conn_handler_ptr->m_adapterList[k]);
+            m_deviceList->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr, (DeviceInfo*) m_foundDevices[i]));
+            m_deviceListAdapter->rst_model();
+            m_deviceList->last()->initializeDevice( &m_conn_handler_ptr->m_adapterList[k]);
             deviceListSize++;
             k++;
             if ( k >= adapterListSize)
@@ -204,7 +207,7 @@ void DeviceFinder::addDeviceToSelection(const quint8 &idx)
     {
         ((DeviceInfo*) m_foundDevices.at(idx) )->setDeviceFlags( ( (DeviceInfo*) m_foundDevices.at(idx) )->getDeviceFlags() | DEVICE_SELECTED);
         m_selectedDevicesCount++;
-        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
+//        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
     }
 }
 
@@ -214,6 +217,6 @@ void DeviceFinder::removeDeviceFromSelection(const quint8 &idx)
     {
         ((DeviceInfo*) m_foundDevices.at(idx) )->setDeviceFlags( 0 );
         m_selectedDevicesCount--;
-        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
+//        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
     }
 }

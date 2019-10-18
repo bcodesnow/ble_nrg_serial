@@ -79,28 +79,31 @@ QBluetoothDeviceInfo DeviceInfo::getDevice() const
 void DeviceInfo::setDeviceFlags(const qint64 &flags)
 {
     m_deviceFlags = flags;
-    emit deviceChanged();
+    emit deviceFlagsChanged(m_deviceFlags);
 }
 
 void DeviceInfo::setDeviceIndex(qint32 idx)
 {
     m_deviceIdx = idx;
-    emit deviceChanged();
+    emit deviceIndexChanged(m_deviceIdx);
 }
 
 void DeviceInfo::setDeviceIdentifier(QString ident)
 {
     m_deviceIdentifier = ident;
+    emit deviceIdentifierChanged(m_deviceIdentifier);
 }
 
 void DeviceInfo::setDeviceMainState(QString state)
 {
     m_deviceMainState = state;
+    emit deviceMainStateChanged(m_deviceMainState);
 }
 
 void DeviceInfo::setDeviceType(DeviceInfo::DeviceType type)
 {
     m_deviceType = type;
+    emit deviceTypeChanged(m_deviceType);
 }
 
 QString DeviceInfo::getName() const
@@ -141,5 +144,5 @@ DeviceInfo::DeviceType DeviceInfo::getDeviceType() const
 void DeviceInfo::setDevice(const QBluetoothDeviceInfo &device)
 {
     m_device = device;
-    emit deviceChanged();
+    //emit deviceInfoChanged();
 }

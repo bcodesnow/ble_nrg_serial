@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 //    // search for bt adapters and select an address for both devices
 //    connection_handler.initBtAdapters(leftAdapter, rightAdapter);
 
-    DeviceFinder device_finder(ladapter->getList(), &connection_handler, time_sync_handler,catch_controller,log_file_handler);
+    DeviceFinder device_finder(ladapter, &connection_handler, time_sync_handler,catch_controller,log_file_handler);
     qDebug()<<"MainThread"<<QThread::currentThreadId();
 
     //device_finder = new DeviceFinder
@@ -74,10 +74,15 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     qRegisterMetaType<DeviceInfo::DeviceType>("DeviceType");
     qRegisterMetaType<DeviceController::AddressType>("AddressType");
+    qmlRegisterUncreatableType<DeviceInfo>("Shared", 1, 0, "DeviceType", "Enum is not a type");
+    qmlRegisterUncreatableType<DeviceController>("Shared", 1, 0, "AddressType", "Enum is not a type");
 
 //    qmlRegisterUncreatableType<DeviceInfo>("com.dev", 1, 0, "DeviceInfo",  QStringLiteral("We do handle object creation only on c++ side in this project") );
 //    qmlRegisterUncreatableType<DeviceInterface>("com.dev", 1, 0, "DeviceInterface",  QStringLiteral("We do handle object creation only on c++ side in this project") );
 
+    ///
+//    qmlRegisterType<QmlListAdapter>("QmlListAdapterCpp",1,0,"QmlListAdapterCpp");
+////
     //engine.rootContext()->setContextProperty("terminalToQml", &term);
     engine.rootContext()->setContextProperty("connectionHandler", &connection_handler);
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);

@@ -16,17 +16,6 @@ CatchController::CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHa
 //    return m_sdEnabled;
 //}
 
-quint8 time_sync_state;
-int    remaining_c;
-int    id_in_sync;
-bool change_conn_of_other_devices;
-int id_in_dl;
-int download_state;
-
-#define SETTING_CONN_MODE 1u
-#define SYNCING           2u
-#define DOWNLOADING       2u
-#define NOT_RUNNING       3u
 
 /* TIME SYNC MULTIMPLE DEVICES */
 //
@@ -199,6 +188,26 @@ void CatchController::onSensorDataAvailableArrived(int idx)
                 notReady++;
     if ( !notReady )
         emit allWearablesAreWaitingForDownload();
+}
+
+void CatchController::onMainStateOfDevXChanged(quint8 state, int idx)
+{
+    bool notTheSame = false;
+    for (int i = 0; i<m_device_list->size(); i++)
+    {
+        if ( i != idx )
+        {
+            if ( m_device_list->at(i)->getLastMainState() != state )
+            {
+                notTheSame = true;
+                break;
+            }
+        }
+    }
+    if ( !notTheSame )
+    {
+        emit mainStateOfAllDevicesChanged(stateToString(state));
+    }
 }
 
 void CatchController::onDownloadTimerExpired()

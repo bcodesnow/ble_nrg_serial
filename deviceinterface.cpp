@@ -10,34 +10,41 @@ DeviceInterface::DeviceInterface (TimeSyncHandler* ts_handler, CatchController* 
     m_logfile_handler_ptr(logfile_handler),
     m_catch_controller_ptr(catch_controller)
 {
+//m_textTimer.setInterval(500);
+//connect(&m_textTimer, &QTimer::timeout, this, &DeviceInterface::onTextTimerTrig);
+//m_textTimer.setSingleShot(false);
+//m_textTimer.start();
 }
+
 
 // TODO we can add relevant information to deviceinfo also - or just keep it general
 void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
 {
-    m_dev_handler_ptr = new DeviceController(this->getDeviceIndex() , this->getDeviceIdentifier()); // we have allocate this dinamically, there is no other way to pass it like this to a thread
+    m_deviceController = new DeviceController(this->getDeviceIndex() , this->getDeviceIdentifier()); // we have allocate this dinamically, there is no other way to pass it like this to a thread
 
 
-    m_dev_handler_ptr->moveToThread(&m_thread_controller);
+    m_deviceController->moveToThread(&m_thread_controller);
 
     // let the qt magic begin..
     //connect(this, SIGNAL(signal_printThreadId()), &dh, SLOT(printThreadId()), Qt::QueuedConnection); // old syntax
-    connect(this, &DeviceInterface::invokePrintThreadId, m_dev_handler_ptr, &DeviceController::printThreadId, Qt::QueuedConnection); // new syntax
+    connect(this, &DeviceInterface::invokePrintThreadId, m_deviceController, &DeviceController::printThreadId, Qt::QueuedConnection); // new syntax
 
-    connect(this, &DeviceInterface::invokeInitializeDevice, m_dev_handler_ptr, &DeviceController::initializeDevice, Qt::QueuedConnection);
+    connect(this, &DeviceInterface::invokeInitializeDevice, m_deviceController, &DeviceController::initializeDevice, Qt::QueuedConnection);
 
-    connect(this, &DeviceInterface::invokeBleUartTx, m_dev_handler_ptr, &DeviceController::bleUartTx, Qt::QueuedConnection);
-    connect(this, &DeviceInterface::invokeBleUartSendCmdOk, m_dev_handler_ptr, &DeviceController::bleUartSendCmdOk, Qt::QueuedConnection);
-    connect(this, &DeviceInterface::invokeBleUartSendCmdWithResp, m_dev_handler_ptr, &DeviceController::bleUartSendCmdWithResp, Qt::QueuedConnection);
+    connect(this, &DeviceInterface::invokeBleUartTx, m_deviceController, &DeviceController::bleUartTx, Qt::QueuedConnection);
+    connect(this, &DeviceInterface::invokeBleUartSendCmdOk, m_deviceController, &DeviceController::bleUartSendCmdOk, Qt::QueuedConnection);
+    connect(this, &DeviceInterface::invokeBleUartSendCmdWithResp, m_deviceController, &DeviceController::bleUartSendCmdWithResp, Qt::QueuedConnection);
 
-    connect(m_dev_handler_ptr, &DeviceController::timeSyncMessageArrived, m_timesync_handler_ptr, &TimeSyncHandler::slot_time_sync_msg_arrived, Qt::QueuedConnection);
-    connect(m_dev_handler_ptr, &DeviceController::timeSyncMsgSent, m_timesync_handler_ptr, &TimeSyncHandler::slot_time_sync_msg_sent, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::timeSyncMessageArrived, m_timesync_handler_ptr, &TimeSyncHandler::slot_time_sync_msg_arrived, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::timeSyncMsgSent, m_timesync_handler_ptr, &TimeSyncHandler::slot_time_sync_msg_sent, Qt::QueuedConnection);
 
 
-    connect(m_dev_handler_ptr, &DeviceController::invokeWriteTypeToFile, m_logfile_handler_ptr, &LogFileHandler::write_type_to_file_slot, Qt::QueuedConnection);
-    connect(m_dev_handler_ptr, &DeviceController::invokeAddToLogFile, m_logfile_handler_ptr, &LogFileHandler::add_to_log_fil_slot, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::invokeWriteTypeToFile, m_logfile_handler_ptr, &LogFileHandler::write_type_to_file_slot, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::invokeAddToLogFile, m_logfile_handler_ptr, &LogFileHandler::add_to_log_fil_slot, Qt::QueuedConnection);
 
     connect(&m_thread_controller, &QThread::started, this, &DeviceInterface::onDeviceThreadStarted); // new syntax
+
+    connect(this, &DeviceInterface::mainStateOfDevXChanged, m_catch_controller_ptr, &CatchController::onMainStateOfDevXChanged, Qt::DirectConnection);
 
     m_thread_controller.start();
 
@@ -84,9 +91,15 @@ void DeviceInterface::onAliveArrived(QByteArray value)
 {
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     alive_msg_t * tptr;
+    alive_msg_t lastAliveMsg = alive_msg;
     tptr =  (alive_msg_t *) &data[0];
     alive_msg = *tptr;
-    this->setDeviceMainState( stateToString(alive_msg.main_state) );
+
+    if (lastAliveMsg.main_state != alive_msg.main_state)
+    {
+        emit mainStateOfDevXChanged(tptr->main_state, this->getDeviceIndex());
+        this->setDeviceMainState( stateToString(tptr->main_state) );
+    }
 
     if (alive_msg.last_error)
         m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Last Error", QString(data[4]));
@@ -122,6 +135,11 @@ void DeviceInterface::sendCmdWriteCatchSuccessToSd(const quint8 &success)
     tba[0] = CMD_WRITE_CATCH_SUCCESS;
     tba[1] = success;
     invokeBleUartSendCmdWithResp(tba);
+}
+
+quint8 DeviceInterface::getLastMainState()
+{
+    return alive_msg.main_state;
 }
 
 //void DeviceInterface::sendCmdEnableSdLogging(bool enable)

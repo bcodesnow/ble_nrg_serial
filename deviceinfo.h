@@ -61,13 +61,13 @@
 class DeviceInfo :public QObject//: public BluetoothBaseClass
 {
     Q_OBJECT
-    Q_PROPERTY(QString deviceName READ getName NOTIFY deviceChanged)
-    Q_PROPERTY(QString deviceAddress READ getAddress NOTIFY deviceChanged)
-    Q_PROPERTY(qint64 deviceFlags READ getDeviceFlags NOTIFY deviceChanged)
-    Q_PROPERTY(qint32 deviceIndex READ getDeviceIndex NOTIFY deviceChanged)
-    Q_PROPERTY(QString deviceIdentifier READ getDeviceIdentifier NOTIFY deviceChanged)
-    Q_PROPERTY(QString deviceMainState READ getDeviceMainState NOTIFY deviceChanged)
-    Q_PROPERTY(DeviceType deviceType READ getDeviceType NOTIFY deviceChanged)
+    Q_PROPERTY(QString deviceName READ getName NOTIFY deviceInfoChanged)
+    Q_PROPERTY(QString deviceAddress READ getAddress NOTIFY deviceInfoChanged)
+    Q_PROPERTY(qint64 deviceFlags READ getDeviceFlags NOTIFY deviceFlagsChanged)
+    Q_PROPERTY(qint32 deviceIndex READ getDeviceIndex NOTIFY deviceIndexChanged)
+    Q_PROPERTY(QString deviceIdentifier READ getDeviceIdentifier NOTIFY deviceIdentifierChanged)
+    Q_PROPERTY(QString deviceMainState READ getDeviceMainState NOTIFY deviceMainStateChanged)
+    Q_PROPERTY(DeviceType deviceType READ getDeviceType NOTIFY deviceTypeChanged)
 
 public:
     DeviceInfo(const QBluetoothDeviceInfo &device);
@@ -100,7 +100,18 @@ public:
     QBluetoothDeviceInfo m_device;
 
 signals:
-    void deviceChanged();
+
+    void deviceMainStateChanged(QString deviceMainState);
+
+    void deviceIdentifierChanged(QString deviceIdentifier);
+
+    void deviceTypeChanged(DeviceType deviceType);
+
+    void deviceIndexChanged(qint32 deviceIndex);
+
+    void deviceFlagsChanged(qint64 deviceFlags);
+
+    void deviceInfoChanged(QString deviceAddress);
 
 private:
     qint64 m_deviceFlags;
@@ -108,6 +119,9 @@ private:
     QString m_deviceIdentifier;
     QString m_deviceMainState;
     DeviceType m_deviceType;
+    qint32 m_deviceIndex;
+    QString m_deviceAddress;
+    QString m_deviceName;
 };
 
 #endif // DEVICEINFO_H
