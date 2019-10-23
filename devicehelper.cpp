@@ -59,7 +59,7 @@
     //        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
 //}
 
-QString stateToString(uint8_t tmp)
+QString stateToString(uint16_t tmp)
 {
     switch (tmp)
     {

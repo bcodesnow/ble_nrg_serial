@@ -38,6 +38,7 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     connect(m_deviceController, &DeviceController::timeSyncMessageArrived, m_timesync_handler_ptr, &TimeSyncHandler::slot_time_sync_msg_arrived, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::timeSyncMsgSent, m_timesync_handler_ptr, &TimeSyncHandler::slot_time_sync_msg_sent, Qt::QueuedConnection);
 
+    connect(m_deviceController, &DeviceController::aliveArrived, this, &DeviceInterface::onAliveArrived, Qt::QueuedConnection);
 
     connect(m_deviceController, &DeviceController::invokeWriteTypeToFile, m_logfile_handler_ptr, &LogFileHandler::write_type_to_file_slot, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::invokeAddToLogFile, m_logfile_handler_ptr, &LogFileHandler::add_to_log_fil_slot, Qt::QueuedConnection);
@@ -45,6 +46,8 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     connect(&m_thread_controller, &QThread::started, this, &DeviceInterface::onDeviceThreadStarted); // new syntax
 
     connect(this, &DeviceInterface::mainStateOfDevXChanged, m_catch_controller_ptr, &CatchController::onMainStateOfDevXChanged, Qt::DirectConnection);
+    connect(this, &DeviceInterface::invokeStartConnModeChangeProcedure, m_deviceController, &DeviceController::startConnModeChangeProcedure, Qt::QueuedConnection);
+    connect(this, &DeviceInterface::invokeStartDownloadAllDataProcedure, m_deviceController, &DeviceController::startDownloadAllDataProcedure, Qt::QueuedConnection);
 
     m_thread_controller.start();
 
@@ -92,19 +95,19 @@ void DeviceInterface::onAliveArrived(QByteArray value)
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     alive_msg_t * tptr;
     alive_msg_t lastAliveMsg = alive_msg;
-    tptr =  (alive_msg_t *) &data[0];
+    tptr =  (alive_msg_t *) &data[1];
     alive_msg = *tptr;
 
-    if (lastAliveMsg.main_state != alive_msg.main_state)
+    if (lastAliveMsg.mainState != alive_msg.mainState)
     {
-        emit mainStateOfDevXChanged(tptr->main_state, this->getDeviceIndex());
-        this->setDeviceMainState( stateToString(tptr->main_state) );
+        emit mainStateOfDevXChanged(tptr->mainState, this->getDeviceIndex());
+        this->setDeviceMainState( stateToString(tptr->mainState) );
     }
 
-    if (alive_msg.last_error)
-        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Last Error", QString(data[4]));
+    if (alive_msg.lastError)
+        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Last Error", QString(alive_msg.lastError)); // there is something bad!
 
-    qDebug()<<this->getDeviceIdentifier()<<" --- ALIVE: -STATE- "<<this->getDeviceMainState()<<" -SUB STATE- "<<alive_msg.sub_state<<" -LAST ERROR- "<<alive_msg.last_error;
+    qDebug()<<this->getDeviceIdentifier()<<" --- ALIVE: -STATE- "<<this->getDeviceMainState()<<" -LAST ERROR- "<<alive_msg.lastError;
 
     // TODO: SD!
 
@@ -139,7 +142,7 @@ void DeviceInterface::sendCmdWriteCatchSuccessToSd(const quint8 &success)
 
 quint8 DeviceInterface::getLastMainState()
 {
-    return alive_msg.main_state;
+    return alive_msg.mainState;
 }
 
 //void DeviceInterface::sendCmdEnableSdLogging(bool enable)

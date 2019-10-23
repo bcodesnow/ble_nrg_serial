@@ -11,7 +11,7 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
 {
     // testsignal
     // connect(this, SIGNAL(qmltestsignal(int)), this, SLOT(signaltestslot(int)));
-
+    m_log_fil_buf = new QString();
     m_homeLocation = QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory);
     m_paintDataList.reserve(TYPE_COUNT*2);
     //    QVector<QObject*> reserver = QVector<QObject*>(TYPE_COUNT*2);

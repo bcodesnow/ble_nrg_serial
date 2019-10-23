@@ -188,9 +188,12 @@ void CatchController::onSensorDataAvailableArrived(int idx)
                 notReady++;
     if ( !notReady )
         emit allWearablesAreWaitingForDownload();
+
+    if ( !notReady )
+       qDebug()<<"allWearablesAreWaitingForDownload()";
 }
 
-void CatchController::onMainStateOfDevXChanged(quint8 state, int idx)
+void CatchController::onMainStateOfDevXChanged(quint16 state, int idx)
 {
     bool notTheSame = false;
     for (int i = 0; i<m_device_list->size(); i++)

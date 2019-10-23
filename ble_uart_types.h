@@ -2,7 +2,6 @@
 #define __BLE_UART_TYPES_H
 
 #include "stdint.h"
-#include "ble_uart.h"
 
 typedef struct conn_param_info_s {
     uint8_t  requested_mode;
@@ -10,6 +9,7 @@ typedef struct conn_param_info_s {
     uint16_t interval;
     uint16_t supervision;
     uint8_t  latency;
+    uint8_t reserved;
 } __attribute__((packed)) conn_param_info_t;
 
 typedef struct huge_chunk_start_s {
@@ -30,12 +30,18 @@ typedef struct ble_uart_cmd_s {
 } __attribute__((packed)) ble_uart_cmd_t;
 
 typedef struct alive_msg_s {
-    uint8_t main_state;
-    uint8_t sub_state; // interface && controller
-    uint8_t last_error; // interface && controller
-    uint8_t sendingOverBleEnabled; // Q_PROPERTY
-    uint8_t sdEnabled; // Q_PROPERTY
-    uint16_t fileIndexOnDevice; // Q_PROPERTY
+    uint16_t mainState;
+    uint8_t reserved;
+    uint8_t lastError;
+    uint8_t isSendingOverBLEenabled;
+    uint8_t isSavingToSDenabled;
+    uint8_t isSDMounted;
+    uint16_t currentFileIndex;
 }__attribute__((packed)) alive_msg_t;
+
+
+//typedef struct request_sensor_data_s {
+//    uint8_t  requested_mode;
+//} __attribute__((packed)) request_sensor_data_t;
 
 #endif

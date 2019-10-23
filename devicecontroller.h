@@ -19,7 +19,7 @@
 class DeviceInfo;
 class TimeSyncHandler;
 
-extern QString stateToString(uint8_t tmp);
+extern QString stateToString(uint16_t tmp);
 
 struct huge_chunk_indexed_byterray_t
 {
@@ -93,6 +93,8 @@ private:
     conn_param_info_t m_dev_conn_param_info; // ble uart package type
     quint8 retries_remaining;
 
+    quint8 connectionValidSent;
+
     QLowEnergyController *m_control;
     QLowEnergyService *m_service;
     QLowEnergyController::RemoteAddressType m_addressType = QLowEnergyController::PublicAddress;
@@ -126,7 +128,7 @@ private:
     //Q_INVOKABLE void sendCMDStringFromTerminal(const QString &str); // TODO -> this would not work..
     void printThroughput();
     // BLE UART Functions
-    void ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value);
+    void bleUartRx(const QLowEnergyCharacteristic &c, const QByteArray &value);
 
     void writeReceivedChunkToFile (uint16_t tmp_write_pointer, uint8_t type );
     void setConnParamMode(uint8_t mode);
@@ -142,7 +144,7 @@ private:
     void setConnParamsOnCentral(uint8_t mode);
     void hugeChunkDownloadFinished();
 
-    friend  QString stateToString(uint8_t tmp);
+    friend  QString stateToString(uint16_t tmp);
 
 public:
     DeviceController(int idx, QString identifier, QObject *parent = nullptr);
@@ -188,7 +190,7 @@ signals:
 
 public slots:
     void bleUartTx(const QByteArray &value);
-    bool bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout = 200, quint8 retry = 5);
+    bool bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout = 250, quint8 retry = 5);
     void bleUartSendCmdOk();
 
     void initializeDevice(QBluetoothHostInfo* hostInfo, QBluetoothDeviceInfo* deviceInfo);

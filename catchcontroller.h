@@ -94,8 +94,7 @@ public slots:
 
     void onSensorDataAvailableArrived(int idx);
 
-    void onMainStateOfDevXChanged(quint8 state, int idx);
-
+    void onMainStateOfDevXChanged(quint16 state, int idx);
 
 
 

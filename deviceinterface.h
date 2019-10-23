@@ -52,7 +52,7 @@ public:
 
     void initializeDevice( QBluetoothHostInfo* hostInfo );
     //bool connectionAlive() const; // this is a connection state..
-    friend QString stateToString(uint8_t tmp);
+    friend QString stateToString(uint16_t tmp);
     void sendCmdStart();
     void sendCmdStop();
     void sendCmdWriteCatchSuccessToSd(const quint8 &success);
@@ -62,7 +62,7 @@ signals:
     void invokeInitializeDevice( QBluetoothHostInfo* hostInfo, QBluetoothDeviceInfo* deviceInfo );
     void invokePrintThreadId();
     //
-    void mainStateOfDevXChanged(quint8 state, int idx);
+    void mainStateOfDevXChanged(quint16 state, int idx);
 
     //void deviceAddressChanged();
 //    void deviceStateChanged();

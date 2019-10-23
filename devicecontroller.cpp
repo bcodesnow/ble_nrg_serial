@@ -30,6 +30,9 @@ DeviceController::DeviceController(int idx, QString identifier, QObject *parent)
     m_bleUartServiceFound(false)
 {
     m_dev_conn_param_info.requested_mode = UNKNOWN;
+    connectionValidSent = 0;
+    connect(this,&DeviceController::connParamInfoArrived, this, &DeviceController::onConnParamInfoArrived);
+
 }
 
 void DeviceController::setIdentifier(QString str, quint8 idx)
@@ -225,7 +228,7 @@ void DeviceController::onDisconnected()
 void DeviceController::updateCurrentService()
 {
     connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceController::serviceStateChanged);
-    connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceController::ble_uart_rx);
+    connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceController::bleUartRx);
     connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceController::confirmedDescriptorWrite);
     connect(m_service, QOverload<QLowEnergyService::ServiceError>::of(&QLowEnergyService::error),
             [=](QLowEnergyService::ServiceError newError){ qCritical()<<"ERR - QlowEnergyServiceError!"; Q_UNUSED(newError);});
@@ -243,6 +246,7 @@ void DeviceController::updateCurrentService()
 
 void DeviceController::searchCharacteristic()
 {
+    quint8 ble_uart_rx_tx_char_found = 0;
     if(m_service){
         foreach (QLowEnergyCharacteristic c, m_service->characteristics())
         {
@@ -317,6 +321,15 @@ void DeviceController::searchCharacteristic()
             }
         }
     }
+    if ( m_writeCharacteristic.isValid() && m_readCharacteristic.isValid() && !connectionValidSent )
+    {
+        QByteArray ba;
+        ba.append(CMD_CONNECTION_VALID);
+        bleUartSendCmdWithResp(ba);
+        connectionValidSent = 1;
+        qDebug()<<"READ WRITE REGISTERED, SENDING CONN VALID!";
+        // todo -> this is much more relevant than ble connected-> pass this to catch controller
+    }
 }
 
 
@@ -344,7 +357,7 @@ void DeviceController::startConnModeChangeProcedure(quint8 mode)
         retries_remaining = 3;
         setRequestedConnParamsOnDevice(m_dev_requested_conn_mode);
         setConnParamsOnCentral(m_dev_requested_conn_mode);
-        m_connParamTimer.singleShot(200, this, &DeviceController::onConnParamTimerExpired);
+        m_connParamTimer.singleShot(500, this, &DeviceController::onConnParamTimerExpired);
     }
 }
 

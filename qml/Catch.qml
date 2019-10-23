@@ -6,12 +6,23 @@ import "."
 import Shared 1.0
 
 AppPage {
+    property bool startEnabled;
     Connections {
         target: catchController
         onMainStateOfAllDevicesChanged:
         {
-
-            console.log("BLABLA" + devicesMainstate);
+            switch(devicesMainState)
+            {
+            case "Unknown":
+                console.log("MainStateChanged"+devicesMainState);
+                break;
+            case "Stopped":
+                startEnabled = true;
+                break;
+            case "Running":
+                startEnabled = false;
+                break;
+            }
         }
     }
 
@@ -144,19 +155,64 @@ AppPage {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: AppConstants.fieldMargin
-        width: viewContainer.width
+        width: viewContainer.width / 3
         height: AppConstants.fieldHeight
         enabled: true
         onClicked: {
-            devices.update()
-            console.log("asd"+            ladApter.rowCount());
-            ladApter.rst_model()
+//            devices.update()
+//            console.log("asd"+            ladApter.rowCount());
+//            ladApter.rst_model()
+            catchController.startDownloadFromAllDevices();
+        }
+
+        Text {
+            anchors.centerIn: parent
+            font.pixelSize: AppConstants.smallFontSizeFontSize
+            text: qsTr("DOWNLOAD")
+            color: white //searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+        }
+    }
+    AppButton {
+        id: testButt2
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: AppConstants.fieldMargin
+        width: viewContainer.width / 3
+        height: AppConstants.fieldHeight
+        enabled: true
+        onClicked: {
+//            devices.update()
+//            console.log("asd"+            ladApter.rowCount());
+//            ladApter.rst_model()
+            catchController.sendStartToAllDevices();
         }
 
         Text {
             anchors.centerIn: parent
             font.pixelSize: AppConstants.tinyFontSize
-            text: qsTr("TEST")
+            text: qsTr("START")
+            color: searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+        }
+    }
+    AppButton {
+        id: testButt3
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: AppConstants.fieldMargin
+        width: viewContainer.width / 3
+        height: AppConstants.fieldHeight
+        enabled: true
+        onClicked: {
+//            devices.update()
+//            console.log("asd"+            ladApter.rowCount());
+//            ladApter.rst_model()
+            catchController.sendStopToAllDevices();
+        }
+
+        Text {
+            anchors.centerIn: parent
+            font.pixelSize: AppConstants.tinyFontSize
+            text: qsTr("STOP")
             color: searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
     }

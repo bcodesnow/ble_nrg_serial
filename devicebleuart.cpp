@@ -14,6 +14,8 @@ bool DeviceController::bleUartSendCmdWithResp(const QByteArray &value, quint16 t
 
     if (value.size())
         m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithoutResponse); /*  m_writeMode */
+
+    qDebug()<<"bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout, quint8 retry)";
     return false;
 }
 
@@ -39,17 +41,19 @@ void DeviceController::onCmdTimerExpired()
 
 void DeviceController::bleUartSendCmdOk()
 {
+    qDebug()<<"Sending CMD OK!";
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_OK;
     tba[1] = 0xFF;
-    bleUartSendCmdWithResp(tba);
+    bleUartTx(tba);
 }
 
 void DeviceController::bleUartTx(const QByteArray &value)
 {
+    qDebug()<<"bleUartTx(const QByteArray &value)";
     if (value.size())
-        m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
+        m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithoutResponse); /*  m_writeMode todo -> I JUST CHANGED IT TO FIXED WITHOUT */
 }
 
 inline bool DeviceController::isDeviceInRequestedConnState()
@@ -57,95 +61,97 @@ inline bool DeviceController::isDeviceInRequestedConnState()
     return ( ( m_dev_conn_param_info.current_mode == m_dev_requested_conn_mode ) && ( m_dev_conn_param_info.requested_mode == m_dev_requested_conn_mode ));
 }
 
-void DeviceController::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByteArray &value)
+void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
     // it would have been the best to only move the send receive functions to an own thread.. with this solution we will have a bit faster dispatch of time sync and receive..
 
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     static const QBluetoothUuid ble_uart_receive = QBluetoothUuid(BLE_UART_TX_CHAR); // TX CHAR OF THE SERVER
 
+    QString hex= QString("%1").arg(data[0] , 0, 16);
+
     if ( c.uuid() == ble_uart_receive )
     {
+
+        qDebug()<<"BLE UART RX FIRST BYTE:"<<hex;
+
         switch ( data[0] )
         {
         case CMD_OK:
-        {
             cmd_resp_struct.cmd_timer.stop();
-            qDebug()<<"CMD Response: OK!"<<cmd_resp_struct.last_cmd.at(0);
-        }
+            qDebug()<<"CMD OK Received..!";
+
             break;
         case TRIGGERED:
-        {
+
             //inform the other device
             emit requestDispatchToOtherDevices(value, m_ident_idx); // TODO this will be received by the catch controller
             //ble_uart_send_cmd_ok(); // Should we also ACK this to the device?!
             emit triggeredArrived(value); // TODO this is handled by the deviceinterface
-        }
+            this->bleUartSendCmdOk();
+
             break;
 
         case DATA_SAVED_TO_SD:
-        {
+
             // todo!!!
             // confirm if it was a catch or drop -> we should give it to a class "above" -> catch controller
             qDebug()<<"Writing data to SD finished, waiting for confimation!";
             // send CMD_WRITE_CATCH_SUCC
             //setInfo("Waiting for Confirmation!");
-        }
+
             break;
 
         case ALIVE:
-        {
+
             emit aliveArrived(value);
-        }
+
             break;
 
         case REPLY_START_HUGE_CHUNK:
-        {
+
             huge_chunk_start_t* hc_transfer_struct_ptr;
             hc_transfer_struct_ptr = (huge_chunk_start_t*) &data[1];
             hc_transfer_struct = *hc_transfer_struct_ptr;
             emit startHugeChunkArrived();
-        }
+
             break;
 
         case REPLY_NO_CHUNK_AVAILABLE:
-        {
+
             emit noChunkAvailableArrived();
-        }
+
             break;
 
-        case SENSORDATA_AVAILABLE:
-        {
+        case CMD_SENSORDATA_AVAILABLE:
+
             qDebug()<<"Sensor Data avialable for download!";
             emit sensorDataAvailableArrived(m_ident_idx);
-        }
+            //bleUartSendCmdOk(); todo, the catch controller also sends ok?!
+
             break;
             //
-        case SENDING_SENSORDATA_FINISHED:
-        {
-            qDebug()<<"UNUSED! -- SENDING_SENSORDATA_FINISHED!";
-        }
-            break;
+
         case TS_MSG:
-        {
+
             emit timeSyncMessageArrived(value);
-        }
+
             break;
 
         case CMD_START_HUGE_CHUNK_ACK_PROC:
-        {
+
             emit startHugeChunkAckProcArrived(value);
-        }
+
             break;
 
         case REPLY_MISSED_PACKAGE:
-        {
+
             emit replyMissingPackageArrived();
-        }
+
             break;
 
         case DIAG_INFO:
-        {
+
             if (data[1] == DIAG_1_TYPE_LENGTH_TEST)
             {
                 qDebug()<<"MESS LEN:::"<<value.size();
@@ -154,17 +160,18 @@ void DeviceController::ble_uart_rx(const QLowEnergyCharacteristic &c, const QByt
             {
                 qDebug()<<"Unimplemented diag msg";
             }
-        }
+
             break;
             //
         case CONN_PARAM_INFO:
-        {
+
             // i should have implemented all packages this way..
             conn_param_info_t* cp_ptr;
             cp_ptr = (conn_param_info_t*) &data[1];
             m_dev_conn_param_info = *cp_ptr;
+            bleUartSendCmdOk();
             emit connParamInfoArrived();
-        }
+
             break;
             //
         default:
@@ -386,12 +393,11 @@ void DeviceController::onNextRequestTimerExpired()
 void DeviceController::onConnParamInfoArrived()
 {
 
-    qDebug()<<"PARA_INFO_MSG:"<<m_ident_idx<<m_ident_str<<"from dev"<<
-              m_dev_conn_param_info.latency<<m_dev_conn_param_info.interval<<
-              m_dev_conn_param_info.current_mode<<m_dev_conn_param_info.requested_mode;
+    qDebug()<<"PARA_INFO_MSG:"<<m_ident_idx<<m_ident_str<<"from dev:"<<
+              "interval:"<<m_dev_conn_param_info.interval<<"latency:"<<m_dev_conn_param_info.latency<<
+              "current mode:"<<m_dev_conn_param_info.current_mode<<"requested mode:"<<m_dev_conn_param_info.requested_mode<<"callcount"<<m_dev_conn_param_info.reserved;
 
     if (isDeviceInRequestedConnState() && m_connParamTimer.isActive())
-
     {
         m_connParamTimer.stop();
         emit requestedConnModeReached(true, m_dev_conn_param_info.current_mode);
@@ -405,7 +411,7 @@ void DeviceController::onConnParamTimerExpired()
     {
         retries_remaining--;
         setConnParamsOnCentral(m_dev_requested_conn_mode);
-        m_connParamTimer.singleShot(150, this, SLOT(onConnParamTimerExpired()));
+        m_connParamTimer.singleShot(500, this, SLOT(onConnParamTimerExpired()));
     }
     else
     {
