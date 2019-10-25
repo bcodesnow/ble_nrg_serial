@@ -161,6 +161,7 @@ void DeviceFinder::connectToSelectedDevices()
     int adapterListSize = m_conn_handler_ptr->m_adapterList.size();
     int deviceListSize = m_deviceList->size();
     int k = 0;
+    quint8 tidx;
 
     qDebug()<<"We have "<< adapterListSize <<"adapters detected";
 
@@ -178,6 +179,8 @@ void DeviceFinder::connectToSelectedDevices()
 
             m_deviceList->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr, (DeviceInfo*) m_foundDevices[i]));
             m_deviceListAdapter->rst_model();
+//            tidx = ( m_deviceList->size() - 1 );
+//            m_deviceList->last()->setDeviceIndex(tidx);
             m_deviceList->last()->initializeDevice( &m_conn_handler_ptr->m_adapterList[k]);
             deviceListSize++;
             k++;

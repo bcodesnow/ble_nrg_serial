@@ -48,7 +48,7 @@
 
 #define CMD_OK                          0xBB
 
-#define CMD_WRITE_CATCH_SUCCESS         0x03
+//#define CMD_WRITE_CATCH_SUCCESS         0x03
 #define CMD_SET_SHUT_UP                 0x04 // when set on device it should not send any notifications
 #define CMD_SET_CONN_MODE   						0x05 // from central msg to receive conn period
 
@@ -98,17 +98,17 @@
 #define S_MIN   250
 #define S_MAX   500
 #define S_LAT   0
-#define S_SUP   2000
+#define S_SUP   5000
 
 #define M_MIN   15
 #define M_MAX   50
 #define M_LAT   0
-#define M_SUP   500
+#define M_SUP   2000
 
 #define F_MIN   7.5
 #define F_MAX   7.5
 #define F_LAT   0
-#define F_SUP   100
+#define F_SUP   300
 
 /* Catch Success: */
 #define CATCH 1u

@@ -32,13 +32,13 @@ struct huge_chunk_helper_t
     uint16_t hc_highest_index;
     bool first_multi_chunk;
     uint16_t last_idx;
-    uint16_t missed_to_request;
+    uint16_t missed_pkg_cnt_to_request;
     uint16_t missed_in_request;
+    bool skipped;
 };
 
 struct cmd_resp_struct_t
 {
-    QTimer cmd_timer;
     QByteArray last_cmd;
     quint8 retry;
     quint16 timeout;
@@ -65,9 +65,11 @@ private:
         "{8873f2e2-b19e-11e2-9e96-0800200c9a66}",
     };
 
-    QElapsedTimer m_debugTimer; // temp
-    QTimer m_timeoutTimer;
-    QTimer m_connParamTimer;
+    QElapsedTimer* m_debugTimer; // temp
+    QTimer* m_timeoutTimer;
+    QTimer* m_connParamTimer;
+
+    QTimer* m_cmdTimer;
 
     bool m_bleUartServiceFound;
 
@@ -169,7 +171,7 @@ signals:
     void connParamInfoArrived();
 
     void sensorDataAvailableArrived(int idx);
-    void replyMissingPackageArrived();
+    void replyMissingPackageArrived(QByteArray value);
 
     void noChunkAvailableArrived(); // Ext - Download Completed
 
@@ -185,12 +187,12 @@ signals:
     void requestedConnModeReached(bool success, quint8 mode); // ?!?!
 
     // Log File Handler Connections
-    void invokeWriteTypeToFile(QString ident, QByteArray* data, uint8_t type, uint16_t wp);
+    void invokeWriteTypeToFile(QString ident, QByteArray* data, quint8 type, quint16 wp);
     void invokeAddToLogFile(QString ident, QString key, QString val);
 
 public slots:
     void bleUartTx(const QByteArray &value);
-    bool bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout = 250, quint8 retry = 5);
+    bool bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout = 500, quint8 retry = 5);
     void bleUartSendCmdOk();
 
     void initializeDevice(QBluetoothHostInfo* hostInfo, QBluetoothDeviceInfo* deviceInfo);

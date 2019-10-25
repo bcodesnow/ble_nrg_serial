@@ -20,6 +20,7 @@ DeviceInterface::DeviceInterface (TimeSyncHandler* ts_handler, CatchController* 
 // TODO we can add relevant information to deviceinfo also - or just keep it general
 void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
 {
+
     m_deviceController = new DeviceController(this->getDeviceIndex() , this->getDeviceIdentifier()); // we have allocate this dinamically, there is no other way to pass it like this to a thread
 
 
@@ -48,6 +49,11 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     connect(this, &DeviceInterface::mainStateOfDevXChanged, m_catch_controller_ptr, &CatchController::onMainStateOfDevXChanged, Qt::DirectConnection);
     connect(this, &DeviceInterface::invokeStartConnModeChangeProcedure, m_deviceController, &DeviceController::startConnModeChangeProcedure, Qt::QueuedConnection);
     connect(this, &DeviceInterface::invokeStartDownloadAllDataProcedure, m_deviceController, &DeviceController::startDownloadAllDataProcedure, Qt::QueuedConnection);
+
+    connect(m_deviceController, &DeviceController::requestedConnModeReached, m_catch_controller_ptr, &CatchController::onConnUpdateOfDevXfinished, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::allDataDownloaded, m_catch_controller_ptr, &CatchController::onDownloadOfDeviceXfinished, Qt::QueuedConnection);
+
+
 
     m_thread_controller.start();
 
@@ -130,15 +136,15 @@ void DeviceInterface::sendCmdStop()
         invokeBleUartSendCmdWithResp(tba);
 }
 
-void DeviceInterface::sendCmdWriteCatchSuccessToSd(const quint8 &success)
-{
-    // todo this is just thrown in
-    QByteArray tba;
-    tba.resize(2);
-    tba[0] = CMD_WRITE_CATCH_SUCCESS;
-    tba[1] = success;
-    invokeBleUartSendCmdWithResp(tba);
-}
+//void DeviceInterface::sendCmdWriteCatchSuccessToSd(const quint8 &success)
+//{
+//    // todo this is just thrown in
+//    QByteArray tba;
+//    tba.resize(2);
+//    tba[0] = CMD_WRITE_CATCH_SUCCESS;
+//    tba[1] = success;
+//    invokeBleUartSendCmdWithResp(tba);
+//}
 
 quint8 DeviceInterface::getLastMainState()
 {

@@ -16,7 +16,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp \
     adapterinfo.cpp \
-    devicebleuart.cpp \
     devicecontroller.cpp \
     devicefinder.cpp \
     bluetoothbaseclass.cpp \

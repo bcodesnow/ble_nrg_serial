@@ -102,7 +102,7 @@ public:
 
 public slots:
     void add_to_log_fil_slot(QString ident, QString key, QString val);
-    void write_type_to_file_slot(QString ident, QByteArray* data, uint8_t type, uint16_t wp);
+    void write_type_to_file_slot(QString ident, QByteArray* data, quint8 type, quint16 wp);
 
 };
 

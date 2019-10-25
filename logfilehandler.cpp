@@ -205,7 +205,7 @@ void LogFileHandler::demo(QString ident, int type)
     qDebug()<<"DEMO END";
 }
 
-void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, uint8_t type, uint16_t wp)
+void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, quint8 type, quint16 wp)
 {
     qDebug()<<" write_type_to_file received the data, but is empty..."<<data->size();
 //    QVector<QVariant> dataVec(QVector<QVariant>(0));

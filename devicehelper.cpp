@@ -107,7 +107,7 @@ void  DeviceController::printThroughput()
     float secs;
     quint64 elapsed;
 
-    elapsed = m_debugTimer.elapsed();
+    elapsed = m_debugTimer->elapsed();
     kbyte_ps = 0;
     kbit_ps = 0;
     secs = (float) elapsed / 1000.0f;
