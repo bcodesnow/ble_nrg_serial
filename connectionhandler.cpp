@@ -50,6 +50,11 @@ void ConnectionHandler::hostModeChanged(QBluetoothLocalDevice::HostMode /*mode*/
     emit deviceChanged();
 }
 
+//void ConnectionHandler::setConnectionProperties()
+//{
+//sudo hcitool lecup – -handle $HANDLE – -min 6 – -max 6 – -latency 0 – -timeout 500
+//}
+
 //QVariant ConnectionHandler::adapters()
 //{
 //    return QVariant::fromValue(m_adapters);

@@ -10,6 +10,8 @@ CatchController::CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHa
 {
     connect(&m_timesyncTimer, &QTimer::timeout, this, &CatchController::onTimeSyncTimerExpired);
     connect(&m_downloadTimer, &QTimer::timeout, this, &CatchController::onDownloadTimerExpired);
+    connect(m_timesync_handler_ptr, &TimeSyncHandler::time_sync_finished, this, &CatchController::onTimeSyncOfDevXfinished);
+
 
 }
 
@@ -35,17 +37,20 @@ void CatchController::onTimeSyncTimerExpired()
             qDebug()<<"TS-> Sync failed!"; // show the devil..
             break;
     }
+    m_timesyncTimer.stop();
 }
 
 void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
 {
     if ( success )
     {
+        qDebug()<<"CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
+
         m_device_list->at(id)->deviceIsTimeSynced = true;
     }
     else
     {
-        qDebug()<<"CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
+        qDebug()<<"ERROR! CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
     }
     if ( (id + 1) < m_device_list->size() )
     {   // this relies on it that we started with 0 and continue upwards..
@@ -63,24 +68,36 @@ void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
 
 void CatchController::startTimeSyncOfDevX(int id)
 {
-    m_device_list->at(id)->invokeStartConnModeChangeProcedure(FAST);
+    #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+        qDebug()<<"BlueZ D->BUS API does not really support connection change from peripheral side!";
+        qDebug()<<"We can set conn parameters permanently on Linux side in kernel/debug/bluetooth/hci0 or via hcitool";
+        qDebug()<<"Starting TS OF DEV"<<id;
+        m_timesyncTimer.stop();
+        m_timesyncTimer.setInterval(4000);
+        m_timesyncTimer.start();
+        time_sync_state = SYNCING;
+        m_timesync_handler_ptr->start_time_sync(id);
+    #endif
+    #if (defined(Q_OS_ANDROID))
+        m_device_list->at(id)->invokeStartConnModeChangeProcedure(FAST);
 
-    if ( change_conn_of_other_devices)
-    {
-         for (int i = 0; i< m_device_list->size(); i++)
-         {
-             if ( i != id)
-                 m_device_list->at(id)->invokeStartConnModeChangeProcedure(SLOW);
-         }
-         remaining_c = m_device_list->size();
-    }
-    else
-    {
-        remaining_c = 1;
-    }
-    time_sync_state = SETTING_CONN_MODE;
-    m_timesyncTimer.setInterval(200);
-    m_timesyncTimer.start();
+        if ( change_conn_of_other_devices)
+        {
+             for (int i = 0; i< m_device_list->size(); i++)
+             {
+                 if ( i != id)
+                     m_device_list->at(id)->invokeStartConnModeChangeProcedure(SLOW);
+             }
+             remaining_c = m_device_list->size();
+        }
+        else
+        {
+            remaining_c = 1;
+        }
+        time_sync_state = SETTING_CONN_MODE;
+        m_timesyncTimer.setInterval(8500);
+        m_timesyncTimer.start();
+    #endif
 }
 
 void CatchController::startTimesyncAllDevices()
@@ -116,7 +133,7 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
         {
             qDebug()<<"Starting TS OF ALL";
             m_timesyncTimer.stop();
-            m_timesyncTimer.setInterval(4000);
+            m_timesyncTimer.setInterval(5000);
             m_timesyncTimer.start();
             time_sync_state = SYNCING;
             m_timesync_handler_ptr->start_time_sync(id_in_sync);
@@ -125,7 +142,7 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
         {
             qDebug()<<"Starting DL OF ALL";
             m_downloadTimer.stop();
-            m_downloadTimer.setInterval(20000);
+            m_downloadTimer.setInterval(45000);
             m_downloadTimer.start();
             download_state = DOWNLOADING;
             emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure();
@@ -151,43 +168,47 @@ void CatchController::startDownloadFromAllDevices()
 void CatchController::startDownloadOfDevX(int id)
 {
 
-    #if (defined(Q_OS_LINUX))
-    qDebug()<<"Linux Download Version -> SHOW A BIT THE DEVIL, as it will be slow as f**k!";
-    qDebug()<<"BlueZ D->BUS API DOES NOT REALLY SUPPORT CONN PARAM UPDATE!";
-    m_downloadTimer.setInterval(20000);
-    m_downloadTimer.start();
-    download_state = DOWNLOADING;
-    emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure();
+    #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+        qDebug()<<"BlueZ D->BUS API does not really support connection change from peripheral side!";
+        qDebug()<<"We can set conn parameters permanently on Linux side in kernel/debug/bluetooth/hci0 or via hcitool";
+        m_downloadTimer.setInterval(90000);
+        m_downloadTimer.start();
+        download_state = DOWNLOADING;
+        emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure();
     #endif
 
     #if (defined(Q_OS_ANDROID))
-    qDebug()<<"Android Download Version";
-    m_device_list->at(id)->invokeStartConnModeChangeProcedure(FAST);
+        qDebug()<<"Android Download Version";
+        m_device_list->at(id)->invokeStartConnModeChangeProcedure(FAST);
 
-    if ( change_conn_of_other_devices)
-    {
-         for (int i = 0; i< m_device_list->size(); i++)
-         {
-             if ( i != id)
-                 m_device_list->at(id)->invokeStartConnModeChangeProcedure(SLOW);
-         }
-         remaining_c = m_device_list->size();
-    }
-    else
-    {
-        remaining_c = 1;
-    }
-    download_state = SETTING_CONN_MODE;
+        ///
+        change_conn_of_other_devices = true;
+        ///
 
-    m_downloadTimer.setInterval(2000);
-    m_downloadTimer.start();
+        if ( change_conn_of_other_devices)
+        {
+             for (int i = 0; i< m_device_list->size(); i++)
+             {
+                 if ( i != id)
+                     m_device_list->at(i)->invokeStartConnModeChangeProcedure(SLOW);
+             }
+             remaining_c = m_device_list->size();
+        }
+        else
+        {
+            remaining_c = 1;
+        }
+        download_state = SETTING_CONN_MODE;
+
+        m_downloadTimer.setInterval(8500 );
+        m_downloadTimer.start();
     #endif
 }
 
 void CatchController::sendStartToAllDevices()
 {
     for(int i=0; i<m_device_list->size(); i++)
-        emit m_device_list->at(i)->sendCmdStart();
+        emit m_device_list->at(i)->invokeSendCmdStart();
 }
 
 void CatchController::sendStopToAllDevices()
@@ -245,6 +266,7 @@ void CatchController::onDownloadTimerExpired()
                   "Download failed!"; // show the devil..
         break;
     }
+    m_downloadTimer.stop();
 }
 
 void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
@@ -264,9 +286,20 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
         m_downloadTimer.stop();
         download_state = NOT_RUNNING;
         emit downloadOfAllDevFinished(true);
+        qDebug()<<"Downloaded everything from all connected devices";
     }
 }
 
 //
 //
 //
+
+void CatchController::onRequestDispatchToOtherDevices(QByteArray value, int idx)
+{
+    for ( int i=0; i<m_device_list->size(); i++)
+    {
+        if (i != idx)
+            m_device_list->at(i)->invokeBleUartSendCmdWithResp(value);
+    }
+}
+

@@ -17,7 +17,9 @@
 #include "graphpainter.h"
 #include "deviceinterface.h"
 #include "qmllistadapter.h"
+#include "linuxterminalinterface.h"
 
+// TODAYS BUG: AFTER DOWNLOAD THE START IS NOT SENT FOR SOME REASON.....
 
 
 int main(int argc, char *argv[])
@@ -54,6 +56,14 @@ int main(int argc, char *argv[])
 
     DeviceFinder device_finder(ladapter, &connection_handler, time_sync_handler,catch_controller,log_file_handler);
     qDebug()<<"MainThread"<<QThread::currentThreadId();
+
+    LinuxTerminalInterface lti;
+    lti.password("Kurvajo1"); // TODO ADD A DIALOG FOR THIS IF QOS_LINUX AND !QOS ANDROID... the property only exists in the class Linux Terminal Inteface
+
+    lti.executeCmdWithSudo("echo 9 > /sys/kernel/debug/bluetooth/hci0/conn_min_interval");
+    lti.executeCmdWithSudo("echo 12 > /sys/kernel/debug/bluetooth/hci0/conn_max_interval");
+    lti.executeCmdWithSudo("cat /sys/kernel/debug/bluetooth/hci0/conn_min_interval");
+    lti.executeCmdWithSudo("cat /sys/kernel/debug/bluetooth/hci0/conn_max_interval");
 
     //device_finder = new DeviceFinder
     //    devices.at(0).init_device(leftAdapter, );

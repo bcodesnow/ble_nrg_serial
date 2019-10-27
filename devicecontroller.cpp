@@ -32,6 +32,7 @@ DeviceController::DeviceController(int idx, QString identifier, QObject *parent)
     m_dev_conn_param_info.requested_mode = UNKNOWN;
     connectionValidSent = 0;
     connect(this, &DeviceController::connParamInfoArrived, this, &DeviceController::onConnParamInfoArrived);
+    m_last_hc_payload_ptr = nullptr;
 }
 
 void DeviceController::setIdentifier(QString str, quint8 idx)
@@ -75,6 +76,7 @@ void DeviceController::connectToPeripheral(QBluetoothDeviceInfo *device)
         connect(m_control, &QLowEnergyController::connected, this, &DeviceController::onConnected);
         connect(m_control, &QLowEnergyController::disconnected, this, &DeviceController::onDisconnected);
         connect(m_control, &QLowEnergyController::connectionUpdated, this, &DeviceController::onCentralConnectionUpdated);
+
 
         // Connect
         m_control->connectToDevice();
@@ -205,7 +207,7 @@ void DeviceController::onCharacteristicWritten(const QLowEnergyCharacteristic &c
     // todo add a state and it state instead of reading every first byte first we send...
     if ( data[0] == TS_MSG)
     {
-        emit timeSyncMsgSent(value, m_ident_idx);
+        emit timeSyncMsgSent(m_ident_idx);
     }
 }
 
@@ -342,6 +344,29 @@ void DeviceController::sendRequestSensorData()
     qDebug()<<"Sending Req SDATA!";
 }
 
+
+void DeviceController::sendStartToDevice()
+{
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+    qDebug()<<"Sending START";
+    QByteArray tba;
+    tba.resize(1);
+    tba[0] = CMD_START;
+    this->bleUartSendCmdWithResp(tba);
+#endif
+
+#if (defined(Q_OS_ANDROID))
+// one of the devices might be in a very slow connection mode, so sending a command to it requires first changing the conn parameters
+
+    setConnParamsOnCentral(FAST);
+    setRequestedConnParamsOnDevice(FAST);
+    m_nextRequest = NEXT_REQ_SEND_START;
+    m_nextRequestTimer->setInterval(1000);
+    m_nextRequestTimer->start();
+    qDebug()<<"Starting Timer!";
+#endif
+}
+
 void DeviceController::startConnModeChangeProcedure(quint8 mode)
 {
     qDebug()<<"startConnModeChangeProcedure(quint8 mode)";
@@ -354,11 +379,11 @@ void DeviceController::startConnModeChangeProcedure(quint8 mode)
     else
     {
         qDebug()<<"startConnModeChangeProcedure(quint8 mode)"<<"retry!";
-        retries_remaining = 3;
+        retries_remaining = 4;
 
         setRequestedConnParamsOnDevice(m_dev_requested_conn_mode);
         setConnParamsOnCentral(m_dev_requested_conn_mode);
-        m_connParamTimer->setInterval(400);
+        m_connParamTimer->setInterval(CONN_MODE_CHANGE_DELAY);
         m_connParamTimer->start();
     }
 }
@@ -381,6 +406,7 @@ void DeviceController::initializeDevice(QBluetoothHostInfo* hostInfo, QBluetooth
     m_connParamTimer= new QTimer();
 
     m_cmdTimer = new QTimer();
+    m_nextRequestTimer = new QTimer();
 
     qDebug()<<"device will be initialized";
     qDebug()<<"received adapter add"<<hostInfo->address();
@@ -391,6 +417,10 @@ void DeviceController::initializeDevice(QBluetoothHostInfo* hostInfo, QBluetooth
     connect(this, &DeviceController::noChunkAvailableArrived, this, &DeviceController::onNoChunkAvailableArrived);
     connect(this, &DeviceController::startHugeChunkAckProcArrived, this, &DeviceController::onStartHugeChunkAckProcArrived);
     connect(this, &DeviceController::replyMissingPackageArrived, this, &DeviceController::onReplyMissingPackageArrived);
+    connect(m_nextRequestTimer, &QTimer::timeout, this, &DeviceController::onNextRequestTimerExpired);
+    m_nextRequestTimer->setSingleShot(true);
+
+
     // TODO: trigger request sensor data if it did not work and missing packages were requested!!! (nextRequestTimer->singleShot!!)
 
 
@@ -400,9 +430,10 @@ void DeviceController::initializeDevice(QBluetoothHostInfo* hostInfo, QBluetooth
 
 void DeviceController::writeReceivedChunkToFile (uint16_t tmp_write_pointer, uint8_t type )
 {
-
     if (m_last_hc_payload_ptr != nullptr)
+    {
         m_last_hc_payload_ptr->~QByteArray();
+    }
     m_last_hc_payload_ptr = new QByteArray();
 
     for (int i = 0; i < m_hc_vec.size(); i++)
@@ -509,8 +540,7 @@ void DeviceController::onCmdTimerExpired()
 
 void DeviceController::bleUartSendCmdOk()
 {
-    qDebug()<<""
-              "Sending CMD OK!";
+    qDebug()<<"Sending CMD OK!";
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_OK;
@@ -520,9 +550,11 @@ void DeviceController::bleUartSendCmdOk()
 
 void DeviceController::bleUartTx(const QByteArray &value)
 {
+#ifdef USE_DEBUG
     qDebug()<<"bleUartTx(const QByteArray &value)";
+#endif
     if (value.size())
-        m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithoutResponse); /*  m_writeMode todo -> I JUST CHANGED IT TO FIXED WITHOUT */
+        m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithResponse); /*  m_writeMode todo -> I JUST CHANGED IT TO FIXED WITHOUT */
 }
 
 inline bool DeviceController::isDeviceInRequestedConnState()
@@ -542,14 +574,14 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
     if ( c.uuid() == ble_uart_receive )
     {
-
+#ifdef USE_DEBUG
         qDebug()<<"BLE UART RX FIRST BYTE:"<<hex;
-
+#endif
         switch ( data[0] )
         {
         case CMD_OK:
             m_cmdTimer->stop();
-            qDebug()<<"CMD OK Received..!";
+            qDebug()<<"CMD OK Received..!"<<m_ident_idx;
 
             break;
         case TRIGGERED:
@@ -666,6 +698,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
         {
             tidx = 0;
             hc_helper_struct.first_multi_chunk = false;
+            hc_helper_struct.last_idx = 0;
             m_debugTimer->start();
         }
         else if ( tidx > hc_helper_struct.hc_highest_index )
@@ -702,6 +735,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
         {
             qDebug()<<"HC -> Last PKG!";
             printThroughput();
+            hc_helper_struct.last_received = true;
         }
         else if (tidx > hc_transfer_struct.incoming_package_count )
         {
@@ -755,7 +789,6 @@ void DeviceController::onStartHugeChunkArrived()
 {
     m_cmdTimer->stop();
     qDebug()<<"onStartHugeChunkArrived()";
-    quint8 val = 0;
 
     if ( hc_transfer_struct.incoming_byte_count )
     {
@@ -775,6 +808,7 @@ void DeviceController::onStartHugeChunkArrived()
     hc_helper_struct.hc_highest_index = 0;
     hc_helper_struct.first_multi_chunk = true;
     hc_helper_struct.missed_pkg_cnt_to_request = 0;
+    hc_helper_struct.last_received = false;
 
     emit invokeAddToLogFile(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
     emit invokeAddToLogFile(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
@@ -784,7 +818,6 @@ void DeviceController::onStartHugeChunkArrived()
 
 }
 
-quint8 hc_chopchop_mode;
 
 void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 {
@@ -792,7 +825,7 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 
     qDebug()<<"HUGE_CHUNK_ACK_PROC : started!";
 
-    if ( hc_helper_struct.skipped )
+    if ( hc_helper_struct.skipped | !hc_helper_struct.last_received )
     {
         qDebug()<<"HUGE_CHUNK_ACK_PROC : arrived_package_count != incoming_package_count!";
         m_hc_missed.clear();
@@ -854,14 +887,33 @@ void DeviceController::hugeChunkDownloadFinished()
 
     sendAckHugeChunk();
     writeReceivedChunkToFile( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type);
-
+    qDebug()<<"Written";
     if (hc_chopchop_mode)
-        m_nextRequestTimer.singleShot(50, this, &DeviceController::onNextRequestTimerExpired );
+    {
+        m_nextRequest = NEXT_REQ_SEND_SENS_DATA;
+        m_nextRequestTimer->setInterval(50);
+        m_nextRequestTimer->start();
+        qDebug()<<"Next Requested";
+    }
 }
+
 
 void DeviceController::onNextRequestTimerExpired()
 {
-    sendRequestSensorData();
+    QByteArray tba;
+
+    switch ( m_nextRequest )
+    {
+    case NEXT_REQ_SEND_START:
+        qDebug()<<"Sending START"<<m_ident_idx;
+        tba.resize(1);
+        tba[0] = CMD_START;
+        this->bleUartSendCmdWithResp(tba, 250, 10);
+           break;
+    case NEXT_REQ_SEND_SENS_DATA:
+        sendRequestSensorData();
+            break;
+    }
 }
 
 void DeviceController::onConnParamInfoArrived()
@@ -874,7 +926,7 @@ void DeviceController::onConnParamInfoArrived()
     if (isDeviceInRequestedConnState() && m_connParamTimer->isActive())
     {
         m_connParamTimer->stop();
-        qDebug()<<"requestedModeReached!";
+        qDebug()<<"requestedModeReached!"<<m_ident_idx;
         emit requestedConnModeReached(true, m_ident_idx); // todo modified
     }
 }
@@ -888,16 +940,17 @@ void DeviceController::onConnParamTimerExpired()
         setConnParamsOnCentral(m_dev_requested_conn_mode);
 
 
-//        // todo added, not really wanted..
+//        todo added, not really wanted..
 //        setRequestedConnParamsOnDevice(m_dev_requested_conn_mode);
-
-        m_connParamTimer->setInterval(400);
+        m_connParamTimer->stop();
+        m_connParamTimer->setInterval(CONN_MODE_CHANGE_DELAY);
         m_connParamTimer->start();
     }
     else
     {
+        m_connParamTimer->stop();
         emit requestedConnModeReached(false, m_ident_idx);
-        qDebug()<<"connparamupdate failed after x retries..";
+        qDebug()<<"connparamupdate failed after x retries.."<<m_ident_idx;
         //show the devil or reply back to catch controller that the action failed
     }
 }

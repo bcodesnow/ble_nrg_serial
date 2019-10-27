@@ -23,10 +23,9 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
 
     m_deviceController = new DeviceController(this->getDeviceIndex() , this->getDeviceIdentifier()); // we have allocate this dinamically, there is no other way to pass it like this to a thread
 
-
+    // let the qt magic begin..
     m_deviceController->moveToThread(&m_thread_controller);
 
-    // let the qt magic begin..
     //connect(this, SIGNAL(signal_printThreadId()), &dh, SLOT(printThreadId()), Qt::QueuedConnection); // old syntax
     connect(this, &DeviceInterface::invokePrintThreadId, m_deviceController, &DeviceController::printThreadId, Qt::QueuedConnection); // new syntax
 
@@ -49,16 +48,19 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     connect(this, &DeviceInterface::mainStateOfDevXChanged, m_catch_controller_ptr, &CatchController::onMainStateOfDevXChanged, Qt::DirectConnection);
     connect(this, &DeviceInterface::invokeStartConnModeChangeProcedure, m_deviceController, &DeviceController::startConnModeChangeProcedure, Qt::QueuedConnection);
     connect(this, &DeviceInterface::invokeStartDownloadAllDataProcedure, m_deviceController, &DeviceController::startDownloadAllDataProcedure, Qt::QueuedConnection);
+    connect(this, &DeviceInterface::invokeSendCmdStart, m_deviceController, &DeviceController::sendStartToDevice, Qt::QueuedConnection);
 
     connect(m_deviceController, &DeviceController::requestedConnModeReached, m_catch_controller_ptr, &CatchController::onConnUpdateOfDevXfinished, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::allDataDownloaded, m_catch_controller_ptr, &CatchController::onDownloadOfDeviceXfinished, Qt::QueuedConnection);
-
+    connect(m_deviceController, &DeviceController::requestDispatchToOtherDevices, m_catch_controller_ptr, &CatchController::onRequestDispatchToOtherDevices, Qt::QueuedConnection);
 
 
     m_thread_controller.start();
 
+#ifdef USE_DEBUG
     QBluetoothDeviceInfo tdi = this->getDevice(); // todo test if we cann pass it directly
     qDebug()<<"The name is there"<<this->getName();
+#endif
     emit invokePrintThreadId();
 
     emit invokeInitializeDevice(hostInfo, &m_device);
@@ -113,20 +115,13 @@ void DeviceInterface::onAliveArrived(QByteArray value)
     if (alive_msg.lastError)
         m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Last Error", QString(alive_msg.lastError)); // there is something bad!
 
-    qDebug()<<this->getDeviceIdentifier()<<" --- ALIVE: -STATE- "<<this->getDeviceMainState()<<" -LAST ERROR- "<<alive_msg.lastError;
+    qDebug()<<this->getDeviceIndex()<<this->getDeviceIdentifier()<<" --- ALIVE: -STATE- "<<this->getDeviceMainState()<<" -LAST ERROR- "<<alive_msg.lastError;
 
     // TODO: SD!
 
     //setInfo("Alive!");
 }
 
-void DeviceInterface::sendCmdStart()
-{
-        QByteArray tba;
-        tba.resize(1);
-        tba[0] = CMD_START;
-        invokeBleUartSendCmdWithResp(tba);
-}
 
 void DeviceInterface::sendCmdStop()
 {

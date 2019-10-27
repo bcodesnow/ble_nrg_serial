@@ -14,10 +14,13 @@ TimeSyncHandler::TimeSyncHandler(QList<DeviceInterface*>* device_interfaces, QOb
     m_timeout_timer.setInterval(TS_TIMEOUT_DELAY_MS);
 }
 
-void TimeSyncHandler::slot_time_sync_msg_sent(const QByteArray &msg)
+void TimeSyncHandler::slot_time_sync_msg_sent(int idx)
 {
     // toDo m_last_msg_ts is only relevant if we are mesuring...
-    qInfo()<<"TS: Sync Msg. Sent!";
+    // toDo check if idx is in sync;
+#ifdef USE_DEBUG
+    qInfo()<<"TS: Sync Msg. Sent!"<<"";
+#endif
     m_last_msg_ts = get_timestamp_us();
 }
 
@@ -60,8 +63,9 @@ void TimeSyncHandler::send_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
+#ifdef USE_DEBUG
     qDebug()<<"TS: send_time_sync_msg() -> "<<tstamp;
-
+#endif
     //m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
     m_device_interfaces_ptr->at(m_dev_idx_in_sync)->invokeBleUartTx(tba); // emit the signal directly in the interface..
     m_timeout_timer.start();
@@ -101,9 +105,28 @@ void TimeSyncHandler::calculate_compensation()
     qInfo()<<"TS: Maximum: "<<max;
     qInfo()<<"TS: Avarage: "<<avg;
 
+    qDebug()<<"Removing 3 Smallest and Biggest..";
+    for (int i=0; i<3; i++)
+    {
+        QVector<quint32>::ConstIterator it =  std::min_element(travelling_times.constBegin(), travelling_times.constEnd());
+        travelling_times.removeAt(std::distance(travelling_times.constBegin(),it)); //remove the 3 smallest
+        it =  std::max_element(travelling_times.constBegin(), travelling_times.constEnd());
+        travelling_times.removeAt(std::distance(travelling_times.constBegin(),it)); //remove the 3 smallest
+    }
+    min = *std::min_element(travelling_times.constBegin(), travelling_times.constEnd());
+    max = *std::max_element(travelling_times.constBegin(), travelling_times.constEnd());
+    avg = std::accumulate(travelling_times.constBegin(), travelling_times.constEnd(), 0) / travelling_times.size() ;
+
+    qInfo()<<"TS: Travelling Times Calculated: ";
+    qInfo()<<"TS: Minimum: "<<min;
+    qInfo()<<"TS: Maximum: "<<max;
+    qInfo()<<"TS: Avarage: "<<avg;
+
     m_travelling_time_acceptance_trsh =int ( (float) min *  TS_TRSH_FACTOR );
     //m_travelling_time_acceptance_trsh = avg;
-    QThread::msleep(8); // give it just a few msecs to breathe
+
+    //QThread::msleep(8); // give it just a few msecs to breathe
+
     qInfo()<<"Calculated Threshold: "<< m_travelling_time_acceptance_trsh;
 
     m_sync_state = SENDING_COMPENSATED;
@@ -113,7 +136,7 @@ void TimeSyncHandler::calculate_compensation()
 void TimeSyncHandler::slot_time_sync_msg_arrived(const QByteArray &msg)
 {
     m_timeout_timer.stop();
-    qDebug()<<"Arrived: "<<msg;
+    //qDebug()<<"Arrived: "<<msg;
     switch (m_sync_state)
     {
     case START_WAITS_FOR_ACK:
@@ -133,8 +156,9 @@ void TimeSyncHandler::slot_time_sync_msg_arrived(const QByteArray &msg)
         //
     case MEASURING_TRAVELING_TIME:
         travelling_times.append( get_diff_in_us_to_current_ts( m_last_msg_ts ) );
+#ifdef USE_DEBUG
         qDebug()<<"TS: Travelling Time -> "<< travelling_times.last() << " us";
-
+#endif
         if (int(msg.at(2)) != m_send_repeat_count)
             qCritical()<<"TS: Shit got fkd up during time sync.. msg idx in Received message is false!"
                          " msg.at(2): "<<int(msg[2])<<" != "<<"m_send_repeat_count: "<<m_send_repeat_count;
@@ -189,17 +213,43 @@ void TimeSyncHandler::slot_time_sync_msg_arrived(const QByteArray &msg)
         else
         {
             // we did it!
-            qInfo()<<"TS: Sync completed! Current TS: " << get_timestamp_us();
+            qInfo()<<"TS: Sync completed! Current TS: " << get_timestamp_us()<<"It needed"<<m_send_repeat_count+1<<"compensated msgs";
+
+            // TODO ADDDED IN TEST
+            travelling_times.clear();
+            m_timeout_timer.stop();
+            m_send_repeat_count = 0;
+            m_sync_state = STOPPED;
+            m_last_msg_ts = 0;
+
+            // TODO ADDDED IN TEST
+            // TODO ADDDED IN TEST
+
             emit time_sync_finished(true, m_dev_idx_in_sync);
+
+
+
+
+
+
+
+
         }
         break;
         //
+    case STOPPED:
+        qDebug()<<"TSYNC RECEIVED A MSG IN STOPPED STATE..";
+        break;
+    default:
+        qDebug()<<"TSYNC SWITCH GOT TO DEFAULT";
+        break;
     }
 }
 
-void TimeSyncHandler::start_time_sync(quint8 devIdxToSync)
+void TimeSyncHandler::start_time_sync(int devIdxToSync)
 {
     m_dev_idx_in_sync = devIdxToSync;
+    qDebug()<<"Received ID"<<devIdxToSync<<"to Sync";
     m_sync_state = START_WAITS_FOR_ACK;
 
     QByteArray tba;
@@ -207,7 +257,6 @@ void TimeSyncHandler::start_time_sync(quint8 devIdxToSync)
     tba[0] = TS_MSG;
     tba[1] = TS_CMD_SYNC_START;
     m_device_interfaces_ptr->at(m_dev_idx_in_sync)->invokeBleUartTx(tba); // emit the signal directly in the interface..
-
 
     m_timeout_timer.start();
 }

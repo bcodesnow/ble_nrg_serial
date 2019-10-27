@@ -15,10 +15,10 @@
  *          -> TimeSync -Pushalike NTP ove BLE UART
  *          -> Travelling Time Measurement
  */
-#define TS_MEASURE_MSG_CNT          10
-#define TS_COMPENSATED_MSG_CNT      40
+#define TS_MEASURE_MSG_CNT          30 //10
+#define TS_COMPENSATED_MSG_CNT      60 //40
 #define TS_TIMEOUT_DELAY_MS         200
-#define TS_TRSH_FACTOR              (float)2.5
+#define TS_TRSH_FACTOR              (float)1.5 //(float)2.5
 
 #define START_WAITS_FOR_ACK         (1<<0)
 #define MEASURING_TRAVELING_TIME    (1<<1)
@@ -43,7 +43,7 @@ private:
 
     QVector<quint32> travelling_times; //"the total delay minus remote processing time" in decimillisec;
     quint32 m_last_msg_ts;
-    quint8 m_dev_idx_in_sync;
+    int m_dev_idx_in_sync;
     quint32 m_travelling_time_acceptance_trsh;
     void send_time_sync_msg();
     void send_compensated_time_sync_msg();
@@ -64,10 +64,10 @@ public:
     uint32_t get_timestamp_us();
 
     uint32_t get_diff_in_us_to_current_ts ( uint32_t some_ts );
-    void start_time_sync(quint8 devIdxToSync);
+    void start_time_sync(int devIdxToSync);
 
 public slots:
-    void slot_time_sync_msg_sent(const QByteArray &msg);
+    void slot_time_sync_msg_sent( int idx );
     void slot_time_sync_msg_arrived(const QByteArray &msg);
     void timeout_timer_expired();
 };

@@ -23,6 +23,7 @@ SOURCES += main.cpp \
     deviceinfo.cpp \
     deviceinterface.cpp \
     graphpainter.cpp \
+    linuxterminalinterface.cpp \
     networkmanager.cpp \
     paintdata.cpp \
     qmllistadapter.cpp \
@@ -55,6 +56,7 @@ HEADERS += \
     deviceinfo.h \
     deviceinterface.h \
     graphpainter.h \
+    linuxterminalinterface.h \
     mci_catch_detection.h \
     networkmanager.h \
     paintdata.h \

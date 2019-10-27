@@ -15,6 +15,10 @@
 
 #define HUGE_CHUNK_IN_PROCESS       (1u<<1u)
 #define CONN_PARAMS_IN_CHANGE       (1u<<3u)
+#define CONN_MODE_CHANGE_DELAY 2000
+
+#define NEXT_REQ_SEND_SENS_DATA  1u
+#define NEXT_REQ_SEND_START      2u
 
 class DeviceInfo;
 class TimeSyncHandler;
@@ -35,6 +39,7 @@ struct huge_chunk_helper_t
     uint16_t missed_pkg_cnt_to_request;
     uint16_t missed_in_request;
     bool skipped;
+    bool last_received;
 };
 
 struct cmd_resp_struct_t
@@ -66,9 +71,7 @@ private:
     };
 
     QElapsedTimer* m_debugTimer; // temp
-    QTimer* m_timeoutTimer;
     QTimer* m_connParamTimer;
-
     QTimer* m_cmdTimer;
 
     bool m_bleUartServiceFound;
@@ -76,7 +79,10 @@ private:
     QBluetoothAddress m_adapterAddress;
     int m_ident_idx; //
     QString m_ident_str;
-    QTimer m_nextRequestTimer;
+    QTimer* m_nextRequestTimer;
+    int m_nextRequest;
+
+    quint8 hc_chopchop_mode;
 
     quint8 downloading_sensor_data_active;
 
@@ -176,8 +182,8 @@ signals:
     void noChunkAvailableArrived(); // Ext - Download Completed
 
     // Procedures (TS,HC,CONN,LF)
-    void timeSyncMsgSent(QByteArray value, int idx); // todo , the device doesnt know about ongoing tsync
-    void requestDispatchToOtherDevices(QByteArray value, quint8 ident_idx );
+    void timeSyncMsgSent(int idx); // todo , the device doesnt know about ongoing tsync
+    void requestDispatchToOtherDevices(QByteArray value, int ident_idx );
 
     void startHugeChunkAckProcArrived(QByteArray value);
     void startHugeChunkArrived();
@@ -203,6 +209,7 @@ public slots:
     void startConnModeChangeProcedure(quint8 mode);
     void startDownloadAllDataProcedure();
 
+    void sendStartToDevice();
 private slots:
     void onCentralConnectionUpdated(const QLowEnergyConnectionParameters &newParameters);
 

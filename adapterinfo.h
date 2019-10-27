@@ -1,6 +1,8 @@
 #ifndef ADAPTERINFO_H
 #define ADAPTERINFO_H
 
+// UNUSED RIGHT NOW, and we also do not need it anymore ase we use all hci interfaces available
+
 #include <QObject>
 #include <QBluetoothAddress>
 

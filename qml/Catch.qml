@@ -102,12 +102,21 @@ AppPage {
 //                        }
                     }
                 }
-
                 Text {
                     id: deviceIdentifierText
                     font.pixelSize: AppConstants.tinyFontSize
-                    text: model.item.deviceIdentifier
+                    text: model.item.deviceIndex + " " + model.item.deviceIdentifier
                     anchors.top: parent.top
+                    anchors.topMargin: parent.height * 0.1
+                    anchors.leftMargin: parent.height * 0.1
+                    anchors.left: parent.left
+                    color: AppConstants.textColor
+                }
+                Text {
+                    id: deviceMainStateText
+                    font.pixelSize: AppConstants.tinyFontSize
+                    text: model.item.deviceMainState
+                    anchors.top: deviceIdentifierText.bottom
                     anchors.topMargin: parent.height * 0.1
                     anchors.leftMargin: parent.height * 0.1
                     anchors.left: parent.left
@@ -118,7 +127,9 @@ AppPage {
                     id: deviceTypeItem
                     anchors.top: parent.top
                     anchors.right: parent.right
-                    //
+                    anchors.topMargin: parent.height * 0.1
+                    anchors.rightMargin: parent.height * 0.1
+                    // TODO ADD A PICTURE
                     width: deviceTypeTempText.width
                     height: deviceTypeTempText.height
 
@@ -126,10 +137,7 @@ AppPage {
                         id: deviceTypeTempText
                         font.pixelSize: AppConstants.tinyFontSize
                         text:  ( model.item.deviceType === DeviceType.Wearable ) ? "Wearable" : "Not Wearable";
-                        anchors.top: parent.top
-                        anchors.topMargin: parent.height * 0.1
-                        anchors.leftMargin: parent.height * 0.1
-                        anchors.left: parent.left
+                        anchors.centerIn: parent
                         color: AppConstants.textColor
                     }
                 }
@@ -163,6 +171,7 @@ AppPage {
 //            console.log("asd"+            ladApter.rowCount());
 //            ladApter.rst_model()
             catchController.startDownloadFromAllDevices();
+            //catchController.startTimesyncAllDevices();
         }
 
         Text {

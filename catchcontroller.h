@@ -96,6 +96,8 @@ public slots:
 
     void onMainStateOfDevXChanged(quint16 state, int idx);
 
+    void onRequestDispatchToOtherDevices(QByteArray value, int idx);
+
 
 
     //#define WAITING_FOR_CONNECTION_TO_COMPLETE 1u
