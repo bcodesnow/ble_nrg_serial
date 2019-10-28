@@ -23,7 +23,7 @@ signals:
     void passwordChanged(QString password);
 
 public slots:
-    void executeCmdWithSudo(QString cmd);
+    void executeCmdWithSudo(QString cmd, QString arg1="");
 
     void password(QString password);
 };

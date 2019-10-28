@@ -209,7 +209,7 @@ public slots:
     void startConnModeChangeProcedure(quint8 mode);
     void startDownloadAllDataProcedure();
 
-    void sendStartToDevice();
+    //void sendStartToDevice();
 private slots:
     void onCentralConnectionUpdated(const QLowEnergyConnectionParameters &newParameters);
 

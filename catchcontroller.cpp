@@ -109,7 +109,7 @@ void CatchController::startTimesyncAllDevices()
 //
 //
 //
-/* SHARED BY TS AND DL */
+/* SHARED BY TS, DL, START */
 //
 //
 //
@@ -123,8 +123,8 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
     }
     else
     {
-        remaining_c = 0;
-        qDebug()<<"CC --> onConnUpdateOfDevXfinished"<<success<<id; // show the devil if its till unknown to the audience..
+        remaining_c = 0; // TODO -> thia is stupid...
+        qDebug()<<"CC -->  FAILED! onConnUpdateOfDevXfinished"<<success<<id; // show the devil if its till unknown to the audience..
     }
     remaining_c--;
     if ( !remaining_c )
@@ -147,6 +147,13 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
             download_state = DOWNLOADING;
             emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure();
         }
+
+        if (sendingStartState == SETTING_CONN_MODE )
+        {
+            sendingStartState = STOPPED;
+            for(int i=0; i<m_device_list->size(); i++)
+                emit m_device_list->at(i)->sendCmdStart();
+        }
     }
 }
 
@@ -164,6 +171,7 @@ void CatchController::startDownloadFromAllDevices()
     id_in_dl = 0;
     startDownloadOfDevX(id_in_dl);
 }
+
 
 void CatchController::startDownloadOfDevX(int id)
 {
@@ -205,70 +213,11 @@ void CatchController::startDownloadOfDevX(int id)
     #endif
 }
 
-void CatchController::sendStartToAllDevices()
-{
-    for(int i=0; i<m_device_list->size(); i++)
-        emit m_device_list->at(i)->invokeSendCmdStart();
-}
-
-void CatchController::sendStopToAllDevices()
-{
-    for(int i=0; i<m_device_list->size(); i++)
-        emit m_device_list->at(i)->sendCmdStop();
-}
-
-void CatchController::onSensorDataAvailableArrived(int idx)
-{
-    emit m_device_list->at(idx)->invokeBleUartSendCmdOk();
-    int notReady = 0;
-    m_device_list->at(idx)->m_sensorDataWaitingForDownload = true;
-
-    for (int i = 0; i < m_device_list->size(); i++)
-        if ( m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable )
-            if (m_device_list->at(i)->m_sensorDataWaitingForDownload != true  )
-                notReady++;
-    if ( !notReady )
-        emit allWearablesAreWaitingForDownload();
-
-    if ( !notReady )
-       qDebug()<<"allWearablesAreWaitingForDownload()";
-}
-
-void CatchController::onMainStateOfDevXChanged(quint16 state, int idx)
-{
-    bool notTheSame = false;
-    for (int i = 0; i<m_device_list->size(); i++)
-    {
-        if ( i != idx )
-        {
-            if ( m_device_list->at(i)->getLastMainState() != state )
-            {
-                notTheSame = true;
-                break;
-            }
-        }
-    }
-    if ( !notTheSame )
-    {
-        emit mainStateOfAllDevicesChanged(stateToString(state));
-    }
-}
-
-void CatchController::onDownloadTimerExpired()
-{
-    switch (download_state)
-    {
-    case SETTING_CONN_MODE:
-        qDebug()<<"CC-DL-> Setting Conn Mode failed!"; // show the devil..
-        break;
-    case DOWNLOADING:
-        qDebug()<<"CC-DL-> "
-                  "Download failed!"; // show the devil..
-        break;
-    }
-    m_downloadTimer.stop();
-}
-
+///
+/// \brief CatchController::onDownloadOfDeviceXfinished
+/// \param success
+/// \param id
+///
 void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
 {
     if ( !success )
@@ -290,10 +239,115 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
     }
 }
 
+
+//
+//
+//
+/* DIVERSE FUNCTIONS */
 //
 //
 //
 
+
+///
+/// \brief CatchController::sendStartToAllDevices
+///
+void CatchController::sendStartToAllDevices()
+{
+    #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+        for(int i=0; i<m_device_list->size(); i++)
+            emit m_device_list->at(i)->sendCmdStart();
+    #endif
+    #if (defined(Q_OS_ANDROID))
+        for (int i = 0; i< m_device_list->size(); i++)
+        {
+            m_device_list->at(i)->invokeStartConnModeChangeProcedure(FAST);
+        }
+        remaining_c = m_device_list->size();
+        sendingStartState = SETTING_CONN_MODE;
+    #endif
+}
+
+///
+/// \brief CatchController::sendStopToAllDevices
+///
+///
+void CatchController::sendStopToAllDevices()
+{
+    for(int i=0; i<m_device_list->size(); i++)
+        emit m_device_list->at(i)->sendCmdStop();
+}
+
+///
+/// \brief CatchController::onSensorDataAvailableArrived
+/// \param idx
+///
+void CatchController::onSensorDataAvailableArrived(int idx)
+{
+    emit m_device_list->at(idx)->invokeBleUartSendCmdOk();
+    int notReady = 0;
+    m_device_list->at(idx)->m_sensorDataWaitingForDownload = true;
+
+    for (int i = 0; i < m_device_list->size(); i++)
+        if ( m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable )
+            if (m_device_list->at(i)->m_sensorDataWaitingForDownload != true  )
+                notReady++;
+    if ( !notReady )
+        emit allWearablesAreWaitingForDownload();
+
+    if ( !notReady )
+       qDebug()<<"allWearablesAreWaitingForDownload()";
+}
+
+///
+/// \brief CatchController::onMainStateOfDevXChanged
+/// \param state
+/// \param idx
+///
+void CatchController::onMainStateOfDevXChanged(quint16 state, int idx)
+{
+    bool notTheSame = false;
+    for (int i = 0; i<m_device_list->size(); i++)
+    {
+        if ( i != idx )
+        {
+            if ( m_device_list->at(i)->getLastMainState() != state )
+            {
+                notTheSame = true;
+                break;
+            }
+        }
+    }
+    if ( !notTheSame )
+    {
+        emit mainStateOfAllDevicesChanged(stateToString(state));
+    }
+}
+
+///
+/// \brief CatchController::onDownloadTimerExpired
+///
+void CatchController::onDownloadTimerExpired()
+{
+    switch (download_state)
+    {
+    case SETTING_CONN_MODE:
+        qDebug()<<"CC-DL-> Setting Conn Mode failed!"; // show the devil..
+        break;
+    case DOWNLOADING:
+        qDebug()<<"CC-DL-> "
+                  "Download failed!"; // show the devil..
+        break;
+    }
+    m_downloadTimer.stop();
+}
+
+
+///
+/// \brief CatchController::onRequestDispatchToOtherDevices
+/// \param value
+/// \param idx
+///
 void CatchController::onRequestDispatchToOtherDevices(QByteArray value, int idx)
 {
     for ( int i=0; i<m_device_list->size(); i++)
@@ -301,5 +355,10 @@ void CatchController::onRequestDispatchToOtherDevices(QByteArray value, int idx)
         if (i != idx)
             m_device_list->at(i)->invokeBleUartSendCmdWithResp(value);
     }
+}
+
+void CatchController::setLoggingMedia(bool toSd, bool sendOverBle)
+{
+
 }
 

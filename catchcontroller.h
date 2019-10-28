@@ -47,6 +47,8 @@ private:
     bool change_conn_of_other_devices;
     int id_in_dl;
     int download_state;
+    int sendingStartState = SETTING_CONN_MODE;
+
     ///
     /// todo: is it final like this? group?
     ///
@@ -67,7 +69,8 @@ signals:
     void timeSyncOfAllDevFinished(bool success);
     void downloadOfAllDevFinished(bool success);
 
-    void allWearablesAreWaitingForDownload();
+    void allWearablesAreWaitingForDownload(); //QML propmt on this signal for CATCH, DROP, FLOP
+
     //    void transferProgressChanged(uint8_t percentage);
     //    void showProgressMessage(QString mainText, QString subText, int percent, uint8_t flag);
     //    void progressFinished();
@@ -77,26 +80,29 @@ signals:
 
 public slots:
 
-    void startTimesyncAllDevices();
+    void startTimesyncAllDevices(); // QML Start this in background during init dialog
     void onTimeSyncTimerExpired();
     void onTimeSyncOfDevXfinished(bool success, int idx);
     void startTimeSyncOfDevX(int id);
 
-    void startDownloadFromAllDevices();
+    void startDownloadFromAllDevices(); // QML use this if user clicks catch or drop
     void onDownloadTimerExpired();
     void onDownloadOfDeviceXfinished(bool success, int idx);
     void startDownloadOfDevX(int id);
 
     void onConnUpdateOfDevXfinished(bool success, int idx); // todo connect both of them
 
-    void sendStartToAllDevices();
-    void sendStopToAllDevices();
+    void sendStartToAllDevices(); // QML use this to restart acquisition
+
+    void sendStopToAllDevices(); // QML make this available while ready to trigger or simpler while !stopped ..
 
     void onSensorDataAvailableArrived(int idx);
 
     void onMainStateOfDevXChanged(quint16 state, int idx);
 
     void onRequestDispatchToOtherDevices(QByteArray value, int idx);
+
+    virtual void setLoggingMedia (bool toSd, bool sendOverBle); // QML, use this during startup dialog
 
 
 

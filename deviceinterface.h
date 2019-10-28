@@ -55,6 +55,7 @@ public:
     friend QString stateToString(uint16_t tmp);
 
     void sendCmdStop();
+    void sendCmdStart();
     void sendCmdWriteCatchSuccessToSd(const quint8 &success);
     quint8 getLastMainState();
 
@@ -63,7 +64,7 @@ signals:
     void invokePrintThreadId();
     //
     void mainStateOfDevXChanged(quint16 state, int idx);
-    void invokeSendCmdStart();
+//    void invokeSendCmdStart();
 
     //void deviceAddressChanged();
 //    void deviceStateChanged();

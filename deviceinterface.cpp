@@ -48,7 +48,7 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     connect(this, &DeviceInterface::mainStateOfDevXChanged, m_catch_controller_ptr, &CatchController::onMainStateOfDevXChanged, Qt::DirectConnection);
     connect(this, &DeviceInterface::invokeStartConnModeChangeProcedure, m_deviceController, &DeviceController::startConnModeChangeProcedure, Qt::QueuedConnection);
     connect(this, &DeviceInterface::invokeStartDownloadAllDataProcedure, m_deviceController, &DeviceController::startDownloadAllDataProcedure, Qt::QueuedConnection);
-    connect(this, &DeviceInterface::invokeSendCmdStart, m_deviceController, &DeviceController::sendStartToDevice, Qt::QueuedConnection);
+//    connect(this, &DeviceInterface::invokeSendCmdStart, m_deviceController, &DeviceController::sendStartToDevice, Qt::QueuedConnection);
 
     connect(m_deviceController, &DeviceController::requestedConnModeReached, m_catch_controller_ptr, &CatchController::onConnUpdateOfDevXfinished, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::allDataDownloaded, m_catch_controller_ptr, &CatchController::onDownloadOfDeviceXfinished, Qt::QueuedConnection);
@@ -129,6 +129,15 @@ void DeviceInterface::sendCmdStop()
         tba.resize(1);
         tba[0] = CMD_STOP;
         invokeBleUartSendCmdWithResp(tba);
+}
+
+void DeviceInterface::sendCmdStart()
+{
+    QByteArray tba;
+    qDebug()<<"Sending START"<<getDeviceIndex();
+    tba.resize(1);
+    tba[0] = CMD_START;
+    invokeBleUartSendCmdWithResp(tba);
 }
 
 //void DeviceInterface::sendCmdWriteCatchSuccessToSd(const quint8 &success)

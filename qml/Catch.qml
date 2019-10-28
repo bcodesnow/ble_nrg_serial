@@ -48,7 +48,7 @@ AppPage {
             verticalAlignment: Text.AlignVCenter
             color: AppConstants.textColor
             font.pixelSize: AppConstants.mediumFontSize
-            text: qsTr("FOUND DEVICES")
+            text: qsTr(catchController.devicesMainState)
 
             BottomLine {
                 height: 1;
@@ -178,7 +178,7 @@ AppPage {
             anchors.centerIn: parent
             font.pixelSize: AppConstants.smallFontSizeFontSize
             text: qsTr("DOWNLOAD")
-            color: white //searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+            color: testButt.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
     }
     AppButton {
@@ -200,7 +200,7 @@ AppPage {
             anchors.centerIn: parent
             font.pixelSize: AppConstants.tinyFontSize
             text: qsTr("START")
-            color: searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+            color: testButt2.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
     }
     AppButton {
@@ -222,7 +222,7 @@ AppPage {
             anchors.centerIn: parent
             font.pixelSize: AppConstants.tinyFontSize
             text: qsTr("STOP")
-            color: searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+            color: testButt3.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
     }
 }

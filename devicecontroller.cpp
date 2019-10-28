@@ -345,27 +345,27 @@ void DeviceController::sendRequestSensorData()
 }
 
 
-void DeviceController::sendStartToDevice()
-{
-#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
-    qDebug()<<"Sending START";
-    QByteArray tba;
-    tba.resize(1);
-    tba[0] = CMD_START;
-    this->bleUartSendCmdWithResp(tba);
-#endif
+//void DeviceController::sendStartToDevice()
+//{
+////#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+////    qDebug()<<"Sending START";
+////    QByteArray tba;
+////    tba.resize(1);
+////    tba[0] = CMD_START;
+////    this->bleUartSendCmdWithResp(tba);
+////#endif
 
-#if (defined(Q_OS_ANDROID))
-// one of the devices might be in a very slow connection mode, so sending a command to it requires first changing the conn parameters
+//#if (defined(Q_OS_ANDROID))
+//// one of the devices might be in a very slow connection mode, so sending a command to it requires first changing the conn parameters
 
-    setConnParamsOnCentral(FAST);
-    setRequestedConnParamsOnDevice(FAST);
-    m_nextRequest = NEXT_REQ_SEND_START;
-    m_nextRequestTimer->setInterval(1000);
-    m_nextRequestTimer->start();
-    qDebug()<<"Starting Timer!";
-#endif
-}
+////    setConnParamsOnCentral(FAST);
+////    setRequestedConnParamsOnDevice(FAST);
+////    m_nextRequest = NEXT_REQ_SEND_START;
+////    m_nextRequestTimer->setInterval(1000);
+////    m_nextRequestTimer->start();
+////    qDebug()<<"Starting Timer!";
+//#endif
+//}
 
 void DeviceController::startConnModeChangeProcedure(quint8 mode)
 {
@@ -560,6 +560,7 @@ void DeviceController::bleUartTx(const QByteArray &value)
 inline bool DeviceController::isDeviceInRequestedConnState()
 {
     qDebug()<<"isDeviceInRequestedConnState()";
+    // todo: the required conn mode is always true in the catch controller...
     return ( ( m_dev_conn_param_info.current_mode == m_dev_requested_conn_mode ) && ( m_dev_conn_param_info.requested_mode == m_dev_requested_conn_mode ));
 }
 
@@ -900,16 +901,14 @@ void DeviceController::hugeChunkDownloadFinished()
 
 void DeviceController::onNextRequestTimerExpired()
 {
-    QByteArray tba;
-
     switch ( m_nextRequest )
     {
-    case NEXT_REQ_SEND_START:
-        qDebug()<<"Sending START"<<m_ident_idx;
-        tba.resize(1);
-        tba[0] = CMD_START;
-        this->bleUartSendCmdWithResp(tba, 250, 10);
-           break;
+//    case NEXT_REQ_SEND_START:
+//        qDebug()<<"Sending START"<<m_ident_idx;
+//        tba.resize(1);
+//        tba[0] = CMD_START;
+//        this->bleUartSendCmdWithResp(tba, 250, 10);
+//           break;
     case NEXT_REQ_SEND_SENS_DATA:
         sendRequestSensorData();
             break;

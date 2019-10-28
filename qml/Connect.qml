@@ -168,7 +168,7 @@ AppPage {
                 {
                     state = "connected"
                     deviceFinder.connectToSelectedDevices();
-//                    view.setCurrentIndex(1);
+                    view.setCurrentIndex(1);
                 }
                 else
                 {
@@ -205,7 +205,6 @@ AppPage {
         enabled: !deviceFinder.scanning
         onClicked: {
             deviceFinder.startSearch()
-
         }
 
         Text {
