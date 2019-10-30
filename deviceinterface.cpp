@@ -50,6 +50,7 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     connect(this, &DeviceInterface::invokeStartDownloadAllDataProcedure, m_deviceController, &DeviceController::startDownloadAllDataProcedure, Qt::QueuedConnection);
 //    connect(this, &DeviceInterface::invokeSendCmdStart, m_deviceController, &DeviceController::sendStartToDevice, Qt::QueuedConnection);
 
+    connect(m_deviceController, &DeviceController::connectionAlive, m_catch_controller_ptr, &CatchController::onConnAliveOfDevXChanged, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::requestedConnModeReached, m_catch_controller_ptr, &CatchController::onConnUpdateOfDevXfinished, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::allDataDownloaded, m_catch_controller_ptr, &CatchController::onDownloadOfDeviceXfinished, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::requestDispatchToOtherDevices, m_catch_controller_ptr, &CatchController::onRequestDispatchToOtherDevices, Qt::QueuedConnection);
@@ -108,8 +109,8 @@ void DeviceInterface::onAliveArrived(QByteArray value)
 
     if (lastAliveMsg.mainState != alive_msg.mainState)
     {
-        emit mainStateOfDevXChanged(tptr->mainState, this->getDeviceIndex());
         this->setDeviceMainState( stateToString(tptr->mainState) );
+        emit mainStateOfDevXChanged(tptr->mainState, this->getDeviceIndex());
     }
 
     if (alive_msg.lastError)
@@ -137,6 +138,17 @@ void DeviceInterface::sendCmdStart()
     qDebug()<<"Sending START"<<getDeviceIndex();
     tba.resize(1);
     tba[0] = CMD_START;
+    invokeBleUartSendCmdWithResp(tba);
+}
+
+void DeviceInterface::sendCmdSetLoggingMedia(bool savingTosdEnabled, bool bleUplEnabled)
+{
+    QByteArray tba;
+    qDebug()<<"Sending Set Logging Media";
+    tba.resize(3);
+    tba[0] = CMD_SET_LOGGING_MEDIA;
+    tba[1] = savingTosdEnabled;
+    tba[2] = bleUplEnabled;
     invokeBleUartSendCmdWithResp(tba);
 }
 

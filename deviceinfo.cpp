@@ -106,6 +106,16 @@ void DeviceInfo::setDeviceType(DeviceInfo::DeviceType type)
     emit deviceTypeChanged(m_deviceType);
 }
 
+void DeviceInfo::setConnectionAlive(bool isItAlive)
+{
+    m_connectionAlive = isItAlive;
+}
+
+bool DeviceInfo::connectionAlive() const
+{
+    return m_connectionAlive;
+}
+
 QString DeviceInfo::getName() const
 {
     return m_device.name();

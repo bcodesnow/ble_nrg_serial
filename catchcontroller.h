@@ -22,6 +22,8 @@ class CatchController : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString devicesMainState MEMBER m_devicesMainState NOTIFY mainStateOfAllDevicesChanged)
+    Q_PROPERTY(bool devicesConnected READ devicesConnected NOTIFY allSelectedDevicesAreConnected)
+
     //    Q_PROPERTY(bool sdEnabled READ sdEnabled NOTIFY sdEnabledChanged)
 
     //Q_PROPERTY(QString lastPath MEMBER m_last_path NOTIFY lastPathChanged)
@@ -53,6 +55,8 @@ private:
     /// todo: is it final like this? group?
     ///
 
+    bool m_devicesConnected;
+
 public:
     CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHandler* ts_handler,
                     LogFileHandler* logfile_handler, QObject *parent = nullptr);
@@ -61,6 +65,11 @@ public:
 
     //bool sdEnabled() const;
 
+
+    bool devicesConnected() const
+    {
+        return m_devicesConnected;
+    }
 
 signals:
     //    void appStateChanged (quint8 state);
@@ -71,12 +80,16 @@ signals:
 
     void allWearablesAreWaitingForDownload(); //QML propmt on this signal for CATCH, DROP, FLOP
 
+    void allSelectedDevicesAreConnected(bool areThey);
+
     //    void transferProgressChanged(uint8_t percentage);
     //    void showProgressMessage(QString mainText, QString subText, int percent, uint8_t flag);
     //    void progressFinished();
 
     //void mainStateOfAllDevicesChanged(const QString& devicesMainState);
     void mainStateOfAllDevicesChanged(QString devicesMainState);
+
+    void devicesAliveChanged(bool devicesAlive);
 
 public slots:
 
@@ -102,7 +115,9 @@ public slots:
 
     void onRequestDispatchToOtherDevices(QByteArray value, int idx);
 
-    virtual void setLoggingMedia (bool toSd, bool sendOverBle); // QML, use this during startup dialog
+    void onConnAliveOfDevXChanged(bool isItAlive, int idx);
+
+    void setLoggingMedia (bool toSd, bool sendOverBle); // QML, use this during startup dialog
 
 
 

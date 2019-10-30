@@ -6,9 +6,11 @@ import "."
 import Shared 1.0
 
 AppPage {
-    property bool startEnabled
-    property bool stopEnabled
-    property bool downloadEnabled
+    id: pageRoot
+
+    property string devicesMainState : catchController.devicesMainState // why for the bloody hell is property alias not working for this case?!
+    property bool buttonsEnabled : catchController.devicesConnected
+
     Connections {
         target: catchController
         onMainStateOfAllDevicesChanged:
@@ -19,21 +21,20 @@ AppPage {
                 console.log("Unknown devices main state:",devicesMainState);
                 break;
             case "Stopped":
-                startEnabled = true;
-                stopEnabled = false
+
                 break;
             case "Running":
-                startEnabled = false;
                 break;
             case "Ready to Trigger":
-                stopEnabled = true
                 break;
             }
+
+            pageRoot.devicesMainState = devicesMainState // this should not be needed .. but it does not work without it!!
         }
         onAllWearablesAreWaitingForDownload:
         {
             catchConfirmPopup.visible = true
-            downloadEnabled = true
+            downloadButton.enabled = true
         }
     }
 
@@ -62,7 +63,7 @@ AppPage {
             verticalAlignment: Text.AlignVCenter
             color: AppConstants.textColor
             font.pixelSize: AppConstants.mediumFontSize
-           // text: qsTr(catchController.devicesMainState)
+            // text: qsTr(catchController.devicesMainState)
             text:
                 if ( catchController.devicesMainState === "" )
                     "Connecting devices..."
@@ -180,7 +181,7 @@ AppPage {
         anchors.bottomMargin: AppConstants.fieldMargin
         width: viewContainer.width / 3
         height: AppConstants.fieldHeight
-        enabled: false//downloadEnabled
+        enabled: true//downloadEnabled
         onClicked: {
             //            devices.update()
             //            console.log("asd"+            ladApter.rowCount());
@@ -198,49 +199,45 @@ AppPage {
         }
     }
     AppButton {
-        id: testButt2
+        id: startStopButton
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.bottomMargin: AppConstants.fieldMargin
         width: viewContainer.width / 3
         height: AppConstants.fieldHeight
-        enabled: startEnabled
+        enabled: pageRoot.buttonsEnabled
+//        state: "Start"//(catchController.devicesMainState === "Stopped") ? "Start" : "Stop"
         onClicked: {
-            //            devices.update()
-            //            console.log("asd"+            ladApter.rowCount());
-            //            ladApter.rst_model()
-            catchController.sendStartToAllDevices();
+            console.log("state"+state)
+            if (state === "Start")
+                catchController.sendStartToAllDevices();
+            else
+                catchController.sendStopToAllDevices();
         }
 
         Text {
+            id: startStopButtonText
             anchors.centerIn: parent
             font.pixelSize: AppConstants.smallFontSize
-            text: qsTr("START")
-            color: testButt2.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
-        }
-    }
-    AppButton {
-        id: testButt3
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: AppConstants.fieldMargin
-        width: viewContainer.width / 3
-        height: AppConstants.fieldHeight
-        enabled: stopEnabled
-        onClicked: {
-            //            devices.update()
-            //            console.log("asd"+            ladApter.rowCount());
-            //            ladApter.rst_model()
-            catchController.sendStopToAllDevices();
-        }
 
-        Text {
-            anchors.centerIn: parent
-            font.pixelSize: AppConstants.smallFontSize
-            text: qsTr("STOP")
-            color: testButt3.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
+        onStateChanged: console.log("!!! State Changed"+state)
+
+        states: [
+            State {
+            name: "Start"; when: (pageRoot.devicesMainState == "Stopped")
+            PropertyChanges { target: startStopButtonText; text: "START" }
+            PropertyChanges { target: startStopButtonText; color: "green" }
+            },
+            State {
+            name: "Stop"; when: (pageRoot.devicesMainState != "Stopped")
+            PropertyChanges { target: startStopButtonText; text: "STOP" }
+            PropertyChanges { target: startStopButtonText; color: "red" }
+
+            }
+        ]
     }
+
 }
 
 //DualAppPage {

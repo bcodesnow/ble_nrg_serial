@@ -21,9 +21,9 @@ class CatchController;
 class DeviceInterface : public DeviceInfo
 {
     Q_OBJECT
+
     //Q_PROPERTY(QString text MEMBER m_text NOTIFY textChanged)
     //Q_PROPERTY(bool heartBeat MEMBER m_heartBeat NOTIFY deviceAddressChanged)
-    //Q_PROPERTY(bool connectionAlive READ connectionAlive NOTIFY aliveChanged)
     //Q_PROPERTY(bool sdEnabled MEMBER m_sdEnabled NOTIFY sdEnabledChanged)
     //Q_PROPERTY(qint16 fileIndexOnDevice MEMBER m_fileIndexOnDevice NOTIFY fileIndexOnDeviceChanged)
     //Q_PROPERTY(bool sendingOverBleEnabled MEMBER m_sendingOverBleEnabled NOTIFY sendingOverBleEnabledChanged)
@@ -51,11 +51,11 @@ public:
     ~DeviceInterface(){} // they get destroyed in the list, always start with the last
 
     void initializeDevice( QBluetoothHostInfo* hostInfo );
-    //bool connectionAlive() const; // this is a connection state..
     friend QString stateToString(uint16_t tmp);
 
     void sendCmdStop();
     void sendCmdStart();
+    void sendCmdSetLoggingMedia(bool savingTosdEnabled, bool bleUplEnabled);
     void sendCmdWriteCatchSuccessToSd(const quint8 &success);
     quint8 getLastMainState();
 

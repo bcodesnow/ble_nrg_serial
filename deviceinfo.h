@@ -51,6 +51,8 @@
 #ifndef DEVICEINFO_H
 #define DEVICEINFO_H
 
+/* BoilerPlateClass */
+
 #include <QString>
 #include <QObject>
 #include <QBluetoothDeviceInfo>
@@ -68,6 +70,8 @@ class DeviceInfo :public QObject//: public BluetoothBaseClass
     Q_PROPERTY(QString deviceIdentifier READ getDeviceIdentifier NOTIFY deviceIdentifierChanged)
     Q_PROPERTY(QString deviceMainState READ getDeviceMainState NOTIFY deviceMainStateChanged)
     Q_PROPERTY(DeviceType deviceType READ getDeviceType NOTIFY deviceTypeChanged)
+    Q_PROPERTY(bool connectionAlive READ connectionAlive NOTIFY aliveChanged)
+
 
 public:
     DeviceInfo(const QBluetoothDeviceInfo &device);
@@ -93,11 +97,14 @@ public:
     void setDeviceIdentifier(QString ident);
     void setDeviceMainState(QString state);
     void setDeviceType( DeviceType type);
+    void setConnectionAlive(bool isItAlive);
 
     bool deviceIsInRequiredConnectionState;
     bool deviceIsTimeSynced;
     bool m_sensorDataWaitingForDownload;
     QBluetoothDeviceInfo m_device;
+
+    bool connectionAlive() const;
 
 signals:
 
@@ -113,6 +120,8 @@ signals:
 
     void deviceInfoChanged(QString deviceAddress);
 
+    void aliveChanged(bool connectionAlive);
+
 private:
     qint64 m_deviceFlags;
     qint32 m_deviceIdx;
@@ -122,6 +131,7 @@ private:
     qint32 m_deviceIndex;
     QString m_deviceAddress;
     QString m_deviceName;
+    bool m_connectionAlive;
 };
 
 #endif // DEVICEINFO_H

@@ -172,7 +172,7 @@ void DeviceController::disconnectService()
         delete m_service;
         m_service = nullptr;
     }
-    emit connectionAlive(false);
+    emit connectionAlive(false, m_ident_idx);
 }
 
 void DeviceController::onCentralConnectionUpdated(const QLowEnergyConnectionParameters &newParameters)
@@ -216,13 +216,12 @@ void DeviceController::onCharacteristicWritten(const QLowEnergyCharacteristic &c
 
 void DeviceController::onConnected()
 {
-    emit connectionAlive(true); // todo move this to the point where all the characteristics are registered...
     m_control->discoverServices();
 }
 
 void DeviceController::onDisconnected()
 {
-    emit connectionAlive( false );
+    emit connectionAlive( false, m_ident_idx );
 }
 
 // this is something one can query to make sure we have a connection
@@ -331,6 +330,7 @@ void DeviceController::searchCharacteristic()
         bleUartSendCmdWithResp(ba);
         connectionValidSent = 1;
         qDebug()<<"READ WRITE REGISTERED, SENDING CONN VALID!";
+        emit connectionAlive(true, m_ident_idx); // todo move this to the point where all the characteristics are registered...
         // todo -> this is much more relevant than ble connected-> pass this to catch controller
     }
 }
@@ -597,15 +597,15 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
             break;
 
-        case DATA_SAVED_TO_SD:
+//        case DATA_SAVED_TO_SD:
 
-            // todo!!!
-            // confirm if it was a catch or drop -> we should give it to a class "above" -> catch controller
-            qDebug()<<"Writing data to SD finished, waiting for confimation!";
-            // send CMD_WRITE_CATCH_SUCC
-            //setInfo("Waiting for Confirmation!");
+//            // todo!!!
+//            // confirm if it was a catch or drop -> we should give it to a class "above" -> catch controller
+//            qDebug()<<"Writing data to SD finished, waiting for confimation!";
+//            // send CMD_WRITE_CATCH_SUCC
+//            //setInfo("Waiting for Confirmation!");
 
-            break;
+//            break;
 
         case ALIVE:
 
@@ -920,9 +920,9 @@ void DeviceController::onNextRequestTimerExpired()
 void DeviceController::onConnParamInfoArrived()
 {
 
-    qDebug()<<"PARA_INFO_MSG:"<<m_ident_idx<<m_ident_str<<"from dev:"<<
+    qDebug()<<">>>  CONN PARAM INFO:"<<m_ident_idx<<m_ident_str<<"from dev:"<<
               "interval:"<<m_dev_conn_param_info.interval<<"latency:"<<m_dev_conn_param_info.latency<<
-              "current mode:"<<m_dev_conn_param_info.current_mode<<"requested mode:"<<m_dev_conn_param_info.requested_mode<<"callcount"<<m_dev_conn_param_info.reserved;
+              "current mode:"<<m_dev_conn_param_info.current_mode<<"requested mode:"<<m_dev_conn_param_info.requested_mode<<"callcount"<<m_dev_conn_param_info.reserved<<"   <<<";
 
     if (isDeviceInRequestedConnState() && m_connParamTimer->isActive())
     {

@@ -167,7 +167,7 @@ public:
 
 signals:
     // Connection
-    void connectionAlive(bool isItAlive);
+    void connectionAlive(bool isItAlive, int deviceIdx);
 
     // Message Signals
     void aliveArrived(QByteArray value); // alive msg arrives
