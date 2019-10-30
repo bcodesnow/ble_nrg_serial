@@ -95,6 +95,7 @@ AppPage
 
     Connections {
         target: terminalToQml
+
         onMessageArrived:
         {
             terminalModel.append({ "str": str, "clr": clr, "fmt": fmt});

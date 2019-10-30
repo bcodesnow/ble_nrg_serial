@@ -58,23 +58,50 @@ Rectangle    {
     height: AppConstants.fieldHeight
     color: AppConstants.viewColor
 
-    property var __titles: ["CONNECT", "CATCH", "DATA", "TERMINAL"]
+    property var __titles: ["Connections", "Catch", "Data Graphs", "Terminal"]
     property int currentIndex: 0
 
     signal titleClicked(int index)
 
     Repeater {
         model: 3
-        Text {
+        Rectangle {
             width: titleBar.width / 3
             height: titleBar.height
             x: index * width
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            text: __titles[index]
-            font.pixelSize: AppConstants.tinyFontSize
-            color: titleBar.currentIndex === index ? AppConstants.textColor : AppConstants.disabledTextColor
-
+            color: "transparent"
+            Image {
+                id: titleIcon
+                anchors.top: parent.top
+                anchors.topMargin: parent.height*0.1
+                anchors.horizontalCenter: parent.horizontalCenter
+                height: titleBar.height/2
+                width: titleBar.width / 3
+                mipmap: true
+                antialiasing: true
+                fillMode: Image.PreserveAspectFit
+                source:
+                    switch(index)
+                    {
+                    case 0:
+                        "images/bluetooth-icon.png"
+                        break;
+                    case 1:
+                        "images/catch-icon.png"
+                        break;
+                    case 2:
+                        "images/graph-icon.png"
+                        break;
+                    }
+            }
+            Text {
+                text: __titles[index]
+                anchors.top: titleIcon.bottom
+                anchors.topMargin: parent.height*0.05
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.pixelSize: AppConstants.tinyFontSize
+                color: AppConstants.textColor
+            }
             MouseArea {
                 anchors.fill: parent
                 onClicked:
@@ -84,7 +111,6 @@ Rectangle    {
             }
         }
     }
-
 
     Item {
         anchors.bottom: parent.bottom

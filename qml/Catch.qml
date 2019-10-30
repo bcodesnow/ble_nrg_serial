@@ -6,7 +6,9 @@ import "."
 import Shared 1.0
 
 AppPage {
-    property bool startEnabled;
+    property bool startEnabled
+    property bool stopEnabled
+    property bool downloadEnabled
     Connections {
         target: catchController
         onMainStateOfAllDevicesChanged:
@@ -14,16 +16,30 @@ AppPage {
             switch(devicesMainState)
             {
             case "Unknown":
-                console.log("MainStateChanged"+devicesMainState);
+                console.log("Unknown devices main state:",devicesMainState);
                 break;
             case "Stopped":
                 startEnabled = true;
+                stopEnabled = false
                 break;
             case "Running":
                 startEnabled = false;
                 break;
+            case "Ready to Trigger":
+                stopEnabled = true
+                break;
             }
         }
+        onAllWearablesAreWaitingForDownload:
+        {
+            catchConfirmPopup.visible = true
+            downloadEnabled = true
+        }
+    }
+
+    MultiPopup {
+        id: catchConfirmPopup
+        popupType: 2
     }
 
     Rectangle {
@@ -38,8 +54,6 @@ AppPage {
         width: parent.width - AppConstants.fieldMargin*2
         color: AppConstants.viewColor
         radius: AppConstants.buttonRadius
-
-
         Text {
             id: title
             width: parent.width
@@ -48,15 +62,17 @@ AppPage {
             verticalAlignment: Text.AlignVCenter
             color: AppConstants.textColor
             font.pixelSize: AppConstants.mediumFontSize
-            text: qsTr(catchController.devicesMainState)
-
+           // text: qsTr(catchController.devicesMainState)
+            text:
+                if ( catchController.devicesMainState === "" )
+                    "Connecting devices..."
+                else qsTr(catchController.devicesMainState)
             BottomLine {
                 height: 1;
                 width: parent.width
                 color: "#898989"
             }
         }
-
 
         ListView {
             id: devices
@@ -67,8 +83,6 @@ AppPage {
             model: ladApter
             clip: true
             spacing: 3
-
-
             delegate:
                 Rectangle {
                 id: box
@@ -90,22 +104,23 @@ AppPage {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        devices.itemAtIndex(0).setName("Gecispina");
-//                        if (modelData.deviceFlags & 0x01)
-//                        {
+                        console.log( model.item.deviceName )
+                        // devices.itemAtIndex(0).setName("Gecispina");
+                        //                        if (modelData.deviceFlags & 0x01)
+                        //                        {
 
-//                            deviceFinder.removeDeviceFromSelection(index);
-//                        }
-//                        else
-//                        {
-//                            deviceFinder.addDeviceToSelection(index);
-//                        }
+                        //                            deviceFinder.removeDeviceFromSelection(index);
+                        //                        }
+                        //                        else
+                        //                        {
+                        //                            deviceFinder.addDeviceToSelection(index);
+                        //                        }
                     }
                 }
                 Text {
                     id: deviceIdentifierText
-                    font.pixelSize: AppConstants.tinyFontSize
-                    text: model.item.deviceIndex + " " + model.item.deviceIdentifier
+                    font.pixelSize: AppConstants.smallTinyFontSize
+                    text: "#" + (model.item.deviceIndex+1) + ": " + model.item.deviceIdentifier + " " + model.item.deviceName
                     anchors.top: parent.top
                     anchors.topMargin: parent.height * 0.1
                     anchors.leftMargin: parent.height * 0.1
@@ -114,12 +129,15 @@ AppPage {
                 }
                 Text {
                     id: deviceMainStateText
-                    font.pixelSize: AppConstants.tinyFontSize
-                    text: model.item.deviceMainState
-                    anchors.top: deviceIdentifierText.bottom
-                    anchors.topMargin: parent.height * 0.1
-                    anchors.leftMargin: parent.height * 0.1
+                    font.pixelSize: AppConstants.smallTinyFontSize
+                    text:
+                        if ( model.item.deviceMainState === "" )
+                            "Not connected"
+                        else model.item.deviceMainState
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: parent.height * 0.2
                     anchors.left: parent.left
+                    anchors.leftMargin: parent.height * 0.1
                     color: AppConstants.textColor
                 }
 
@@ -129,16 +147,13 @@ AppPage {
                     anchors.right: parent.right
                     anchors.topMargin: parent.height * 0.1
                     anchors.rightMargin: parent.height * 0.1
-                    // TODO ADD A PICTURE
-                    width: deviceTypeTempText.width
-                    height: deviceTypeTempText.height
-
-                    Text {
-                        id: deviceTypeTempText
-                        font.pixelSize: AppConstants.tinyFontSize
-                        text:  ( model.item.deviceType === DeviceType.Wearable ) ? "Wearable" : "Not Wearable";
-                        anchors.centerIn: parent
-                        color: AppConstants.textColor
+                    width: deviceTypeImg.width
+                    height: deviceTypeImg.height
+                    Image {
+                        id: deviceTypeImg
+                        source: ( model.item.deviceType === DeviceType.Wearable ) ? "images/wearable.png" : "images/stationary.png"
+                        height: AppConstants.largeFontSize
+                        fillMode: Image.PreserveAspectFit
                     }
                 }
 
@@ -165,18 +180,19 @@ AppPage {
         anchors.bottomMargin: AppConstants.fieldMargin
         width: viewContainer.width / 3
         height: AppConstants.fieldHeight
-        enabled: true
+        enabled: false//downloadEnabled
         onClicked: {
-//            devices.update()
-//            console.log("asd"+            ladApter.rowCount());
-//            ladApter.rst_model()
+            //            devices.update()
+            //            console.log("asd"+            ladApter.rowCount());
+            //            ladApter.rst_model()
             catchController.startDownloadFromAllDevices();
+            downloadEnabled = false
             //catchController.startTimesyncAllDevices();
         }
 
         Text {
             anchors.centerIn: parent
-            font.pixelSize: AppConstants.smallFontSizeFontSize
+            font.pixelSize: AppConstants.smallTinyFontSize
             text: qsTr("DOWNLOAD")
             color: testButt.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
@@ -188,17 +204,17 @@ AppPage {
         anchors.bottomMargin: AppConstants.fieldMargin
         width: viewContainer.width / 3
         height: AppConstants.fieldHeight
-        enabled: true
+        enabled: startEnabled
         onClicked: {
-//            devices.update()
-//            console.log("asd"+            ladApter.rowCount());
-//            ladApter.rst_model()
+            //            devices.update()
+            //            console.log("asd"+            ladApter.rowCount());
+            //            ladApter.rst_model()
             catchController.sendStartToAllDevices();
         }
 
         Text {
             anchors.centerIn: parent
-            font.pixelSize: AppConstants.tinyFontSize
+            font.pixelSize: AppConstants.smallFontSize
             text: qsTr("START")
             color: testButt2.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }
@@ -210,17 +226,17 @@ AppPage {
         anchors.bottomMargin: AppConstants.fieldMargin
         width: viewContainer.width / 3
         height: AppConstants.fieldHeight
-        enabled: true
+        enabled: stopEnabled
         onClicked: {
-//            devices.update()
-//            console.log("asd"+            ladApter.rowCount());
-//            ladApter.rst_model()
+            //            devices.update()
+            //            console.log("asd"+            ladApter.rowCount());
+            //            ladApter.rst_model()
             catchController.sendStopToAllDevices();
         }
 
         Text {
             anchors.centerIn: parent
-            font.pixelSize: AppConstants.tinyFontSize
+            font.pixelSize: AppConstants.smallFontSize
             text: qsTr("STOP")
             color: testButt3.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }

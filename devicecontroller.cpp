@@ -72,7 +72,9 @@ void DeviceController::connectToPeripheral(QBluetoothDeviceInfo *device)
 
         connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceController::serviceDiscovered);
         connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceController::serviceScanDone);
-        connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>(&QLowEnergyController::error), this, [this](QLowEnergyController::Error error) {Q_UNUSED(error) Q_UNUSED(this) qDebug()<<"Cannot connect to remote device.";});
+        connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>
+                (&QLowEnergyController::error), this, [this](QLowEnergyController::Error error)
+                {Q_UNUSED(error) Q_UNUSED(this) qDebug()<<"Cannot connect to remote device.";});
         connect(m_control, &QLowEnergyController::connected, this, &DeviceController::onConnected);
         connect(m_control, &QLowEnergyController::disconnected, this, &DeviceController::onDisconnected);
         connect(m_control, &QLowEnergyController::connectionUpdated, this, &DeviceController::onCentralConnectionUpdated);
@@ -903,15 +905,15 @@ void DeviceController::onNextRequestTimerExpired()
 {
     switch ( m_nextRequest )
     {
-//    case NEXT_REQ_SEND_START:
-//        qDebug()<<"Sending START"<<m_ident_idx;
-//        tba.resize(1);
-//        tba[0] = CMD_START;
-//        this->bleUartSendCmdWithResp(tba, 250, 10);
-//           break;
+    //    case NEXT_REQ_SEND_START:
+    //        qDebug()<<"Sending START"<<m_ident_idx;
+    //        tba.resize(1);
+    //        tba[0] = CMD_START;
+    //        this->bleUartSendCmdWithResp(tba, 250, 10);
+    //           break;
     case NEXT_REQ_SEND_SENS_DATA:
         sendRequestSensorData();
-            break;
+        break;
     }
 }
 
@@ -939,8 +941,8 @@ void DeviceController::onConnParamTimerExpired()
         setConnParamsOnCentral(m_dev_requested_conn_mode);
 
 
-//        todo added, not really wanted..
-//        setRequestedConnParamsOnDevice(m_dev_requested_conn_mode);
+        //        todo added, not really wanted..
+        //        setRequestedConnParamsOnDevice(m_dev_requested_conn_mode);
         m_connParamTimer->stop();
         m_connParamTimer->setInterval(CONN_MODE_CHANGE_DELAY);
         m_connParamTimer->start();

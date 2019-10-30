@@ -163,8 +163,6 @@ void DeviceFinder::connectToSelectedDevices()
     int k = 0;
     quint8 tidx;
 
-    qDebug()<<"We have "<< adapterListSize <<"adapters detected";
-
     for (int i = 0; i < m_foundDevices.size(); i++)
     {
         if  ( ((DeviceInfo*) m_foundDevices.at(i) )->getDeviceFlags() & DEVICE_SELECTED )

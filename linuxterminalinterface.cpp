@@ -29,7 +29,7 @@ void LinuxTerminalInterface::executeCmdWithSudo(QString cmd, QString arg1)
     m_process->write(toSend.toUtf8());
     m_process->waitForFinished(300);
     QString returned = m_process->readAll();
-    qDebug()<<"Returned: "<<returned;
+    qDebug()<<"Linux command:"<<toSend<<"Returned:"<<returned;
     m_process->close();
 
 //    echo 'deb blah ... blah' | sudo tee -a /etc/apt/sources.list

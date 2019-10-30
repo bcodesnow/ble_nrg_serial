@@ -52,22 +52,77 @@ import QtQuick 2.9
 //import com.dev 1.0
 
 AppPage {
-
     errorMessage: deviceFinder.error
     infoMessage: deviceFinder.info
 
+    MultiPopup {
+        //
+        id: settingsPopup
+        popupType: 4
+    }
+
+    Rectangle {
+        id: settingsContainer
+        anchors.top: parent.top
+        height: AppConstants.fieldHeight
+        anchors.topMargin: AppConstants.fieldMargin/2 + messageHeight
+        // anchors.bottomMargin: AppConstants.fieldMargin
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: parent.width - AppConstants.fieldMargin*2
+        color: Qt.darker(AppConstants.viewColor,1.15)
+        radius: AppConstants.buttonRadius
+        Text {
+            width: parent.width
+            height: AppConstants.fieldHeight
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+           // leftPadding: AppConstants.fieldMargin
+            color: AppConstants.textColor
+            font.pixelSize: AppConstants.smallFontSize
+            text: qsTr("Session settings")
+            visible: false
+        }
+        AppButton
+        {
+            id: settingsButton
+            height: parent.height-AppConstants.fieldMargin/2
+            width: height
+            color: AppConstants.buttonColor
+            anchors.right: parent.right
+            anchors.rightMargin: AppConstants.fieldMargin/2
+            anchors.verticalCenter: parent.verticalCenter
+            border.width: 1
+            border.color: "#898989"
+            Image {
+                id: settingsicon
+                source: "images/settings-icon.png"
+                height: parent.height
+                fillMode: Image.PreserveAspectFit
+                mipmap: true
+                antialiasing: true
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            onClicked: {
+                settingsPopup.visible = true
+            }
+        }
+    }
+
     Rectangle {
         id: viewContainer
-        anchors.top: parent.top
+        anchors.top: settingsContainer.bottom
         anchors.bottom: connectButton.top
         // only BlueZ platform has address type selection
         // connectionHandler.requiresAddressType ? addressTypeButton.top : searchButton.top
-        anchors.topMargin: AppConstants.fieldMargin + messageHeight
+        anchors.topMargin: AppConstants.fieldMargin/4
         anchors.bottomMargin: AppConstants.fieldMargin
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width - AppConstants.fieldMargin*2
         color: AppConstants.viewColor
         radius: AppConstants.buttonRadius
+
+
 
 
         Text {
@@ -77,8 +132,8 @@ AppPage {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             color: AppConstants.textColor
-            font.pixelSize: AppConstants.mediumFontSize
-            text: qsTr("FOUND DEVICES")
+            font.pixelSize: AppConstants.smallFontSize
+            text: qsTr("Discovered Devices")
 
             BottomLine {
                 height: 1;
@@ -153,47 +208,47 @@ AppPage {
         }
     }
 
-        AppButton {
-            id: connectButton
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: searchButton.top
-            anchors.bottomMargin: AppConstants.fieldMargin*0.5
-            width: viewContainer.width
-            height: AppConstants.fieldHeight
-            visible: true //connectionHandler.requiresAddressType // only required on BlueZ
-            state: "disconnected"
-            onClicked:
+    AppButton {
+        id: connectButton
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: searchButton.top
+        anchors.bottomMargin: AppConstants.fieldMargin*0.5
+        width: viewContainer.width
+        height: AppConstants.fieldHeight
+        visible: true //connectionHandler.requiresAddressType // only required on BlueZ
+        state: "disconnected"
+        onClicked:
+        {
+            if (state === "disconnected")
             {
-                if (state === "disconnected")
-                {
-                    state = "connected"
-                    deviceFinder.connectToSelectedDevices();
-                    view.setCurrentIndex(1);
-                }
-                else
-                {
-                    state = "disconnected"
-                    // handle termination gracefully
-                }
+                state = "connected"
+                deviceFinder.connectToSelectedDevices();
+                view.setCurrentIndex(1);
             }
-            states: [
-                State {
-                    name: "disconnected"
-                    PropertyChanges { target: addressTypeText; text: qsTr("CONNECT") }
-                },
-                State {
-                    name: "connected"
-                    PropertyChanges { target: addressTypeText; text: qsTr("TERMINATE") }
-                }
-            ]
-
-            Text {
-                id: addressTypeText
-                anchors.centerIn: parent
-                font.pixelSize: AppConstants.tinyFontSize
-                color: AppConstants.textColor
+            else
+            {
+                state = "disconnected"
+                // handle termination gracefully
             }
         }
+        states: [
+            State {
+                name: "disconnected"
+                PropertyChanges { target: addressTypeText; text: qsTr("CONNECT") }
+            },
+            State {
+                name: "connected"
+                PropertyChanges { target: addressTypeText; text: qsTr("TERMINATE") }
+            }
+        ]
+
+        Text {
+            id: addressTypeText
+            anchors.centerIn: parent
+            font.pixelSize: AppConstants.tinyFontSize
+            color: AppConstants.textColor
+        }
+    }
 
     AppButton {
         id: searchButton

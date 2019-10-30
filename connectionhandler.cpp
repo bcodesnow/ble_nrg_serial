@@ -9,16 +9,12 @@ ConnectionHandler::ConnectionHandler(QObject *parent) : QObject(parent)
     connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged,
             this, &ConnectionHandler::hostModeChanged);
 
-    qDebug()<<"Fetching Adapter List";
-
-
     m_adapterList = QBluetoothLocalDevice::allDevices(); // todo android us old way
     if ( m_adapterList.size() != 0 )
     {
-        qDebug()<<m_adapterList.at(0).address();
-        qDebug()<<m_adapterList.at(0).name();
-        qDebug()<<"Adapter List Size: "<< m_adapterList.size();
+        qDebug()<<"Bluetooth Adapters found:"<< m_adapterList.size();
     }
+    else qDebug()<<"Bluetooth Adapters: using default";
 }
 
 bool ConnectionHandler::alive() const

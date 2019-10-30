@@ -17,5 +17,6 @@
         <file>qml/SwipePages.qml</file>
         <file>qml/Graphs.qml</file>
         <file>qml/ProgressPopup.qml</file>
+        <file>qml/MultiPopup.qml</file>
     </qresource>
 </RCC>

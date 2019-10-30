@@ -58,6 +58,7 @@ Item {
     property bool appIsReady: false
     property bool splashIsReady: false
 
+
     property bool ready: appIsReady && splashIsReady
     onReadyChanged: if (ready) readyToGo();
 

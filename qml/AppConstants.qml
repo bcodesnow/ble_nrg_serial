@@ -28,8 +28,8 @@ Item {
     property real mediumFontSize: hugeFontSize * 0.7
     property real bigFontSize: hugeFontSize * 0.8
     property real largeFontSize: hugeFontSize * 0.9
-    property real hugeFontSize: (wWidth + wHeight) * 0.03
-    property real giganticFontSize: (wWidth + wHeight) * 0.04
+    property real hugeFontSize: (wHeight) * 0.05
+    property real giganticFontSize: (wHeight) * 0.06
 
     // Some other values
     property real fieldHeight: wHeight * 0.08

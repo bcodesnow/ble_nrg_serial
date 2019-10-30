@@ -8,5 +8,17 @@
         <file>qml/images/lock_toopen_w.png</file>
         <file>qml/images/lock_opened_w.png</file>
         <file>qml/images/lock_not_w.png</file>
+        <file>qml/images/wearable.png</file>
+        <file>qml/images/stationary.png</file>
+        <file>qml/images/bluetooth-icon.png</file>
+        <file>qml/images/catch-icon.png</file>
+        <file>qml/images/graph-icon.png</file>
+        <file>qml/images/devil.png</file>
+        <file>qml/images/devil_full.png</file>
+        <file>qml/images/flames_big.png</file>
+        <file>qml/images/flames_small.png</file>
+        <file>qml/images/settings-icon.png</file>
+        <file>qml/images/btadapter-icon.png</file>
+        <file>qml/images/bt.png</file>
     </qresource>
 </RCC>

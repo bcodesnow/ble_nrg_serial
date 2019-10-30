@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 
     QmlListAdapter* ladapter = new QmlListAdapter();
     TerminalToQmlB term;
-    term.setActive (false); // true
+    term.setActive (true); // true
 
     LogFileHandler* log_file_handler = new LogFileHandler();
     log_file_handler->set_aut_incr(false);
@@ -57,11 +57,11 @@ int main(int argc, char *argv[])
 //    connection_handler.initBtAdapters(leftAdapter, rightAdapter);
 
     DeviceFinder device_finder(ladapter, &connection_handler, time_sync_handler,catch_controller,log_file_handler);
-    qDebug()<<"MainThread"<<QThread::currentThreadId();
+    qDebug()<<"MainThread ID"<<QThread::currentThreadId();
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
     LinuxTerminalInterface lti;
-    lti.password("Kurvajo1"); // TODO ADD A DIALOG FOR THIS IF QOS_LINUX AND !QOS ANDROID... the property only exists in the class Linux Terminal Inteface
+    lti.password("Kurvajo1"); // TODO ADD A DIALOG FOR THIS IF QOS_LINUX AND !QOS ANDROID... the property only exists in the class Linux Terminal Interface
 
     lti.executeCmdWithSudo("echo 6 > /sys/kernel/debug/bluetooth/hci0/conn_min_interval");
     lti.executeCmdWithSudo("echo 9 > /sys/kernel/debug/bluetooth/hci0/conn_max_interval");
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
 //    ts.setRefToDevHandlerArr(device_handler);
 
-    //NetworkManager ntwMngr(&log_file_handler);
+    NetworkManager ntwMngr;
 
     QQmlApplicationEngine engine;
     qRegisterMetaType<DeviceInfo::DeviceType>("DeviceType");
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     ///
 //    qmlRegisterType<QmlListAdapter>("QmlListAdapterCpp",1,0,"QmlListAdapterCpp");
 ////
-    //engine.rootContext()->setContextProperty("terminalToQml", &term);
+    engine.rootContext()->setContextProperty("terminalToQml", &term);
     engine.rootContext()->setContextProperty("connectionHandler", &connection_handler);
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);
     engine.rootContext()->setContextProperty("catchController", catch_controller);
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("fileHandler", log_file_handler);
 
-    //engine.rootContext()->setContextProperty("networkManager", &ntwMngr);
+    engine.rootContext()->setContextProperty("networkManager", &ntwMngr);
 
     QQuickStyle::setStyle("Material");
 
