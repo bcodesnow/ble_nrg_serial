@@ -239,6 +239,7 @@ Popup {
                         console.log("Catch: downloading")
                         catchController.startDownloadFromAllDevices()
                         fileHandler.sendCatchSuccessFromQML(true)
+                        multiPopup.visible = false
                         //                        if (usingSDonDevice)
                         //                            deviceFinder.sendConfirmationToBothDevices(1);
                         //                        fileHandler.sendCatchSuccessFromQML(true);
@@ -266,6 +267,7 @@ Popup {
                         console.log("Drop: downloading")
                         catchController.startDownloadFromAllDevices()
                         fileHandler.sendCatchSuccessFromQML(false)
+                        multiPopup.visible = false
                     }
                     Text {
                         anchors.centerIn: parent
