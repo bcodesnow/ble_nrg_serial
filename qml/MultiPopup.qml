@@ -11,10 +11,8 @@ Popup {
     anchors.centerIn: parent
     closePolicy: Popup.NoAutoClose
     focus: visible
-    // modal: (popupType == type_SATAN)
     dim: modal
     padding: 0.0
-    // visible: false
     clip: true
     width:
         switch(popupType) {
@@ -48,25 +46,13 @@ Popup {
     property string subtitle: "Sub Title"
     property int currentProgress: 100
     property bool indeterminate: false
-    property double maxOpacity: 0.90//0.93
+    property double maxOpacity: 0.90
 
     readonly property int type_progress: 1
     readonly property int type_catch: 2
     readonly property int type_adapter: 3
     readonly property int type_session: 4
-    //    readonly property int type_upload: 5
     readonly property int type_SATAN: 666
-
-    signal popupRejected
-    signal popupAccepted
-
-    onPopupAccepted: {
-        visible = false
-    }
-
-    onPopupRejected: {
-        visible = false
-    }
 
     enter: Transition {
         NumberAnimation { property: "opacity"; from: 0.0; to: maxOpacity; duration: 500}
@@ -74,7 +60,6 @@ Popup {
     exit: Transition {
         NumberAnimation { property: "opacity"; from: maxOpacity; to: 0.0; duration: 500}
     }
-    // Either a Loader...
     Loader {
         anchors.fill: parent
         sourceComponent:
@@ -91,23 +76,16 @@ Popup {
             case type_session:
                 sessionPopup
                 break;
-                //            case type_upload:
-                //                uploadPopup
-                //                break;
             case type_SATAN:
                 satanPopup
                 break;
             }
     }
-    // ... or create Objects out of Components, example:
-    //            Component.onCompleted: {
-    //                progressPopup.createObject(multiPopup)
-    //            }
 
     Component {
         id: progressPopup
         Rectangle {
-            color: Qt.lighter( AppConstants.backgroundColor )//Qt.darker("white")
+            color: Qt.lighter( AppConstants.backgroundColor )
             opacity: maxOpacity
             radius: AppConstants.buttonRadius*2
             ColumnLayout {
@@ -240,9 +218,6 @@ Popup {
                         catchController.startDownloadFromAllDevices()
                         fileHandler.sendCatchSuccessFromQML(true)
                         multiPopup.visible = false
-                        //                        if (usingSDonDevice)
-                        //                            deviceFinder.sendConfirmationToBothDevices(1);
-                        //                        fileHandler.sendCatchSuccessFromQML(true);
                     }
                     Text {
                         anchors.centerIn: parent
@@ -257,7 +232,6 @@ Popup {
                     Layout.preferredHeight: AppConstants.fieldHeight
                     Layout.preferredWidth: parent.width*(4/5)
                     Layout.alignment: Qt.AlignCenter
-                    //  enabled: parent.catchConfirmationNeeded
                     blinkingColor: AppConstants.errorColor
                     pressedColor: AppConstants.errorColor
                     border.color: AppConstants.errorColor
@@ -282,7 +256,6 @@ Popup {
                     Layout.preferredHeight: dropButton.height*2/3
                     Layout.preferredWidth: dropButton.width*2/3
                     Layout.alignment: Qt.AlignCenter
-                    //  enabled: parent.catchConfirmationNeeded
                     blinkingColor: AppConstants.textColor
                     pressedColor: AppConstants.textColor
                     border.color: AppConstants.textColor
@@ -290,9 +263,7 @@ Popup {
                     onClicked:
                     {
                         console.log("Flop: sending stop")
-                        catchController.sendStopToAllDevices()
-                        //  popupFlop()
-                        // todo
+                        catchController.sendStopToAllDevices() // is this right?
                         multiPopup.visible = false
                     }
                     Text {
@@ -310,7 +281,7 @@ Popup {
     Component {
         id: adapterPopup
         Rectangle {
-            color: Qt.lighter( AppConstants.backgroundColor )//Qt.darker("white")
+            color: Qt.lighter( AppConstants.backgroundColor )
             opacity: maxOpacity
             radius: AppConstants.buttonRadius*2
             ColumnLayout {
@@ -355,23 +326,9 @@ Popup {
                             font.pixelSize: AppConstants.mediumFontSize
                             // font.bold: true
                             text: qsTr("Close")
-                            color:  AppConstants.textColor // : AppConstants.disabledTextColor
+                            color:  AppConstants.textColor
                         }
                     }
-                    //                    AppButton {
-                    //                        Layout.preferredHeight: AppConstants.fieldHeight
-                    //                        Layout.preferredWidth: multiPopup.width*(1/3)
-                    //                        pressedColor: AppConstants.infoColor
-                    //                        onClicked: {
-                    //                            popupAccepted()
-                    //                        }
-                    //                        Text {
-                    //                            anchors.centerIn: parent
-                    //                            font.pixelSize: AppConstants.mediumFontSize
-                    //                            text: qsTr("Apply")
-                    //                            color:  AppConstants.textColor // : AppConstants.disabledTextColor
-                    //                        }
-                    //                    }
                 } // !RowLayout
             } // !ColumnLayout
         } // !Rectangle
@@ -383,19 +340,21 @@ Popup {
         id: sessionPopup
         Rectangle {
             id: sessionPopupRoot
-            color: Qt.lighter( AppConstants.backgroundColor )//Qt.darker("white")
+            color: Qt.lighter( AppConstants.backgroundColor )
             opacity: maxOpacity
             radius: AppConstants.buttonRadius*2
             property bool timesync: false
             property int textPadding: parent.width/20
             property int rowHeight: AppConstants.smallFontSize*2
             onVisibleChanged: {
-                // assuming that the dialog only  will be / can be  opened,
-                // if all device connections (wearable) are successfull.
                 if (visible && !timesync)
                 {
-                    console.log("Start time sync")
-                    //  catchController.startTimesyncAllDevices()
+                    if (catchController.devicesConnected) // prevent crash
+                    {
+                        console.log("Starting time sync")
+                        catchController.startTimesyncAllDevices()
+                    }
+                    else console.log("Time sync failed")
                 }
             }
 
@@ -403,6 +362,7 @@ Popup {
                 target: catchController
                 onTimeSyncOfAllDevFinished:
                 {
+                    console.log("Time sync success")
                     timesync = success
                 }
             }
@@ -430,7 +390,7 @@ Popup {
                 RowLayout {
                     id: nameSetting
                     Text {
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.preferredWidth: multiPopup.width/2
                         text: "Username:"
                         font.pixelSize: AppConstants.smallFontSize
@@ -440,6 +400,7 @@ Popup {
                         rightPadding: sessionPopupRoot.textPadding
                     }
                     Rectangle {
+                        id: usernameInputContainer
                         Layout.preferredHeight: AppConstants.bigFontSize
                         Layout.preferredWidth: multiPopup.width * 2/5
                         Layout.alignment: Qt.AlignLeft
@@ -448,10 +409,13 @@ Popup {
                         border.color: "black"
                         radius: 5
                         TextInput {
+                            id: usernameInput
                             font.pixelSize: AppConstants.smallFontSize
                             color: AppConstants.textColor
                             height: parent.height
                             width: parent.width
+                            validator: RegExpValidator { regExp: /[a-zA-Z,]{1,12}/ }
+                            focus: true
                             leftPadding: 5
                             rightPadding: 5
                         }
@@ -460,7 +424,7 @@ Popup {
                 RowLayout {
                     id: catchModeSetting
                     Text {
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.preferredWidth: multiPopup.width/2
                         text: "Catch mode:"
                         font.pixelSize: AppConstants.smallFontSize
@@ -471,7 +435,7 @@ Popup {
                     }
                     ComboBox {
                         id: catchModeCB
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize*2
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.preferredWidth: multiPopup.width * 2/5
                         Layout.alignment: Qt.AlignLeft
                         font.pixelSize: AppConstants.smallTinyFontSize
@@ -491,7 +455,7 @@ Popup {
                 RowLayout {
                     id: sdCardSetting
                     Text {
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.preferredWidth: multiPopup.width/2
                         text: "SD enabled:"
                         font.pixelSize: AppConstants.smallFontSize
@@ -507,20 +471,20 @@ Popup {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.left: parent.left
                             width: height*1.1
-                            height: AppConstants.mediumFontSize //* screenRatio
+                            height: AppConstants.mediumFontSize
                             anchors.leftMargin: parent.width-parent.implicitWidth-15
                         }
                     }
                     Switch {
                         id: sdSwitch
                         checked: false
-                        Layout.preferredWidth: 50//multiPopup.width * 2/5
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredWidth: 50
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.alignment: Qt.AlignCenter
                         indicator:
                             Rectangle {
                             implicitHeight: AppConstants.smallTinyFontSize
-                            implicitWidth: 60//multiPopup.width / 8
+                            implicitWidth: 60
                             anchors.left: parent.left
                             anchors.leftMargin: AppConstants.tinyFontSize/2
                             x: sdSwitch.leftPadding
@@ -539,15 +503,15 @@ Popup {
                             }
                         }
                         onCheckedChanged: {
-                            // todo: enable / disable sd card
-
+                            if (checked && btSwitch.checked)
+                                btSwitch.checked = false
                         }
                     }
                 } // !RowLayout
                 RowLayout {
                     id: bluetoothSetting
                     Text {
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.preferredWidth: multiPopup.width/2
                         text: "BT enabled:"
                         font.pixelSize: AppConstants.smallFontSize
@@ -562,22 +526,21 @@ Popup {
                             source: "images/bt.png"
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.left: parent.left
-//                            width: height
-                            height: AppConstants.mediumFontSize //* screenRatio
+                            height: AppConstants.mediumFontSize
                             anchors.leftMargin: parent.width-parent.implicitWidth-width/2
-                             fillMode: Image.PreserveAspectFit
+                            fillMode: Image.PreserveAspectFit
                         }
                     }
                     Switch {
                         id: btSwitch
                         checked: false
-                        Layout.preferredWidth: 50//multiPopup.width * 2/5
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredWidth: 50
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.alignment: Qt.AlignCenter
                         indicator:
                             Rectangle {
                             implicitHeight: AppConstants.smallTinyFontSize
-                            implicitWidth: 60//multiPopup.width / 8
+                            implicitWidth: 60
                             anchors.left: parent.left
                             anchors.leftMargin: AppConstants.tinyFontSize/2
                             x: btSwitch.leftPadding
@@ -596,8 +559,8 @@ Popup {
                             }
                         }
                         onCheckedChanged: {
-                            // todo: enable / disable bt
-
+                            if (checked && sdSwitch.checked)
+                                sdSwitch.checked = false
                         }
                     }
                 } // !RowLayout
@@ -605,7 +568,7 @@ Popup {
                     id: timeSyncIndicator
 
                     Text {
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.preferredWidth: multiPopup.width/2
                         text: "Synchronization:"
                         font.pixelSize: AppConstants.smallFontSize
@@ -615,7 +578,7 @@ Popup {
                         rightPadding: sessionPopupRoot.textPadding
                     }
                     Rectangle {
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.preferredWidth: multiPopup.width/2
                         color: "transparent"
                         StatusIndicator {
@@ -630,7 +593,7 @@ Popup {
                 RowLayout {
                     id: gdriveSetting
                     Text {
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.preferredWidth: multiPopup.width/2
                         text: "Google Drive:"
                         font.pixelSize: AppConstants.smallFontSize
@@ -646,7 +609,7 @@ Popup {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.left: parent.left
                             width: height*1.1
-                            height: AppConstants.mediumFontSize //* screenRatio
+                            height: AppConstants.mediumFontSize
                             anchors.leftMargin: parent.width-parent.implicitWidth-15
                         }
                     }
@@ -654,22 +617,13 @@ Popup {
                     Switch {
                         id: googleSwitch
                         checked: false
-                        //                        text: switch (networkManager.authorized) {
-                        //                              case 1: "disabled"
-                        //                                  break;
-                        //                              case 2: "enabled"
-                        //                                  break;
-                        //                              case 3: "error"
-                        //                                  break;
-                        //                              }
-                        //                        enabled: (text == "disabled" || text == "enabled" || text == "error" )
-                        Layout.preferredWidth: 50//multiPopup.width * 2/5
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight//AppConstants.smallFontSize
+                        Layout.preferredWidth: 50
+                        Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.alignment: Qt.AlignCenter
                         indicator:
                             Rectangle {
                             implicitHeight: AppConstants.smallTinyFontSize
-                            implicitWidth: 60//multiPopup.width / 8
+                            implicitWidth: 60
                             anchors.left: parent.left
                             anchors.leftMargin: AppConstants.tinyFontSize/2
                             x: googleSwitch.leftPadding
@@ -687,20 +641,12 @@ Popup {
                                 property int maxX: parent.width - width
                             }
                         }
-                        //                        contentItem:
-                        //                            Text {
-                        //                            text: googleSwitch.text
-                        //                           // color: "transparent"
-                        //                             color: googleSwitch.checked ? AppConstants.infoColor : AppConstants.textColor
-                        //                            font.pixelSize: AppConstants.tinyFontSize
-                        //                            topPadding: googleSwitch.indicator.height + font.pixelSize + 10
-                        //                        }
-
                         onCheckedChanged: {
                             // todo:
                             if (checked && networkManager.authorized === 1)
                             {
                                 // authorize to google and enable auto data upload
+                                networkManager.synchronizeData();
                                 console.log("Enabled google")
                             }
                             else if (!checked && networkManager.authorized === 2)
@@ -727,48 +673,42 @@ Popup {
                                     else if (networkManager.authorized === 3)
                                         "images/lock_not_w.png"
                             width: height
-                            height: AppConstants.mediumFontSize// parent.height
+                            height: AppConstants.mediumFontSize
                         }
                     }
-
-
-
                 } // !RowLayout
-
-
-
-                RowLayout {
+                AppButton {
                     Layout.alignment: Qt.AlignCenter
-                    AppButton {
-                        Layout.preferredHeight: AppConstants.fieldHeight
-                        Layout.preferredWidth: multiPopup.width*(1/3)
-                        pressedColor: AppConstants.errorColor
-                        onClicked: {
-                            popupRejected()
-                        }
-                        Text {
-                            anchors.centerIn: parent
-                            font.pixelSize: AppConstants.mediumFontSize
-                            text: qsTr("Cancel")
-                            color:  AppConstants.textColor // : AppConstants.disabledTextColor
-                        }
-                    }
-                    AppButton {
-                        Layout.preferredHeight: AppConstants.fieldHeight
-                        Layout.preferredWidth: multiPopup.width*(1/3)
-                        pressedColor: AppConstants.infoColor
-                        onClicked: {
-                            popupAccepted()
-                        }
-                        Text {
-                            anchors.centerIn: parent
-                            font.pixelSize: AppConstants.mediumFontSize
-                            text: qsTr("Apply")
-                            color:  AppConstants.textColor // : AppConstants.disabledTextColor
-                        }
-                    }
+                    Layout.preferredHeight: AppConstants.fieldHeight
+                    Layout.preferredWidth: multiPopup.width*(2/3)
+                    pressedColor: AppConstants.infoColor
+                    enabled: buttonEnabled
+                    onClicked: {
+                        console.log("Start a lot of shit ")
+                        // 1. create folder name by usernameInput.text
 
-                } // !RowLayout
+                        // 2. add catch mode to log file by catchModeCB.currentText
+
+                        // 3. enable sd
+
+                        // 4. enable bluetooth data transfer
+
+                        // 5. can only be accepted when time sync success
+
+                        // 6. can only be accepted when google is off, or is authorized to google
+
+                    }
+                    property bool buttonEnabled:
+                        usernameInput.acceptableInput && sessionPopupRoot.timesync &&
+                        (sdSwitch.checked || btSwitch.checked) &&
+                        (googleSwitch.enabled && networkManager.authorized === 2 || !googleSwitch.enabled)
+                    Text {
+                        anchors.centerIn: parent
+                        font.pixelSize: AppConstants.mediumFontSize
+                        text: qsTr("Apply")
+                        color: parent.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+                    }
+                }
             } // !ColumnLayout
         } // !Rectangle
     } // !Component
@@ -905,7 +845,7 @@ Popup {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        multiPopup.visible = false
+                        popupAccepted()
                     }
                 }
             }

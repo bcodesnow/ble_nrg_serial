@@ -55,7 +55,7 @@ private:
     /// todo: is it final like this? group?
     ///
 
-    bool m_devicesConnected;
+    bool m_devicesConnected = false;
 
 public:
     CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHandler* ts_handler,
@@ -90,6 +90,8 @@ signals:
     void mainStateOfAllDevicesChanged(QString devicesMainState);
 
     void devicesAliveChanged(bool devicesAlive);
+
+    void showHappyFlowers();
 
 public slots:
 

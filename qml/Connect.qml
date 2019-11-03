@@ -54,10 +54,11 @@ import QtQuick 2.9
 AppPage {
     errorMessage: deviceFinder.error
     infoMessage: deviceFinder.info
+//    signal invokeSessionPopup
 
     MultiPopup {
-        //
-        id: settingsPopup
+        // just for testing, delete later
+        id: settingsPopupTest
         popupType: 4
     }
 
@@ -104,7 +105,7 @@ AppPage {
                 anchors.verticalCenter: parent.verticalCenter
             }
             onClicked: {
-                settingsPopup.visible = true
+                settingsPopupTest.visible = true
             }
         }
     }
@@ -224,6 +225,7 @@ AppPage {
                 state = "connected"
                 deviceFinder.connectToSelectedDevices();
                 view.setCurrentIndex(1);
+               // invokeSessionPopup();
             }
             else
             {

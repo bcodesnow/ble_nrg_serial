@@ -1,15 +1,15 @@
 import QtQuick 2.9
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
+import QtGraphicalEffects 1.0
 import "."
 //import com.dev 1.0
 import Shared 1.0
 
 AppPage {
     id: pageRoot
-
-    property string devicesMainState : catchController.devicesMainState // why for the bloody hell is property alias not working for this case?!
-    property bool buttonsEnabled : catchController.devicesConnected
+    property string devicesMainState : catchController.devicesMainState // why for the bloody hell is property alias not working for this case?! -> It can only refer to an object, or the property of an object, that is within the scope of the type within which the alias is declared.
+    property bool devicesConnected : catchController.devicesConnected
 
     Connections {
         target: catchController
@@ -28,13 +28,11 @@ AppPage {
             case "Ready to Trigger":
                 break;
             }
-
-            pageRoot.devicesMainState = devicesMainState // this should not be needed .. but it does not work without it!!
+            pageRoot.devicesMainState = devicesMainState // this should not be needed .. but it does not work without it!! -> why member AND signal with transfer value? i think qml fucks you in the ass right there
         }
         onAllWearablesAreWaitingForDownload:
         {
             catchConfirmPopup.visible = true
-            downloadButton.enabled = true
         }
     }
 
@@ -46,13 +44,13 @@ AppPage {
     Rectangle {
         id: viewContainer
         anchors.top: parent.top
-        anchors.bottom: testButt.top
         // only BlueZ platform has address type selection
         // connectionHandler.requiresAddressType ? addressTypeButton.top : searchButton.top
         anchors.topMargin: AppConstants.fieldMargin + messageHeight
         anchors.bottomMargin: AppConstants.fieldMargin
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width - AppConstants.fieldMargin*2
+        height: parent.height*2/3
         color: AppConstants.viewColor
         radius: AppConstants.buttonRadius
         Text {
@@ -66,7 +64,7 @@ AppPage {
             // text: qsTr(catchController.devicesMainState)
             text:
                 if ( catchController.devicesMainState === "" )
-                    "Connecting devices..."
+                    "Connect devices..."
                 else qsTr(catchController.devicesMainState)
             BottomLine {
                 height: 1;
@@ -90,18 +88,6 @@ AppPage {
                 height:AppConstants.fieldHeight * 1.2
                 width: parent.width
                 color:  index % 2 === 0 ? AppConstants.delegate1Color : AppConstants.delegate2Color
-                //                {
-                //                    if ( model.deviceFlags & 0x01)
-                //                    {
-                //                        AppConstants.infoColor
-                //                    }
-                //                    else
-                //                    {
-                //                        index % 2 === 0 ? AppConstants.delegate1Color : AppConstants.delegate2Color
-
-                //                    }
-                //                }
-
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
@@ -174,70 +160,112 @@ AppPage {
     }
 
 
-    AppButton {
-        id: testButt
+    Rectangle {
+        id: buttonBar
+        anchors.top: viewContainer.bottom
+        anchors.topMargin: AppConstants.fieldMargin/2
+        height: AppConstants.fieldHeight
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: AppConstants.fieldMargin
-        width: viewContainer.width / 3
-        height: AppConstants.fieldHeight
-        enabled: true//downloadEnabled
-        onClicked: {
-            //            devices.update()
-            //            console.log("asd"+            ladApter.rowCount());
-            //            ladApter.rst_model()
-            catchController.startDownloadFromAllDevices();
-            downloadEnabled = false
-            //catchController.startTimesyncAllDevices();
-        }
+        width: parent.width - AppConstants.fieldMargin*2
+        color: "transparent"
+        radius: AppConstants.buttonRadius
+        border.color: Qt.darker(AppConstants.textColor,3)
+        border.width: 1
+        AppButton {
+            id: downloadBtn
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.margins: 4
+            width: parent.width/2 - anchors.margins*1.5//7.5
+            height: parent.height * 0.9
+            enabled: pageRoot.devicesConnected//downloadEnabled
+            onClicked: {
+                //            devices.update()
+                //            console.log("asd"+            ladApter.rowCount());
+                //            ladApter.rst_model()
+                catchController.startDownloadFromAllDevices();
 
-        Text {
-            anchors.centerIn: parent
-            font.pixelSize: AppConstants.smallTinyFontSize
-            text: qsTr("DOWNLOAD")
-            color: testButt.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
-        }
-    }
-    AppButton {
-        id: startStopButton
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: AppConstants.fieldMargin
-        width: viewContainer.width / 3
-        height: AppConstants.fieldHeight
-        enabled: pageRoot.buttonsEnabled
-//        state: "Start"//(catchController.devicesMainState === "Stopped") ? "Start" : "Stop"
-        onClicked: {
-            console.log("state"+state)
-            if (state === "Start")
-                catchController.sendStartToAllDevices();
-            else
-                catchController.sendStopToAllDevices();
-        }
-
-        Text {
-            id: startStopButtonText
-            anchors.centerIn: parent
-            font.pixelSize: AppConstants.smallFontSize
-
-        }
-        onStateChanged: console.log("!!! State Changed"+state)
-
-        states: [
-            State {
-            name: "Start"; when: (pageRoot.devicesMainState == "Stopped")
-            PropertyChanges { target: startStopButtonText; text: "START" }
-            PropertyChanges { target: startStopButtonText; color: "green" }
-            },
-            State {
-            name: "Stop"; when: (pageRoot.devicesMainState != "Stopped")
-            PropertyChanges { target: startStopButtonText; text: "STOP" }
-            PropertyChanges { target: startStopButtonText; color: "red" }
-
+                //catchController.startTimesyncAllDevices();
             }
-        ]
-    }
 
+            Image {
+                id: downloadImg
+                source: "images/download-icon.png"
+                anchors.centerIn: parent
+                height: parent.height * 0.85
+                fillMode: Image.PreserveAspectFit
+                mipmap: true
+                antialiasing: true
+                ColorOverlay {
+                    anchors.fill: parent
+                    source: parent
+                    color: pageRoot.devicesConnected ? "transparent" : "gray"
+                }
+            }
+
+        }
+        AppButton {
+            id: startStopBtn
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.margins: 4
+            width: parent.width/2 - anchors.margins*1.5
+            height: parent.height * 0.9
+            enabled: pageRoot.devicesConnected
+            onClicked: {
+                console.log("state"+state)
+                if (state === "Start")
+                {
+                    rotRight.start()
+                    catchController.sendStartToAllDevices();
+                }
+                else
+                {
+                    rotLeft.start()
+                    catchController.sendStopToAllDevices();
+                }
+            }
+
+            Image {
+                id: startStopImg
+                source: "images/playbtn.png"
+                anchors.centerIn: parent
+                height: parent.height * 0.85
+                fillMode: Image.PreserveAspectFit
+                mipmap: true
+                antialiasing: true
+                ColorOverlay {
+                    anchors.fill: parent
+                    source: parent
+                    color: pageRoot.devicesConnected ? "transparent" : "gray"
+                }
+            }
+
+            NumberAnimation { id: rotLeft; target: startStopImg; property: "rotation"; from: 360; to: 0; duration: 2000; running: false }
+            NumberAnimation { id: rotRight; target: startStopImg; property: "rotation"; from: 0; to: 360; duration: 2000; running: false }
+
+            onStateChanged: {
+                console.log("qml state changed to: "+state)
+            }
+
+            states: [
+                State {
+                    name: "Start"; when: (pageRoot.devicesMainState == "Stopped" || pageRoot.devicesMainState == "")
+                    PropertyChanges {
+                        target: startStopImg; source: "images/playbtn.png"
+                    }
+                },
+                State {
+                    name: "Stop"; when: (pageRoot.devicesMainState != "Stopped" && pageRoot.devicesMainState != "")
+                    PropertyChanges {
+                        target: startStopImg; source: "images/stopbtn.png"
+                    }
+                }
+            ]
+        }
+    }
 }
 
 //DualAppPage {

@@ -19,8 +19,6 @@ Item {
         currentProgress: 50
     }
 
-
-
     MultiPopup {
         // todo: fill list with adapters from c++ (only showing, no interaction)
         id: btAdapterPopup
@@ -28,9 +26,20 @@ Item {
     }
 
     MultiPopup {
-        // todo: show when something goes wrong in c++
+        id: sessionSettingsPopup
+        popupType: 4
+    }
+
+    MultiPopup {
         id: showTheDevilPopup
         popupType: 666
+        Connections {
+            target: catchController
+            onShowHappyFlowers: {
+                showTheDevilPopup.visible = true
+                console.log("Woops...")
+            }
+        }
     }
 
     function init()
@@ -82,6 +91,12 @@ Item {
             id: secondPage
             Catch {
                 id: catchPage
+                onDevicesConnectedChanged: {
+                    if (devicesConnected)
+                    {
+                        sessionSettingsPopup.visible = true
+                    }
+                }
             }
         }
         Item {

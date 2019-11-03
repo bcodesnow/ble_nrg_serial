@@ -20,5 +20,8 @@
         <file>qml/images/settings-icon.png</file>
         <file>qml/images/btadapter-icon.png</file>
         <file>qml/images/bt.png</file>
+        <file>qml/images/download-icon.png</file>
+        <file>qml/images/playbtn.png</file>
+        <file>qml/images/stopbtn.png</file>
     </qresource>
 </RCC>
