@@ -305,7 +305,56 @@ void LogFileHandler::sendCatchSuccessFromQML(bool wasItCatched)
     add_to_log_fil_slot("Info","Username",m_curr_user);
     add_to_log_fil_slot("Info","CatchMode",m_curr_catch_mode);
     add_to_log_fil_slot("Info","SUCCESS", wasItCatched ? "CATCH" : "DROP");
+
+
     // fin_log_fil(QString("Info"));
+}
+
+void LogFileHandler::rst_idx()
+{
+    m_curr_idx = 0;
+        emit idxChanged(m_curr_idx);
+}
+
+quint64 LogFileHandler::get_idx()
+{
+    return m_curr_idx;
+}
+
+void LogFileHandler::set_aut_incr(bool onoff)
+{
+    m_is_aut_incr_en = onoff;
+}
+
+void LogFileHandler::incr_idx()
+{
+    m_curr_idx++;
+        emit idxChanged(m_curr_idx);
+}
+
+void LogFileHandler::set_last_type(uint8_t type)
+{
+    m_last_type = type;
+}
+
+void LogFileHandler::set_fil_src_cnt(quint16 cunt)
+{
+    m_fil_src_cnt = cunt;
+}
+
+void LogFileHandler::set_curr_dir(QString username)
+{
+    m_curr_user = username;
+        m_curr_dir = "catch_data_WD_"+username+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
+        QDir dir;
+        dir.setPath(m_homeLocation);
+        dir.mkdir(m_curr_dir);
+        qDebug()<<"Created folder"<<m_curr_dir<<"in"<<m_homeLocation;
+}
+
+void LogFileHandler::set_curr_catch_mode(QString mode)
+{
+    m_curr_catch_mode = mode;
 }
 
 //void LogFileHandler::confirm (QString ident, bool bcatch)
@@ -324,4 +373,9 @@ void LogFileHandler::fin_log_fil(QString ident)
 QString LogFileHandler::getHomeLocation()
 {
     return m_homeLocation;
+}
+
+QVariant LogFileHandler::getPaintDataList()
+{
+    return QVariant::fromValue(m_paintDataList);
 }

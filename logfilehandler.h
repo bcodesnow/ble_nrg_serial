@@ -5,7 +5,9 @@
 #include <QDataStream>
 #include <QVariant>
 #include <QDateTime>
+#include <QDir>
 #include <QDebug>
+
 
 #include <graphpainter.h>
 #include <paintdata.h>
@@ -66,51 +68,19 @@ public:
     QString getHomeLocation();
 
 
-    QVariant getPaintDataList()
-    {
-        return QVariant::fromValue(m_paintDataList);
-    }
+    QVariant getPaintDataList();
 
     Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
     //Q_INVOKABLE void confirm (QString ident, bool bcatch);
 
-    Q_INVOKABLE void rst_idx()
-    {
-        m_curr_idx = 0;
-        emit idxChanged(m_curr_idx);
-    }
-    quint64 get_idx()
-    {
-        return m_curr_idx;
-    }
-    void set_aut_incr(bool onoff)
-    {
-        m_is_aut_incr_en = onoff;
-    }
-    Q_INVOKABLE void incr_idx()
-    {
-        m_curr_idx++;
-        emit idxChanged(m_curr_idx);
-    }
-    void set_last_type (uint8_t type)
-    {
-        m_last_type = type;
-    }
-    void set_fil_src_cnt (quint16 cunt)
-    {
-        m_fil_src_cnt = cunt;
-    }
-    Q_INVOKABLE void set_curr_dir (QString username)
-    {
-        m_curr_user = username;
-        m_curr_dir = "catch_data_WD_"+username+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
-      //  add_to_log_fil_slot("Info","Username",username);
-    }
-    Q_INVOKABLE void set_curr_catch_mode (QString mode)
-    {
-        m_curr_catch_mode = mode;
-      //  add_to_log_fil_slot("Info","CatchMode",mode);
-    }
+    Q_INVOKABLE void rst_idx();
+    quint64 get_idx();
+    void set_aut_incr(bool onoff);
+    Q_INVOKABLE void incr_idx();
+    void set_last_type (uint8_t type);
+    void set_fil_src_cnt (quint16 cunt);
+    Q_INVOKABLE void set_curr_dir (QString username);
+    Q_INVOKABLE void set_curr_catch_mode (QString mode);
 
 
 public slots:
