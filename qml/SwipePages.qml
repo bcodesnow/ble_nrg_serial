@@ -9,39 +9,6 @@ Item {
 
     Behavior on opacity { NumberAnimation { duration: 500 } }
 
-    MultiPopup {
-        // todo: connect this to c++ ble TX/RX
-        id: downloadProgressPopup
-        popupType: 1
-        maintitle: "Wearable Data Download"
-        subtitle: "Downloading sensor data ..."
-        indeterminate: false
-        currentProgress: 50
-    }
-
-    MultiPopup {
-        // todo: fill list with adapters from c++ (only showing, no interaction)
-        id: btAdapterPopup
-        popupType: 3
-    }
-
-    MultiPopup {
-        id: sessionSettingsPopup
-        popupType: 4
-    }
-
-    MultiPopup {
-        id: showTheDevilPopup
-        popupType: 666
-        Connections {
-            target: catchController
-            onShowHappyFlowers: {
-                showTheDevilPopup.visible = true
-                console.log("Woops...")
-            }
-        }
-    }
-
     function init()
     {
         opacity = 1.0
@@ -63,6 +30,28 @@ Item {
             }
             break;
         default: break;
+        }
+    }
+
+    // global popups
+    MultiPopup {
+        // todo: fill list with adapters from c++ (only showing, no interaction)
+        id: btAdapterPopup
+        popupType: 3
+    }
+    MultiPopup {
+        id: sessionSettingsPopup
+        popupType: 4
+    }
+    MultiPopup {
+        id: showTheDevilPopup
+        popupType: 666
+        Connections {
+            target: catchController
+            onInvokeQmlError: {
+                showTheDevilPopup.visible = true
+                console.log("Woops...")
+            }
         }
     }
 

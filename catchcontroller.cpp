@@ -32,11 +32,11 @@ void CatchController::onTimeSyncTimerExpired()
     {
     case SETTING_CONN_MODE:
         qDebug()<<"TS-> Setting Conn Mode failed!"; // show the devil..
-        emit showHappyFlowers();
+        emit invokeQmlError();
         break;
     case SYNCING:
         qDebug()<<"TS-> Sync failed!"; // show the devil..
-        emit showHappyFlowers();
+        emit invokeQmlError();
         break;
     }
     m_timesyncTimer.stop();
@@ -47,13 +47,13 @@ void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
     if ( success )
     {
         qDebug()<<"CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
-        emit showHappyFlowers();
+        emit invokeQmlError();
         m_device_list->at(id)->deviceIsTimeSynced = true;
     }
     else
     {
         qDebug()<<"ERROR! CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
-        emit showHappyFlowers();
+        emit invokeQmlError();
     }
     if ( (id + 1) < m_device_list->size() )
     {   // this relies on it that we started with 0 and continue upwards..
@@ -128,7 +128,7 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
     {
         remaining_c = 0; // TODO -> thia is stupid...
         qDebug()<<"CC -->  FAILED! onConnUpdateOfDevXfinished"<<success<<id; // show the devil if its till unknown to the audience..
-        emit showHappyFlowers();
+        emit invokeQmlError();
     }
     remaining_c--;
     if ( !remaining_c )
@@ -227,7 +227,7 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
     if ( !success )
     {
         qDebug()<<"CC-DL --> onDownloadOfDeviceXfinished"<<success<<id; // show the devil they must have a look at it...
-        emit showHappyFlowers();
+        emit invokeQmlError();
     }
     // todo -> modify this to differentiate by dev type, wearable or not../add this property to deviceinfo in deviceinterface
     if ( (id + 1) < m_device_list->size() )
@@ -339,12 +339,12 @@ void CatchController::onDownloadTimerExpired()
     {
     case SETTING_CONN_MODE:
         qDebug()<<"CC-DL-> Setting Conn Mode failed!"; // show the devil..
-        emit showHappyFlowers();
+        emit invokeQmlError();
         break;
     case DOWNLOADING:
         qDebug()<<"CC-DL-> "
                   "Download failed!"; // show the devil..
-        emit showHappyFlowers();
+        emit invokeQmlError();
         break;
     }
     m_downloadTimer.stop();

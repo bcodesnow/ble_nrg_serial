@@ -21,14 +21,18 @@ class NetworkManager : public QObject
     Q_OBJECT
     Q_PROPERTY(int authorized READ getAuthorized NOTIFY authorizedChanged)
 private:
+    LogFileHandler* m_logfile_handler_ptr;
+
     QNetworkReply *m_reply;
     QNetworkRequest m_request;
     uint8_t m_authorized = AUTH_UNAUTH;
+    bool m_uploadEnabled = false;
 
     QOAuth2AuthorizationCodeFlow *m_googleAuth;
     QNetworkAccessManager *m_networkHandler;
     QOAuthHttpServerReplyHandler *m_oauthReplyHandler;
 
+    QString m_curr_folder_id;
     QUrl m_authUri;
     QString m_clientId;
     QUrl m_tokenUri;
@@ -59,7 +63,6 @@ private:
     // note: get folder id by using createDriveFolder(name, uploadUrl)
     const QString development_drive_folder_id = "1eQo3DNOG7VmZtEwDnoX9migoQitqyIXL";
 
-
     const char* googleDriveFile =
             "https://www.googleapis.com/drive/v2/files/%1";
     const char* googleDriveChanges =
@@ -72,217 +75,31 @@ private:
     const char* googlekOAuthScope =
             "https://www.googleapis.com/auth/drive.readonly";
 
-
-
-
 public:
-    explicit NetworkManager()
-    {
-        m_googleAuth = new QOAuth2AuthorizationCodeFlow();
-        m_networkHandler = new QNetworkAccessManager();
+    NetworkManager(LogFileHandler* logfile_handler, QObject *parent = nullptr);
+
+    Q_INVOKABLE void authorize();
 
 
-        m_googleAuth->setScope(drive_file_scope);
-
-        connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser,
-                &QDesktopServices::openUrl);
-        connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::granted,
-                this, &NetworkManager::authorizationGranted);
-        connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::statusChanged,
-                this, &NetworkManager::stateChanged);
-
-        connect( m_networkHandler, &QNetworkAccessManager::authenticationRequired,
-                 this, &NetworkManager::authenticationReply);
-        connect( m_networkHandler, SIGNAL(finished(QNetworkReply *)),
-                 this, SLOT(replyFinished(QNetworkReply *)));
-
-    }
+    void createDriveFolder(QString name, QString uploadUrl);
 
 
+//    void uploadLocalFileHttpMulti(QString localPath, QString uploadUrl,
+//                             QByteArray contentType, QString folderID);
 
-    void authorize()
-    {
-        if (m_authorized == AUTH_SUCCESS)
-            return;
-        // parse json file
-        QFile jsonReader;
-
-        QString fn = ":/common/client_secret_914794792674-hkarun0t7ccuchh8om2n0a160rnsnbce.apps.googleusercontent.com.json";
-        QByteArray val;
-        // jsonReader.setFileName(m_refToFileHandlerNM->getHomeLocation()+fn);
-        jsonReader.setFileName(fn);
-        qDebug()<<"NetworkManager: json file location:"<<QStandardPaths::HomeLocation+fn;
-        if ( !jsonReader.open(QIODevice::ReadOnly | QIODevice::Text) )
-        {
-            qDebug()<<"NetworkManager: can't read json file";
-            jsonReader.close();
-            return;
-        }
-        val = jsonReader.readAll();
-        jsonReader.close();
-        QJsonDocument jsonDoc = QJsonDocument::fromJson(val);
-        QJsonObject jsonObj = jsonDoc.object();
-        const QJsonObject webSettingsObj = jsonObj["web"].toObject();
-        m_authUri = QUrl(webSettingsObj["auth_uri"].toString());
-        m_clientId = QString(webSettingsObj["client_id"].toString());
-        m_tokenUri = QUrl(webSettingsObj["token_uri"].toString());
-        m_clientSecret = QString(webSettingsObj["client_secret"].toString());
-
-        const QJsonArray redirectUris = webSettingsObj["redirect_uris"].toArray();
-        const QUrl redirectUri = QUrl(redirectUris[0].toString()); // Get the first URI
-        m_port = static_cast<quint16>(redirectUri.port()); // Get the port
-
-        // config google
-        qDebug()<<"NetworkManager: authorization URI:"<<m_authUri;
-        m_googleAuth->setAuthorizationUrl(m_authUri);
-        qDebug()<<"NetworkManager: client ID:"<<m_clientId;
-        m_googleAuth->setClientIdentifier(m_clientId);
-        qDebug()<<"NetworkManager: token URI:"<<m_tokenUri;
-        m_googleAuth->setAccessTokenUrl(m_tokenUri);
-        qDebug()<<"NetworkManager: client secret:"<<m_clientSecret;
-        m_googleAuth->setClientIdentifierSharedKey(m_clientSecret);
-        qDebug()<<"NetworkManager: port:"<<m_port;
-
-        m_oauthReplyHandler = new QOAuthHttpServerReplyHandler(m_port);
-
-        connect(m_oauthReplyHandler, &QOAuthHttpServerReplyHandler::replyDataReceived,
-                this, &NetworkManager::printNetworkReply);
-
-        connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::granted,
-                m_oauthReplyHandler, &QOAuthHttpServerReplyHandler::close);
-
-        m_googleAuth->setReplyHandler(m_oauthReplyHandler);
+    void uploadDataHttpMulti(QByteArray data, QString name, QString uploadUrl,
+                             QByteArray contentType, QString folderID = "");
 
 
-        // start authorization
-        qDebug()<<"NetworkManager: starting authorization";
-        m_googleAuth->grant();
-    }
-
-
-    void createDriveFolder(QString name, QString uploadUrl)
-    {
-        uploadUrl.append(drive_type_multi);
-        QNetworkRequest request(uploadUrl);
-
-
-        const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
-
-        QHttpPart MetadataPart;
-        MetadataPart.setRawHeader("Content-Type", "application/json; charset=UTF-8");
-        QString body = "{\n" + tr("\"name\": \"%1\",\n").arg(name)
-                + tr("\"mimeType\": \"%1\"\n").arg("application/vnd.google-apps.folder") + tr("}");
-        MetadataPart.setBody(body.toUtf8());
-
-        QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::RelatedType);
-        multiPart->setBoundary("bound2");
-        multiPart->append(MetadataPart);
-
-        request.setRawHeader("Content-Type","multipart/related; boundary=bound2");
-        request.setRawHeader("Authorization", bearer.toUtf8());
-
-        qDebug()<<"Sending request:"<<request.rawHeaderList();
-
-        QNetworkReply *reply = m_networkHandler->post(request,multiPart);
-
-        connect(reply, &QNetworkReply::finished, [reply](){
-            qDebug()<<"Folder upload request. Error? " << (reply->error() != QNetworkReply::NoError);
-            qDebug() << reply->readAll();
-        });
-    }
-
-
-    void uploadFileHttpMulti(QString localPath, QString uploadUrl,
-                             QByteArray contentType, QString folderID = "")
-    {
-        uploadUrl.append(drive_type_multi);
-        QNetworkRequest request(uploadUrl);
-
-        const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
-
-        QFile *file = new QFile(localPath); // ":/qml/images/splash.png"
-        if ( !file->open(QIODevice::ReadOnly) )
-        {
-            qDebug()<<"cannot open file";
-            return;
-        }
-        QByteArray rawData = file->readAll();
-        file->close();
-
-        QHttpPart MetadataPart;
-        MetadataPart.setRawHeader("Content-Type", "application/json; charset=UTF-8");
-        QString body;
-        if (folderID.isEmpty()) {
-            body = "{\n" + tr("\"name\": \"%1\"\n").arg("myUpload") + tr("}");
-        }
-        else {
-            body = "{\n" + tr("\"name\": \"%1\",\n").arg("myUpload")
-                    + tr("\"parents\": [\"%1\"]\n").arg(folderID)
-                    + tr("}");
-        }
-
-        MetadataPart.setBody(body.toUtf8());
-
-        QHttpPart MediaPart;
-        MediaPart.setRawHeader("Content-Type", contentType);
-        MediaPart.setBody(rawData);
-
-        QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::RelatedType);
-        multiPart->setBoundary("bound1");
-        multiPart->append(MetadataPart);
-        multiPart->append(MediaPart);
-
-        request.setRawHeader("Content-Type","multipart/related; boundary=bound1");
-        request.setRawHeader("Authorization", bearer.toUtf8());
-
-        qDebug()<<"Sending request:"<<request.rawHeaderList();
-
-        QNetworkReply *reply = m_networkHandler->post(request,multiPart);
-
-        connect(reply, &QNetworkReply::finished, [reply](){
-            qDebug()<<"File upload request. Error? " << (reply->error() != QNetworkReply::NoError);
-            qDebug() << reply->readAll();
-        });
-    }
-
-    void readFilesHttp (QString downloadUrl, QString folderID = "")
-    {
-        QNetworkRequest request(downloadUrl);
-        const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
-        QNetworkReply *reply = m_networkHandler->get(request);
-
-        connect(reply, &QNetworkReply::finished, [reply](){
-            qDebug()<<"Read filenames request. Error? " << (reply->error() != QNetworkReply::NoError);
-            qDebug() << reply->readAll();
-        });
-    }
+    void readFilesHttp (QString downloadUrl, QString folderID = "");
 
 
 
 
-    uint8_t getAuthorized()
-    {
-        return m_authorized;
-    }
+    uint8_t getAuthorized();
 
 
-    Q_INVOKABLE void synchronizeData()
-    {
-        authorize();
-
-        if (m_authorized == AUTH_SUCCESS)
-        {
-            // todo: qsettings and synchronization with drive-appdata
-            qDebug()<<"sending TEST request";
-            // uploadFileHttpMulti(":/qml/images/splash.png", drive_file_upload_url, "image/png", development_drive_folder_id);
-            //  uploadFileHttpMulti("/home/boergi/catch_balint/0_LEFT_AUDIO", drive_file_url, "text/plain");
-            // createDriveFolder("Catch_Data_Wearable",drive_file_upload_url);
-            readFilesHttp(file_metadata_url); // drives_url file_metadata_url
-        }
-
-
-
-    }
+    Q_INVOKABLE void synchronizeData();
 
     //    void setRefToFileHandlerNM(LogFileHandler *reference)
     //    {
@@ -294,80 +111,19 @@ signals:
 
 public slots:
 
-    void uploadFinished(QNetworkReply *reply)
-    {
-        qDebug()<<"NetworkManager: Upload finished"<<reply->url();
-    }
+    void uploadFinished(QNetworkReply *reply);
 
-    void stateChanged(QAbstractOAuth::Status state)
-    {
-        if (state == QAbstractOAuth::Status::Granted) {
-            qDebug()<<"State changed to: Granted";
-            m_authorized = AUTH_SUCCESS;
-            emit authorizedChanged();
-            if (m_oauthReplyHandler->isListening())
-            {
-                qDebug()<<"NetworkManager: Reply handler listening to port"<<m_oauthReplyHandler->port();
-                qDebug()<<"NetworkManager: callback path:"<<m_oauthReplyHandler->callbackPath();
-                qDebug()<<"NetworkManager: callback text:"<<m_oauthReplyHandler->callbackText();
-                qDebug()<<"NetworkManager: callback:"<<m_oauthReplyHandler->callback();
-            }
-            else {
-                qDebug()<<"NetworkManager: Reply Handler not listening";
-            }
-        }
-        else if (state == QAbstractOAuth::Status::NotAuthenticated) {
-            qDebug()<<"State changed to: NotAuthenticated";
-            m_authorized = AUTH_FAILURE;
-            emit authorizedChanged();
-        }
-        else if (state == QAbstractOAuth::Status::TemporaryCredentialsReceived) {
-            qDebug()<<"State changed to: TemporaryCredentialsReceived";
-        }
-        else if (state == QAbstractOAuth::Status::RefreshingToken)
-        {
-            qDebug()<<"State changed to: RefreshingToken";
-        }
-    }
+    void stateChanged(QAbstractOAuth::Status state);
 
-    void authorizationGranted() {
-        qDebug() << "Authorization granted. Expires at:" << m_googleAuth->expirationAt().toString();
-    }
+    void authorizationGranted();
 
-    void replyFinished(QNetworkReply *reply)
-    {
-        qDebug()<<"Network reply arrived. Error? " << (reply->error() != QNetworkReply::NoError);
-        qDebug() << reply->readAll();
-    }
+    void replyFinished(QNetworkReply *reply);
 
-    void printNetworkReply (const QByteArray reply)
-    {
-        qDebug()<<"OAuth reply arrived.";
-        qDebug()<<reply;
+    void printNetworkReply (const QByteArray reply);
 
-        const QByteArray accesstoken = "access_token";
-        const QByteArray expiresin = "expires_in";
+    void authenticationReply(QNetworkReply *reply, QAuthenticator *authenticator);
 
-        QList<QByteArray> replyList = reply.split('\"');
-        m_currentAccessToken = replyList.at(3);
-
-        QByteArray tmpExpiration;
-        tmpExpiration = replyList.at(6);
-        tmpExpiration = tmpExpiration.simplified();
-        tmpExpiration = tmpExpiration.left(tmpExpiration.size()-1);
-        tmpExpiration = tmpExpiration.right(tmpExpiration.size()-1);
-
-        m_accessExpirationIn = tmpExpiration.toInt();
-
-    }
-
-    void authenticationReply(QNetworkReply *reply, QAuthenticator *authenticator) {
-        qDebug()<<"Authentication reply arrived. Error? " << (reply->error() != QNetworkReply::NoError);
-        qDebug()<<"auth user:"<<authenticator->user();
-        qDebug()<<"auth password:"<<authenticator->password();
-        qDebug()<<"auth realm:"<<authenticator->realm();
-        qDebug()<<reply->readAll();
-    }
+    void uploadCatchData(QString name, QByteArray data);
 
 
 };

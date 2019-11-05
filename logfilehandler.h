@@ -4,10 +4,14 @@
 #include <QObject>
 #include <QDataStream>
 #include <QVariant>
+#include <QDateTime>
 #include <QDebug>
 
 #include <graphpainter.h>
 #include <paintdata.h>
+
+#define SEP_CHAR " : "
+#define LINE_END ";\n"
 
 class LogFileHandler : public QObject
 {
@@ -24,10 +28,10 @@ private:
     quint8  m_last_type; // and last type make out when it increments.
     QString* m_log_fil_buf;
     QString m_homeLocation;
+    QString m_curr_dir;
+    QString m_curr_catch_mode;
     bool m_is_aut_incr_en;
-
     QList<QObject*> m_paintDataList;
-
 
 signals:
     void lastPathChanged(void);
@@ -36,7 +40,7 @@ signals:
     void paintDataListChanged();
     void qmltestsignal(int idx);
     void newPaintData(QObject *dataptr, QString dataname);
-    // void newPaintData(QObject *dataptr, int type, char side);
+    void invokeGoogleUpload(QString filename, QByteArray data);
 
 public:
     explicit LogFileHandler(QObject *parent = nullptr);
@@ -55,7 +59,6 @@ public:
     QByteArray loadFromFile(QString ident, uint8_t type);
 
 
-    void start_new_log_fil();
 
     void fin_log_fil(QString ident);
 
@@ -68,10 +71,7 @@ public:
     }
 
     Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
-    Q_INVOKABLE void confirm (QString ident, bool bcatch)
-    {
-        add_to_log_fil_slot(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
-    }
+    //Q_INVOKABLE void confirm (QString ident, bool bcatch);
 
     Q_INVOKABLE void rst_idx()
     {
@@ -99,6 +99,15 @@ public:
     {
         m_fil_src_cnt = cunt;
     }
+    Q_INVOKABLE void set_curr_dir (QString username)
+    {
+        m_curr_dir = "catch_data_WD_"+username+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
+    }
+    Q_INVOKABLE void set_curr_catch_mode (QString mode)
+    {
+        m_curr_catch_mode = mode;
+    }
+
 
 public slots:
     void add_to_log_fil_slot(QString ident, QString key, QString val);

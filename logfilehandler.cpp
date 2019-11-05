@@ -207,116 +207,93 @@ void LogFileHandler::demo(QString ident, int type)
 
 void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, quint8 type, quint16 wp)
 {
-    qDebug()<<" write_type_to_file received the data, but is empty..."<<data->size();
-//    QVector<QVariant> dataVec(QVector<QVariant>(0));
-//    static quint64 counter;
+    qDebug()<<"write_type_to_file_slot"<<data->size();
 
-//    // get target location
-//    QString tmpLocation = m_homeLocation;
-//    qDebug()<<"File Path: "<<tmpLocation;
-//    QString idx_str = tr("%1_%2_").arg(m_curr_idx).arg(ident);
-//    tmpLocation.append( idx_str );
-//    bool shitty = false;
+    QVector<QVariant> dataVec(QVector<QVariant>(0));
+    static quint64 counter;
 
-//    // sort by writepointer
-//    if (type != TYPE_LOG)
-//    {
-//        sortArray(data, wp);
-//        //        tgt_idx = typeToIndex(type);
-//        //        if (tgt_idx < 0) {
-//        //            qDebug()<<"Painter index fucked up";
-//        //        }
-//        //        if (ident == "RIGHT")
-//        //            tgt_idx = tgt_idx + TYPE_COUNT;
-//        //        qDebug()<<"New paint data at index:"<<tgt_idx;
-//    }
+    // get target location
+    QString tmpLocation = m_homeLocation+"/"+m_curr_dir+"/";
+    qDebug()<<"File Path: "<<tmpLocation;
+    QString idx_str = tr("%1_%2_").arg(m_curr_idx).arg(ident);
+    tmpLocation.append( idx_str );
 
-//    // Byte conversion
-//    switch (type)
-//    {
-//    case TYPE_AUD:
-//        dataVec = bytesToInt16(*data);
-//        tmpLocation.append( QString("AUDIO") );
-//        break;
-//    case TYPE_GYR:
-//        dataVec = bytesToInt16(data);
-//        tmpLocation.append( QString("GYR") );
-//        break;
-//    case TYPE_ACC:
-//        dataVec = bytesToInt16(data);
-//        tmpLocation.append( QString("ACC") );
-//        break;
-//    case TYPE_PRS:
-//        dataVec = bytesToFloat32(data);
-//        tmpLocation.append( QString("PRS") );
-//        break;
-//    case TYPE_MAG:
-//        dataVec = bytesToInt16(data);
-//        tmpLocation.append( QString("MAG") );
-//        break;
-//    case TYPE_LOG:
-//        Q_UNUSED(wp);
-//        tmpLocation.append( QString("LOG") );
-//        break;
-//    default:
-//        tmpLocation.append( QString("SOMEFILE") );
-//        shitty = true;
-//    }
+    // sort by writepointer
+    if (type != TYPE_LOG && !data->isEmpty())
+        sortArray(data, wp);
 
+    // Byte conversion
+    switch (type)
+    {
+    case TYPE_AUD:
+        dataVec = bytesToInt16(*data);
+        tmpLocation.append( QString("AUDIO") );
+        break;
+    case TYPE_GYR:
+        dataVec = bytesToInt16(*data);
+        tmpLocation.append( QString("GYR") );
+        break;
+    case TYPE_ACC:
+        dataVec = bytesToInt16(*data);
+        tmpLocation.append( QString("ACC") );
+        break;
+    case TYPE_PRS:
+        dataVec = bytesToFloat32(*data);
+        tmpLocation.append( QString("PRS") );
+        break;
+    case TYPE_MAG:
+        dataVec = bytesToInt16(*data);
+        tmpLocation.append( QString("MAG") );
+        break;
+    case TYPE_LOG:
+        tmpLocation.append( QString("LOG") );
+        break;
+    default:
+        tmpLocation.append( QString("SOMEFILE") );
+    }
 
-//    if (type != TYPE_LOG || type == !shitty)
-//    {
-//        // remove previous paint data
-//        for (int i=0;i<m_paintDataList.size();i++) {
-//            if (((PaintData*)m_paintDataList.at(i))->getType() == type &&
-//                    ((PaintData*)m_paintDataList.at(i))->getSide() == ident.at(0).toLatin1())
-//            {
-//                m_paintDataList.removeAt(i);
-//            }
-//        }
+    if (type != TYPE_LOG && !dataVec.isEmpty())
+    {
+        // remove previous paint data
+        for (int i=0;i<m_paintDataList.size();i++) {
+            if (((PaintData*)m_paintDataList.at(i))->getType() == type &&
+                    ((PaintData*)m_paintDataList.at(i))->getSide() == ident.at(0).toLatin1())
+            {
+                m_paintDataList.removeAt(i);
+            }
+        }
+        // add data to painters
+        m_paintDataList.append(new PaintData(type, ident.at(0).toLatin1(), dataVec));
+        emit paintDataListChanged();
+        for (int i=0;i<m_paintDataList.size();i++) {
+            emit newPaintData(m_paintDataList.at(i),((PaintData*)m_paintDataList.at(i))->getName());
+        }
+        // save as csv
+        // saveToCsv(tmpLocation, dataVec);
+    }
+    //    else {
+    // save as text
+    QFile file(tmpLocation);
+    qDebug()<<file.open(QIODevice::WriteOnly);
+    qDebug()<<file.write(*data);
+    file.close();
+    //    }
 
-//        // add data to painters
-//        m_paintDataList.append(new PaintData(type, ident.at(0).toLatin1(), dataVec));
-//        emit paintDataListChanged();
-//        for (int i=0;i<m_paintDataList.size();i++) {
-//            emit newPaintData(m_paintDataList.at(i),((PaintData*)m_paintDataList.at(i))->getName());
-//        }
-
-//        // save as csv
-//        saveToCsv(tmpLocation, dataVec);
-//    }
-//    else {
-//        // save as text
-//        QFile file(tmpLocation);
-//        qDebug()<<file.open(QIODevice::WriteOnly);
-//        qDebug()<<file.write(data);
-//        file.close();
-//        qDebug()<<"LOG FILE WRITTEN";
-//    }
-//    // increment file index
-//    if ( m_is_aut_incr_en )
-//    {
-//        if (type == m_last_type)
-//        {
-//            counter++;
-//            if ( counter % m_fil_src_cnt == 0)
-//            {
-//                m_curr_idx++;
-//                emit idxChanged(m_curr_idx);
-//            }
-//        }
-//    }
+    // increment file index
+    if ( m_is_aut_incr_en )
+    {
+        if (type == m_last_type)
+        {
+            counter++;
+            if ( counter % m_fil_src_cnt == 0)
+            {
+                m_curr_idx++;
+                emit idxChanged(m_curr_idx);
+            }
+        }
+    }
 }
 
-
-
-void LogFileHandler::start_new_log_fil()
-{
-
-}
-
-#define SEP_CHAR " : "
-#define LINE_END ";\n"
 void LogFileHandler::add_to_log_fil_slot(QString ident, QString key, QString val)
 {
     QString tmpString = ident + SEP_CHAR + key + SEP_CHAR + val + LINE_END;
@@ -325,9 +302,14 @@ void LogFileHandler::add_to_log_fil_slot(QString ident, QString key, QString val
 
 void LogFileHandler::sendCatchSuccessFromQML(bool wasItCatched)
 {
-    add_to_log_fil_slot("LR","SUCCESS", wasItCatched ? "CATCH" : "DROP");
-    fin_log_fil(QString("LR"));
+    add_to_log_fil_slot("Info","SUCCESS", wasItCatched ? "CATCH" : "DROP");
+    // fin_log_fil(QString("Info"));
 }
+
+//void LogFileHandler::confirm (QString ident, bool bcatch)
+//{
+//    add_to_log_fil_slot(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
+//}
 
 void LogFileHandler::fin_log_fil(QString ident)
 {

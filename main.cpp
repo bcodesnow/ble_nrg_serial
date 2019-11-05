@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
 //    ts.setRefToDevHandlerArr(device_handler);
 
-    NetworkManager ntwMngr;
+    NetworkManager* ntwMngr = new NetworkManager(log_file_handler);
 
     QQmlApplicationEngine engine;
     qRegisterMetaType<DeviceInfo::DeviceType>("DeviceType");
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("fileHandler", log_file_handler);
 
-    engine.rootContext()->setContextProperty("networkManager", &ntwMngr);
+    engine.rootContext()->setContextProperty("networkManager", ntwMngr);
 
     QQuickStyle::setStyle("Material");
 

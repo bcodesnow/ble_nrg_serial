@@ -25,7 +25,7 @@ Popup {
     height:
         switch(popupType) {
         case type_progress:
-            parent.height / 2
+            parent.height / 3
             break;
         case type_catch:
             parent.height / 2
@@ -53,6 +53,8 @@ Popup {
     readonly property int type_adapter: 3
     readonly property int type_session: 4
     readonly property int type_SATAN: 666
+
+    signal downloadConfirmed(bool catched)
 
     enter: Transition {
         NumberAnimation { property: "opacity"; from: 0.0; to: maxOpacity; duration: 500}
@@ -85,9 +87,52 @@ Popup {
     Component {
         id: progressPopup
         Rectangle {
+            id: progressPopupRoot
             color: Qt.lighter( AppConstants.backgroundColor )
             opacity: maxOpacity
             radius: AppConstants.buttonRadius*2
+
+            property double startTime
+            property int secondsElapsed
+            onVisibleChanged: {
+                if (visible)
+                {
+                    restartCounter()
+                    elapsedTimer.start()
+                }
+                else elapsedTimer.stop()
+            }
+
+            function restartCounter()  {
+                startTime = 0;
+            }
+            function timeChanged()  {
+                if(startTime===0)
+                {
+                    startTime = new Date().getTime();
+                }
+                var currentTime = new Date().getTime();
+                secondsElapsed = (currentTime-startTime)/1000;
+            }
+
+            Timer  {
+                id: elapsedTimer
+                interval: 1000;
+                running: false;
+                repeat: true;
+                triggeredOnStart: true
+                onTriggered: progressPopupRoot.timeChanged()
+            }
+
+            Connections {
+                target: catchController
+                onDownloadOfAllDevFinished: {
+                    console.log("download finished:",success)
+                    multiPopup.visible = false
+                    fileHandler.fin_log_fil("Info");
+                }
+            }
+
             ColumnLayout {
                 id: progressColumn
                 anchors.fill: parent
@@ -107,6 +152,17 @@ Popup {
                     Layout.preferredHeight: AppConstants.smallTinyFontSize*2
                     Layout.preferredWidth: parent.width
                     text: multiPopup.subtitle
+                    font.pixelSize: AppConstants.smallTinyFontSize
+                    color: AppConstants.textColor
+                    horizontalAlignment: TextEdit.AlignHCenter
+                    verticalAlignment: TextEdit.AlignVCenter
+                    readOnly: true
+                }
+                TextEdit {
+                    Layout.alignment: Qt.AlignCenter
+                    Layout.preferredHeight: AppConstants.smallTinyFontSize*2
+                    Layout.preferredWidth: parent.width
+                    text: "Time elapsed: "+progressPopupRoot.secondsElapsed+" s"
                     font.pixelSize: AppConstants.smallTinyFontSize
                     color: AppConstants.textColor
                     horizontalAlignment: TextEdit.AlignHCenter
@@ -187,9 +243,18 @@ Popup {
     Component {
         id: catchPopup
         Rectangle {
+            id: catchPopupRoot
             color: Qt.lighter( AppConstants.backgroundColor, 1.2 )//Qt.darker("white")
             opacity: maxOpacity
             radius: AppConstants.buttonRadius*2
+            // signal downloadConfirmed(bool catched)
+            //            onDownloadConfirmed: {
+            //                console.log("Ball catched:",catched)
+            //                catchController.startDownloadFromAllDevices()
+            //                fileHandler.confirm("Catch",catched)
+            //                multiPopup.visible = false
+            //                // show progressPopup
+            //            }
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 15
@@ -209,15 +274,15 @@ Popup {
                     Layout.preferredHeight: AppConstants.fieldHeight
                     Layout.preferredWidth: parent.width*(4/5)
                     Layout.alignment: Qt.AlignCenter
-                    //   enabled: parent.catchConfirmationNeeded
                     pressedColor: AppConstants.infoColor
                     border.color: AppConstants.infoColor
                     opacity: 0.9
                     onClicked: {
-                        console.log("Catch: downloading")
-                        catchController.startDownloadFromAllDevices()
-                        fileHandler.sendCatchSuccessFromQML(true)
-                        multiPopup.visible = false
+                        //                        catchController.startDownloadFromAllDevices()
+                        //                        // fileHandler.sendCatchSuccessFromQML(true)
+                        //                        fileHandler.confirm("Catch",true)
+                        //                        multiPopup.visible = false
+                        downloadConfirmed(true)
                     }
                     Text {
                         anchors.centerIn: parent
@@ -238,10 +303,11 @@ Popup {
                     opacity: 0.9
                     onClicked:
                     {
-                        console.log("Drop: downloading")
-                        catchController.startDownloadFromAllDevices()
-                        fileHandler.sendCatchSuccessFromQML(false)
-                        multiPopup.visible = false
+                        //                        catchController.startDownloadFromAllDevices()
+                        //                        // fileHandler.sendCatchSuccessFromQML(false)
+                        //                        fileHandler.confirm("Catch",false)
+                        //                        multiPopup.visible = false
+                        downloadConfirmed(false)
                     }
                     Text {
                         anchors.centerIn: parent
@@ -349,11 +415,9 @@ Popup {
             onVisibleChanged: {
                 if (visible && !timesync)
                 {
+                    console.log("Starting time sync")
                     if (catchController.devicesConnected) // prevent crash
-                    {
-                        console.log("Starting time sync")
                         catchController.startTimesyncAllDevices()
-                    }
                     else console.log("Time sync failed")
                 }
             }
@@ -362,7 +426,7 @@ Popup {
                 target: catchController
                 onTimeSyncOfAllDevFinished:
                 {
-                    console.log("Time sync success")
+                    console.log("Time sync success:",success)
                     timesync = success
                 }
             }
@@ -642,23 +706,11 @@ Popup {
                             }
                         }
                         onCheckedChanged: {
-                            // todo:
-                            if (checked && networkManager.authorized === 1)
+                            if (checked && networkManager.authorized != 2)
                             {
-                                // authorize to google and enable auto data upload
-                                networkManager.synchronizeData();
+                                // authorize to google
+                                networkManager.authorize();
                                 console.log("Enabled google")
-                            }
-                            else if (!checked && networkManager.authorized === 2)
-                            {
-                                // disable auto data upload
-                                // maybe unauthorize but not neccessary
-                                console.log("Disabled google")
-                            }
-                            else if (checked && networkManager.authorized === 3)
-                            {
-                                // reconnect after error
-                                console.log("Enabled google after error")
                             }
                         }
                         Image {
@@ -685,23 +737,18 @@ Popup {
                     enabled: buttonEnabled
                     onClicked: {
                         console.log("Start a lot of shit ")
-                        // 1. create folder name by usernameInput.text
-
-                        // 2. add catch mode to log file by catchModeCB.currentText
-
-                        // 3. enable sd
-
-                        // 4. enable bluetooth data transfer
-
-                        // 5. can only be accepted when time sync success
-
-                        // 6. can only be accepted when google is off, or is authorized to google
+                        catchController.setLoggingMedia(sdSwitch.checked,btSwitch.checked)
+                        fileHandler.set_curr_dir(usernameInput.text)
+                        fileHandler.set_curr_catch_mode(catchModeCB.currentText)
+                        googleSwitch.enabled
+                        // networkManager
 
                     }
                     property bool buttonEnabled:
                         usernameInput.acceptableInput && sessionPopupRoot.timesync &&
                         (sdSwitch.checked || btSwitch.checked) &&
                         (googleSwitch.enabled && networkManager.authorized === 2 || !googleSwitch.enabled)
+
                     Text {
                         anchors.centerIn: parent
                         font.pixelSize: AppConstants.mediumFontSize

@@ -91,7 +91,7 @@ signals:
 
     void devicesAliveChanged(bool devicesAlive);
 
-    void showHappyFlowers();
+    void invokeQmlError();
 
 public slots:
 
@@ -119,7 +119,7 @@ public slots:
 
     void onConnAliveOfDevXChanged(bool isItAlive, int idx);
 
-    void setLoggingMedia (bool toSd, bool sendOverBle); // QML, use this during startup dialog
+    void setLoggingMedia(bool toSd, bool sendOverBle); // QML, use this during startup dialog
 
 
 

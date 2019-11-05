@@ -74,7 +74,7 @@ void DeviceController::connectToPeripheral(QBluetoothDeviceInfo *device)
         connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceController::serviceScanDone);
         connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>
                 (&QLowEnergyController::error), this, [this](QLowEnergyController::Error error)
-                {Q_UNUSED(error) Q_UNUSED(this) qDebug()<<"Cannot connect to remote device.";});
+        {Q_UNUSED(error) Q_UNUSED(this) qDebug()<<"Cannot connect to remote device.";});
         connect(m_control, &QLowEnergyController::connected, this, &DeviceController::onConnected);
         connect(m_control, &QLowEnergyController::disconnected, this, &DeviceController::onDisconnected);
         connect(m_control, &QLowEnergyController::connectionUpdated, this, &DeviceController::onCentralConnectionUpdated);
@@ -597,15 +597,15 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
             break;
 
-//        case DATA_SAVED_TO_SD:
+            //        case DATA_SAVED_TO_SD:
 
-//            // todo!!!
-//            // confirm if it was a catch or drop -> we should give it to a class "above" -> catch controller
-//            qDebug()<<"Writing data to SD finished, waiting for confimation!";
-//            // send CMD_WRITE_CATCH_SUCC
-//            //setInfo("Waiting for Confirmation!");
+            //            // todo!!!
+            //            // confirm if it was a catch or drop -> we should give it to a class "above" -> catch controller
+            //            qDebug()<<"Writing data to SD finished, waiting for confimation!";
+            //            // send CMD_WRITE_CATCH_SUCC
+            //            //setInfo("Waiting for Confirmation!");
 
-//            break;
+            //            break;
 
         case ALIVE:
 
@@ -816,9 +816,14 @@ void DeviceController::onStartHugeChunkArrived()
     emit invokeAddToLogFile(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
     emit invokeAddToLogFile(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
     emit invokeAddToLogFile(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
+    emit invokeAddToLogFile(m_ident_str, QString("RecordingTime"), QString::number(2500)+" ms");
+    emit invokeAddToLogFile(m_ident_str, QString("freq_AUDIO"), QString::number(8000));
+    emit invokeAddToLogFile(m_ident_str, QString("freq_ACC"), QString::number(1000));
+    emit invokeAddToLogFile(m_ident_str, QString("freq_GYR"), QString::number(1000));
+    emit invokeAddToLogFile(m_ident_str, QString("freq_MAG"), QString::number(100));
+    emit invokeAddToLogFile(m_ident_str, QString("freq_PRS"), QString::number(100));
 
     bleUartSendCmdOk();
-
 }
 
 

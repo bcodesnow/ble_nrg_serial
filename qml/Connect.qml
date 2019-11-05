@@ -54,77 +54,19 @@ import QtQuick 2.9
 AppPage {
     errorMessage: deviceFinder.error
     infoMessage: deviceFinder.info
-//    signal invokeSessionPopup
-
-    MultiPopup {
-        // just for testing, delete later
-        id: settingsPopupTest
-        popupType: 4
-    }
-
-    Rectangle {
-        id: settingsContainer
-        anchors.top: parent.top
-        height: AppConstants.fieldHeight
-        anchors.topMargin: AppConstants.fieldMargin/2 + messageHeight
-        // anchors.bottomMargin: AppConstants.fieldMargin
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width - AppConstants.fieldMargin*2
-        color: Qt.darker(AppConstants.viewColor,1.15)
-        radius: AppConstants.buttonRadius
-        Text {
-            width: parent.width
-            height: AppConstants.fieldHeight
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-           // leftPadding: AppConstants.fieldMargin
-            color: AppConstants.textColor
-            font.pixelSize: AppConstants.smallFontSize
-            text: qsTr("Session settings")
-            visible: false
-        }
-        AppButton
-        {
-            id: settingsButton
-            height: parent.height-AppConstants.fieldMargin/2
-            width: height
-            color: AppConstants.buttonColor
-            anchors.right: parent.right
-            anchors.rightMargin: AppConstants.fieldMargin/2
-            anchors.verticalCenter: parent.verticalCenter
-            border.width: 1
-            border.color: "#898989"
-            Image {
-                id: settingsicon
-                source: "images/settings-icon.png"
-                height: parent.height
-                fillMode: Image.PreserveAspectFit
-                mipmap: true
-                antialiasing: true
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            onClicked: {
-                settingsPopupTest.visible = true
-            }
-        }
-    }
 
     Rectangle {
         id: viewContainer
-        anchors.top: settingsContainer.bottom
+        anchors.top: parent.top
         anchors.bottom: connectButton.top
         // only BlueZ platform has address type selection
         // connectionHandler.requiresAddressType ? addressTypeButton.top : searchButton.top
-        anchors.topMargin: AppConstants.fieldMargin/4
+        anchors.topMargin: AppConstants.fieldMargin + messageHeight
         anchors.bottomMargin: AppConstants.fieldMargin
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width - AppConstants.fieldMargin*2
         color: AppConstants.viewColor
         radius: AppConstants.buttonRadius
-
-
-
 
         Text {
             id: title
@@ -133,7 +75,7 @@ AppPage {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             color: AppConstants.textColor
-            font.pixelSize: AppConstants.smallFontSize
+            font.pixelSize: AppConstants.mediumFontSize
             text: qsTr("Discovered Devices")
 
             BottomLine {
@@ -225,7 +167,6 @@ AppPage {
                 state = "connected"
                 deviceFinder.connectToSelectedDevices();
                 view.setCurrentIndex(1);
-               // invokeSessionPopup();
             }
             else
             {
@@ -247,7 +188,7 @@ AppPage {
         Text {
             id: addressTypeText
             anchors.centerIn: parent
-            font.pixelSize: AppConstants.tinyFontSize
+            font.pixelSize: AppConstants.smallTinyFontSize
             color: AppConstants.textColor
         }
     }
@@ -266,7 +207,7 @@ AppPage {
 
         Text {
             anchors.centerIn: parent
-            font.pixelSize: AppConstants.tinyFontSize
+            font.pixelSize: AppConstants.smallTinyFontSize
             text: qsTr("START SEARCH")
             color: searchButton.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
         }

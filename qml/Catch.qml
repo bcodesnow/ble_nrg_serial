@@ -39,6 +39,21 @@ AppPage {
     MultiPopup {
         id: catchConfirmPopup
         popupType: 2
+        onDownloadConfirmed: {
+            console.log("Ball catched:",catched)
+            catchController.startDownloadFromAllDevices()
+            fileHandler.sendCatchSuccessFromQML(catched)
+            multiPopup.visible = false
+            downloadProgressPopup.visible = true
+        }
+    }
+    MultiPopup {
+        id: downloadProgressPopup
+        popupType: 1
+        maintitle: "Wearable Data Download"
+        subtitle: "Downloading sensor data ..."
+        indeterminate: true // false
+        currentProgress: 100 // 0
     }
 
     Rectangle {
@@ -159,59 +174,53 @@ AppPage {
         }
     }
 
-
     Rectangle {
         id: buttonBar
         anchors.top: viewContainer.bottom
         anchors.topMargin: AppConstants.fieldMargin/2
-        height: AppConstants.fieldHeight
+        height: AppConstants.fieldHeight*1.3
         anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width - AppConstants.fieldMargin*2
+        width: parent.width - AppConstants.fieldMargin*2 - AppConstants.fieldHeight*2
         color: "transparent"
         radius: AppConstants.buttonRadius
         border.color: Qt.darker(AppConstants.textColor,3)
         border.width: 1
-        AppButton {
-            id: downloadBtn
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.margins: 4
-            width: parent.width/2 - anchors.margins*1.5//7.5
-            height: parent.height * 0.9
-            enabled: pageRoot.devicesConnected//downloadEnabled
-            onClicked: {
-                //            devices.update()
-                //            console.log("asd"+            ladApter.rowCount());
-                //            ladApter.rst_model()
-                catchController.startDownloadFromAllDevices();
-
-                //catchController.startTimesyncAllDevices();
-            }
-
-            Image {
-                id: downloadImg
-                source: "images/download-icon.png"
-                anchors.centerIn: parent
-                height: parent.height * 0.85
-                fillMode: Image.PreserveAspectFit
-                mipmap: true
-                antialiasing: true
-                ColorOverlay {
-                    anchors.fill: parent
-                    source: parent
-                    color: pageRoot.devicesConnected ? "transparent" : "gray"
-                }
-            }
-
-        }
+        //        AppButton {
+        //            id: downloadBtn
+        //            anchors.right: parent.right
+        //            anchors.top: parent.top
+        //            anchors.bottom: parent.bottom
+        //            anchors.margins: 4
+        //            width: parent.width/2 - anchors.margins*1.5//7.5
+        //            height: parent.height * 0.9
+        //            enabled: pageRoot.devicesConnected//downloadEnabled
+        //            onClicked: {
+        //                catchController.startDownloadFromAllDevices();
+        //                console.log("remove me")
+        //            }
+        //            Image {
+        //                id: downloadImg
+        //                source: "images/download-icon.png"
+        //                anchors.centerIn: parent
+        //                height: parent.height * 0.85
+        //                fillMode: Image.PreserveAspectFit
+        //                mipmap: true
+        //                antialiasing: true
+        //                ColorOverlay {
+        //                    anchors.fill: parent
+        //                    source: parent
+        //                    color: pageRoot.devicesConnected ? "transparent" : "gray"
+        //                }
+        //            }
+        //        }
         AppButton {
             id: startStopBtn
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
+            anchors.centerIn: parent
+            //            anchors.left: parent.left
+            //            anchors.top: parent.top
+            //            anchors.bottom: parent.bottom
             anchors.margins: 4
-            width: parent.width/2 - anchors.margins*1.5
+            width: parent.width - anchors.margins*1.5
             height: parent.height * 0.9
             enabled: pageRoot.devicesConnected
             onClicked: {
