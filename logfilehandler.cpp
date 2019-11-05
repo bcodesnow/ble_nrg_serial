@@ -302,6 +302,8 @@ void LogFileHandler::add_to_log_fil_slot(QString ident, QString key, QString val
 
 void LogFileHandler::sendCatchSuccessFromQML(bool wasItCatched)
 {
+    add_to_log_fil_slot("Info","Username",m_curr_user);
+    add_to_log_fil_slot("Info","CatchMode",m_curr_catch_mode);
     add_to_log_fil_slot("Info","SUCCESS", wasItCatched ? "CATCH" : "DROP");
     // fin_log_fil(QString("Info"));
 }

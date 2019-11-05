@@ -7,6 +7,8 @@ Item {
     anchors.fill: parent
     opacity: 0.0
 
+    property bool devMode: false
+
     Behavior on opacity { NumberAnimation { duration: 500 } }
 
     function init()
@@ -34,11 +36,11 @@ Item {
     }
 
     // global popups
-    MultiPopup {
-        // todo: fill list with adapters from c++ (only showing, no interaction)
-        id: btAdapterPopup
-        popupType: 3
-    }
+    //    MultiPopup {
+    //        // todo: fill list with adapters from c++ (only showing, no interaction)
+    //        id: btAdapterPopup
+    //        popupType: 3
+    //    }
     MultiPopup {
         id: sessionSettingsPopup
         popupType: 4
@@ -70,6 +72,11 @@ Item {
         anchors.top: titleBar.bottom
         anchors.bottom: parent.bottom
 
+        onCurrentIndexChanged: {
+            if (currentIndex > 2 && !devMode)
+                decrementCurrentIndex()
+        }
+
         Item {
             id: connect
             Connect {
@@ -96,6 +103,7 @@ Item {
         }
         Item {
             id: terminalPage
+            visible: devMode
             Terminal {
                 id: terminalToQmlPage
             }
@@ -106,7 +114,21 @@ Item {
         id: titleBar
         visible: connectionHandler.alive
         currentIndex: view.currentIndex
-        onTitleClicked: view.setCurrentIndex(index);
+        property string combination
+        property string solution: "001122"
+        onTitleClicked:
+        {
+            view.setCurrentIndex(index);
+
+            combination += currentIndex
+            if (combination.length > solution.length)
+                combination = combination.substring(1)
+            if (combination == solution && !devMode)
+            {
+                devMode = true
+                console.log("Developer mode unlocked")
+            }
+        }
 
     }
 }

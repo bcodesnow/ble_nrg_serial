@@ -6,6 +6,7 @@ import QtGraphicalEffects 1.0
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Extras 1.4
 
+
 Popup {
     id: multiPopup
     anchors.centerIn: parent
@@ -412,6 +413,7 @@ Popup {
             property bool timesync: false
             property int textPadding: parent.width/20
             property int rowHeight: AppConstants.smallFontSize*2
+
             onVisibleChanged: {
                 if (visible && !timesync)
                 {
@@ -736,18 +738,20 @@ Popup {
                     pressedColor: AppConstants.infoColor
                     enabled: buttonEnabled
                     onClicked: {
-                        console.log("Start a lot of shit ")
+                        console.log("Accepted session settings")
                         catchController.setLoggingMedia(sdSwitch.checked,btSwitch.checked)
                         fileHandler.set_curr_dir(usernameInput.text)
                         fileHandler.set_curr_catch_mode(catchModeCB.currentText)
                         googleSwitch.enabled
                         // networkManager
 
+                        multiPopup.visible = false
                     }
                     property bool buttonEnabled:
-                        usernameInput.acceptableInput && sessionPopupRoot.timesync &&
-                        (sdSwitch.checked || btSwitch.checked) &&
-                        (googleSwitch.enabled && networkManager.authorized === 2 || !googleSwitch.enabled)
+                        (usernameInput.acceptableInput && sessionPopupRoot.timesync &&
+                         (sdSwitch.checked || btSwitch.checked) &&
+                         (googleSwitch.enabled && networkManager.authorized === 2 || !googleSwitch.enabled))
+                         || devMode
 
                     Text {
                         anchors.centerIn: parent

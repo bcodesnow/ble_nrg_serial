@@ -103,22 +103,6 @@ AppPage {
                 height:AppConstants.fieldHeight * 1.2
                 width: parent.width
                 color:  index % 2 === 0 ? AppConstants.delegate1Color : AppConstants.delegate2Color
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        console.log( model.item.deviceName )
-                        // devices.itemAtIndex(0).setName("Gecispina");
-                        //                        if (modelData.deviceFlags & 0x01)
-                        //                        {
-
-                        //                            deviceFinder.removeDeviceFromSelection(index);
-                        //                        }
-                        //                        else
-                        //                        {
-                        //                            deviceFinder.addDeviceToSelection(index);
-                        //                        }
-                    }
-                }
                 Text {
                     id: deviceIdentifierText
                     font.pixelSize: AppConstants.smallTinyFontSize

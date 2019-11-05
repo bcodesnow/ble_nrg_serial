@@ -28,6 +28,7 @@ private:
     quint8  m_last_type; // and last type make out when it increments.
     QString* m_log_fil_buf;
     QString m_homeLocation;
+    QString m_curr_user;
     QString m_curr_dir;
     QString m_curr_catch_mode;
     bool m_is_aut_incr_en;
@@ -101,11 +102,14 @@ public:
     }
     Q_INVOKABLE void set_curr_dir (QString username)
     {
+        m_curr_user = username;
         m_curr_dir = "catch_data_WD_"+username+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
+      //  add_to_log_fil_slot("Info","Username",username);
     }
     Q_INVOKABLE void set_curr_catch_mode (QString mode)
     {
         m_curr_catch_mode = mode;
+      //  add_to_log_fil_slot("Info","CatchMode",mode);
     }
 
 
