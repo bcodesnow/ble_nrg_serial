@@ -441,7 +441,7 @@ void CatchController::onNextRequestTimerExpired()
 /// \param catchSuccess
 ///
 
-void CatchController::onCatchSuccessConfirmed( int catchSuccess )
+void CatchController::onCatchSuccessConfirmed( quint8 catchSuccess )
 {
     m_lastCatchSuccess = catchSuccess;
     switch( catchSuccess )

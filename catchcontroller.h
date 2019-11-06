@@ -148,7 +148,7 @@ public slots:
 
     void onNextRequestTimerExpired();
 
-    void onCatchSuccessConfirmed(int catchSuccess);
+    void onCatchSuccessConfirmed(quint8 catchSuccess);
 };
 
 #endif // CATCHCONTROLLER_H

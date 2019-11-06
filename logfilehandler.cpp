@@ -304,7 +304,7 @@ void LogFileHandler::sendCatchSuccessFromQML(bool wasItCatched)
 {
     add_to_log_fil_slot("Info","Username",m_curr_user);
     add_to_log_fil_slot("Info","CatchMode",m_curr_catch_mode);
-    qDebug()<<"USE here the lastCatchSuccess from the Catch controller, make a qproperty daraus"
+    qDebug()<<"USE here the lastCatchSuccess from the Catch controller, make a qproperty daraus";
 
     //add_to_log_fil_slot("Info","SUCCESS", wasItCatched ? "CATCH" : "DROP");
 
@@ -315,7 +315,7 @@ void LogFileHandler::sendCatchSuccessFromQML(bool wasItCatched)
 void LogFileHandler::rst_idx()
 {
     m_curr_idx = 0;
-        emit idxChanged(m_curr_idx);
+    emit idxChanged(m_curr_idx);
 }
 
 quint64 LogFileHandler::get_idx()
@@ -331,7 +331,7 @@ void LogFileHandler::set_aut_incr(bool onoff)
 void LogFileHandler::incr_idx()
 {
     m_curr_idx++;
-        emit idxChanged(m_curr_idx);
+    emit idxChanged(m_curr_idx);
 }
 
 void LogFileHandler::set_last_type(uint8_t type)
@@ -346,12 +346,16 @@ void LogFileHandler::set_fil_src_cnt(quint16 cunt)
 
 void LogFileHandler::set_curr_dir(QString username)
 {
-    m_curr_user = username;
-        m_curr_dir = "catch_data_WD_"+username+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
-        QDir dir;
-        dir.setPath(m_homeLocation);
-        dir.mkdir(m_curr_dir);
-        qDebug()<<"Created folder"<<m_curr_dir<<"in"<<m_homeLocation;
+    if (username.isEmpty())
+        m_curr_user = "dev";
+    else
+        m_curr_user = username;
+
+    m_curr_dir = "catch_data_WD_"+m_curr_user+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
+    QDir dir;
+    dir.setPath(m_homeLocation);
+    dir.mkdir(m_curr_dir);
+    qDebug()<<"Created folder"<<m_curr_dir<<"in"<<m_homeLocation;
 }
 
 void LogFileHandler::set_curr_catch_mode(QString mode)

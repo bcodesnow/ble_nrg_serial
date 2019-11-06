@@ -43,11 +43,11 @@ Item {
     //    }
     MultiPopup {
         id: sessionSettingsPopup
-        popupType: 4
+        currentPopupType: MultiPopupType.type_session
     }
     MultiPopup {
         id: showTheDevilPopup
-        popupType: 666
+        currentPopupType: MultiPopupType.type_satan
         Connections {
             target: catchController
             onInvokeQmlError: {

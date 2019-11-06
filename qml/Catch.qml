@@ -38,19 +38,18 @@ AppPage {
 
     MultiPopup {
         id: catchConfirmPopup
-        popupType: MultiPopupType.type_catch
-        onDownloadConfirmed: {
-            // returned from popup .. it does not confirm any download.. tha naming is incorrect, we are receiving catchsuccess from gui, but its not sure that we will download..
-            console.log("Ball catched:",catched)
-            catchController.onCatchSuccessConfirmed( catched )
-            //fileHandler.sendCatchSuccessFromQML(catched)
+        currentPopupType: MultiPopupType.type_catch
+        onPopupConfirmed: {
+            console.log("Ball catched:",index)
+            catchController.onCatchSuccessConfirmed( index )
             multiPopup.visible = false
-            downloadProgressPopup.visible = true // ONLY if ble upload is enabled!
+            if (catchController.bleUplEnabled)
+                downloadProgressPopup.visible = true
         }
     }
     MultiPopup {
         id: downloadProgressPopup
-        popupType: 1
+        currentPopupType: 1
         maintitle: "Wearable Data Download"
         subtitle: "Downloading sensor data ..."
         indeterminate: true // false
@@ -170,46 +169,41 @@ AppPage {
         radius: AppConstants.buttonRadius
         border.color: Qt.darker(AppConstants.textColor,3)
         border.width: 1
-        //        AppButton {
-        //            id: downloadBtn
-        //            anchors.right: parent.right
-        //            anchors.top: parent.top
-        //            anchors.bottom: parent.bottom
-        //            anchors.margins: 4
-        //            width: parent.width/2 - anchors.margins*1.5//7.5
-        //            height: parent.height * 0.9
-        //            enabled: pageRoot.devicesConnected//downloadEnabled
-        //            onClicked: {
-        //                catchController.startDownloadFromAllDevices();
-        //                console.log("remove me")
-        //            }
-        //            Image {
-        //                id: downloadImg
-        //                source: "images/download-icon.png"
-        //                anchors.centerIn: parent
-        //                height: parent.height * 0.85
-        //                fillMode: Image.PreserveAspectFit
-        //                mipmap: true
-        //                antialiasing: true
-        //                ColorOverlay {
-        //                    anchors.fill: parent
-        //                    source: parent
-        //                    color: pageRoot.devicesConnected ? "transparent" : "gray"
-        //                }
-        //            }
-        //        }
+
         AppButton {
             id: startStopBtn
             anchors.centerIn: parent
-            //            anchors.left: parent.left
-            //            anchors.top: parent.top
-            //            anchors.bottom: parent.bottom
             anchors.margins: 4
             width: parent.width - anchors.margins*1.5
             height: parent.height * 0.9
             enabled: pageRoot.devicesConnected
+            state: "Start"
+
+            states: [
+                State {
+                    name: "Start"; when: (pageRoot.devicesMainState == "Stopped" || pageRoot.devicesMainState == "")
+                    PropertyChanges { target: startImg; opacity: 1}
+                    PropertyChanges { target: stopImg; opacity: 0}
+                    // PropertyChanges { target: startStopImg; source: "images/playbtn.png" }
+                },
+                State {
+                    name: "Stop"; when: (pageRoot.devicesMainState != "Stopped" && pageRoot.devicesMainState != "")
+                    PropertyChanges { target: startImg; opacity: 0}
+                    PropertyChanges { target: stopImg; opacity: 1}
+                    // PropertyChanges { target: startStopImg; source: "images/stopbtn.png" }
+                }
+            ]
+            transitions: [
+                Transition {
+                    NumberAnimation { property: "opacity"; easing.type: Easing.InOutQuad; duration: 2500  }
+                }
+            ]
+
+            onStateChanged: {
+                console.log("button state changed to:",state)
+            }
+
             onClicked: {
-                console.log("state"+state)
                 if (state === "Start")
                 {
                     rotRight.start()
@@ -223,13 +217,14 @@ AppPage {
             }
 
             Image {
-                id: startStopImg
+                id: startImg
                 source: "images/playbtn.png"
                 anchors.centerIn: parent
                 height: parent.height * 0.85
                 fillMode: Image.PreserveAspectFit
                 mipmap: true
                 antialiasing: true
+                //opacity: 1
                 ColorOverlay {
                     anchors.fill: parent
                     source: parent
@@ -237,28 +232,26 @@ AppPage {
                 }
             }
 
-            NumberAnimation { id: rotLeft; target: startStopImg; property: "rotation"; from: 360; to: 0; duration: 2000; running: false }
-            NumberAnimation { id: rotRight; target: startStopImg; property: "rotation"; from: 0; to: 360; duration: 2000; running: false }
-
-            onStateChanged: {
-                console.log("qml state changed to: "+state)
+            Image {
+                id: stopImg
+                source: "images/stopbtn.png"
+                anchors.centerIn: parent
+                height: parent.height * 0.85
+                fillMode: Image.PreserveAspectFit
+                mipmap: true
+                antialiasing: true
+                // opacity: 0
+                ColorOverlay {
+                    anchors.fill: parent
+                    source: parent
+                    color: pageRoot.devicesConnected ? "transparent" : "gray"
+                }
             }
 
-            states: [
-                State {
-                    name: "Start"; when: (pageRoot.devicesMainState == "Stopped" || pageRoot.devicesMainState == "")
-                    PropertyChanges {
-                        target: startStopImg; source: "images/playbtn.png"
-                    }
-                },
-                State {
-                    name: "Stop"; when: (pageRoot.devicesMainState != "Stopped" && pageRoot.devicesMainState != "")
-                    PropertyChanges {
-                        target: startStopImg; source: "images/stopbtn.png"
-                    }
-                }
-            ]
-        }
+            NumberAnimation { id: rotLeft; target: stopImg; property: "rotation"; from: 360; to: 0; duration: 2000; running: false }
+            NumberAnimation { id: rotRight; target: startImg; property: "rotation"; from: 0; to: 360; duration: 2000; running: false }
+
+        } // !AppButton
     }
 }
 

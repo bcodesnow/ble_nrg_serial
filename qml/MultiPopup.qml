@@ -16,7 +16,7 @@ Popup {
     padding: 0.0
     clip: true
     width:
-        switch(popupType) {
+        switch(currentPopupType) {
         case MultiPopupType.type_satan:
             parent.width
             break;
@@ -24,7 +24,7 @@ Popup {
             parent.width - 30
         }
     height:
-        switch(popupType) {
+        switch(currentPopupType) {
         case MultiPopupType.type_progress:
             parent.height / 3
             break;
@@ -42,14 +42,14 @@ Popup {
             break;
         }
 
-    property int popupType: 0 // currentPopupType?
+    property int currentPopupType: 0
     property string maintitle: "Main Title"
     property string subtitle: "Sub Title"
     property int currentProgress: 100
     property bool indeterminate: false
-    property double maxOpacity: 0.90   
+    property double maxOpacity: 0.90
 
-    signal downloadConfirmed(bool catched)
+    signal popupConfirmed(int index)
 
     enter: Transition {
         NumberAnimation { property: "opacity"; from: 0.0; to: maxOpacity; duration: 500}
@@ -60,7 +60,7 @@ Popup {
     Loader {
         anchors.fill: parent
         sourceComponent:
-            switch(popupType) {
+            switch(currentPopupType) {
             case MultiPopupType.type_progress:
                 progressPopup
                 break;
@@ -273,11 +273,7 @@ Popup {
                     border.color: AppConstants.infoColor
                     opacity: 0.9
                     onClicked: {
-                        //                        catchController.startDownloadFromAllDevices()
-                        //                        // fileHandler.sendCatchSuccessFromQML(true)
-                        //                        fileHandler.confirm("Catch",true)
-                        //                        multiPopup.visible = false
-                        downloadConfirmed(true)
+                        popupConfirmed(1)
                     }
                     Text {
                         anchors.centerIn: parent
@@ -298,11 +294,7 @@ Popup {
                     opacity: 0.9
                     onClicked:
                     {
-                        //                        catchController.startDownloadFromAllDevices()
-                        //                        // fileHandler.sendCatchSuccessFromQML(false)
-                        //                        fileHandler.confirm("Catch",false)
-                        //                        multiPopup.visible = false
-                        downloadConfirmed(false)
+                        popupConfirmed(2)
                     }
                     Text {
                         anchors.centerIn: parent
@@ -323,7 +315,8 @@ Popup {
                     opacity: 0.9
                     onClicked:
                     {
-                        console.log("Flop: sending stop")
+                        console.log("Flop")
+                        popupConfirmed(3)
                         // catchController.sendStopToAllDevices() // is this right? -> no it isnt, we need to tell the device only in sd enabled mode something.. the something is work in progress
                         multiPopup.visible = false
                     }
@@ -341,7 +334,7 @@ Popup {
 
     Component {
         id: adapterPopup
-        // is this unused?
+        // is this unused? -> yes
         Rectangle {
             color: Qt.lighter( AppConstants.backgroundColor )
             opacity: maxOpacity
@@ -409,16 +402,16 @@ Popup {
             property int textPadding: parent.width/20
             property int rowHeight: AppConstants.smallFontSize*2
 
-//            onVisibleChanged: {
-//                if (visible && !timesync)
-//                {
-//                    // i think we should just start the timesync from c++ as all the connections are ready--> moved to catch controller
-//                    console.log("Starting time sync")
-//                    if (catchController.devicesConnected) // prevent crash
-//                        catchController.startTimesyncAllDevices()
-//                    else console.log("Time sync failed")
-//                }
-//            }
+            //            onVisibleChanged: {
+            //                if (visible && !timesync)
+            //                {
+            //                    // i think we should just start the timesync from c++ as all the connections are ready--> moved to catch controller
+            //                    console.log("Starting time sync")
+            //                    if (catchController.devicesConnected) // prevent crash
+            //                        catchController.startTimesyncAllDevices()
+            //                    else console.log("Time sync failed")
+            //                }
+            //            }
 
             Connections {
                 target: catchController
@@ -564,10 +557,6 @@ Popup {
                                 property int maxX: parent.width - width
                             }
                         }
-                        onCheckedChanged: {
-                            if (checked && btSwitch.checked)
-                                btSwitch.checked = false
-                        }
                     }
                 } // !RowLayout
                 RowLayout {
@@ -595,7 +584,7 @@ Popup {
                     }
                     Switch {
                         id: btSwitch
-                        checked: false
+                        checked: true
                         Layout.preferredWidth: 50
                         Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.alignment: Qt.AlignCenter
@@ -619,10 +608,6 @@ Popup {
                                 color: btSwitch.down ? "darkgray" : AppConstants.textColor
                                 property int maxX: parent.width - width
                             }
-                        }
-                        onCheckedChanged: {
-                            if (checked && sdSwitch.checked)
-                                sdSwitch.checked = false
                         }
                     }
                 } // !RowLayout
@@ -735,20 +720,21 @@ Popup {
                     enabled: buttonEnabled
                     onClicked: {
                         console.log("Accepted session settings")
+                        console.log("USER:",usernameInput.text)
+                        console.log("MODE:",catchModeCB.currentText)
+                        console.log("SD:",sdSwitch.checked,"BT:",btSwitch.checked,"G:",googleSwitch.checked)
                         catchController.setLoggingMedia(sdSwitch.checked,btSwitch.checked)
                         fileHandler.set_curr_dir(usernameInput.text)
                         fileHandler.set_curr_catch_mode(catchModeCB.currentText)
-                        googleSwitch.enabled
                         // networkManager
 
                         multiPopup.visible = false
                     }
-                    property bool buttonEnabled: true // TODO
-
-//                        (usernameInput.acceptableInput && sessionPopupRoot.timesync &&
-//                         (sdSwitch.checked || btSwitch.checked) &&
-//                         (googleSwitch.enabled && networkManager.authorized === 2 || !googleSwitch.enabled))
-//                         || devMode
+                    property bool buttonEnabled:
+                        (usernameInput.acceptableInput && sessionPopupRoot.timesync &&
+                         (sdSwitch.checked || btSwitch.checked) &&
+                         (googleSwitch.checked && (networkManager.authorized === 2) || !googleSwitch.checked))
+                        || devMode
 
                     Text {
                         anchors.centerIn: parent
@@ -990,53 +976,5 @@ Popup {
             radius: 50
         }
     }
-
-    // currently unused ...
-    function insertNewLine(text, maxchars)
-    {
-        var output
-        var index = maxchars - 1;
-        var iterations = text.length / maxchars
-        for (var i;i<iterations;i++)
-        {
-            output.concat( text.substr(index*i, index*(i+1)) + "\n" )
-            //  text.substr(index*i, index*(i+1)) + "\n" + text.substr(maxchars*(i+1))
-        }
-        return output;
-    }
-
-
-    // Example connections
-    //    Connections {
-    //        target: deviceHandler_0
-    //        onShowProgressMessage: {
-    //            console.log("Popup 0:",mainText,subText,percent,flag)
-    //            if (!visible) open()
-    //            maintitle = mainText
-    //            subtitle = subText
-    //            currentProgress = percent
-    //            popupType = flag
-    //        }
-    //        onProgressFinished: {
-    //            close()
-    //            currentProgress = 0
-    //        }
-    //    }
-    //    Connections {
-    //        target: deviceHandler_1
-    //        onShowProgressMessage: {
-    //            console.log("Popup 1:",mainText,subText,percent,flag)
-    //            if (!visible) open()
-    //            maintitle = mainText
-    //            subtitle = subText
-    //            progress = percent
-    //        }
-    //        onProgressFinished: {
-    //            close()
-    //            progress = 0
-    //        }
-    //    }
-
-
 
 } // !Popup
