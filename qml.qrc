@@ -18,5 +18,6 @@
         <file>qml/Graphs.qml</file>
         <file>qml/ProgressPopup.qml</file>
         <file>qml/MultiPopup.qml</file>
+        <file>qml/MultiPopupType.qml</file>
     </qresource>
 </RCC>

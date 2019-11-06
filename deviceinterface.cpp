@@ -54,6 +54,7 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     connect(m_deviceController, &DeviceController::requestedConnModeReached, m_catch_controller_ptr, &CatchController::onConnUpdateOfDevXfinished, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::allDataDownloaded, m_catch_controller_ptr, &CatchController::onDownloadOfDeviceXfinished, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::requestDispatchToOtherDevices, m_catch_controller_ptr, &CatchController::onRequestDispatchToOtherDevices, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::sensorDataAvailableArrived, m_catch_controller_ptr, &CatchController::onSensorDataAvailableArrived, Qt::QueuedConnection);
 
 
     m_thread_controller.start();
@@ -152,15 +153,15 @@ void DeviceInterface::sendCmdSetLoggingMedia(bool savingTosdEnabled, bool bleUpl
     invokeBleUartSendCmdWithResp(tba);
 }
 
-//void DeviceInterface::sendCmdWriteCatchSuccessToSd(const quint8 &success)
-//{
-//    // todo this is just thrown in
-//    QByteArray tba;
-//    tba.resize(2);
-//    tba[0] = CMD_WRITE_CATCH_SUCCESS;
-//    tba[1] = success;
-//    invokeBleUartSendCmdWithResp(tba);
-//}
+void DeviceInterface::sendCmdWriteCatchSuccessToSd(const quint8 success)
+{
+    // todo this is just thrown in
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = CMD_WRITE_CATCH_SUCCESS;
+    tba[1] = success;
+    invokeBleUartSendCmdWithResp(tba);
+}
 
 quint8 DeviceInterface::getLastMainState()
 {

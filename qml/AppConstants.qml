@@ -37,7 +37,7 @@ Item {
     property real buttonHeight: wHeight * 0.08
     property real buttonRadius: buttonHeight * 0.1
 
-    // Some help functions
+    // Some helper functions
     function widthForHeight(h, ss)
     {
         return h/ss.height * ss.width;

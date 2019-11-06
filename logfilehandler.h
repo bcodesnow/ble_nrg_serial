@@ -70,7 +70,7 @@ public:
 
     QVariant getPaintDataList();
 
-    Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
+//    Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
     //Q_INVOKABLE void confirm (QString ident, bool bcatch);
 
     Q_INVOKABLE void rst_idx();

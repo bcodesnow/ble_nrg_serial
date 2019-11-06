@@ -28,7 +28,7 @@ AppPage {
             case "Ready to Trigger":
                 break;
             }
-            pageRoot.devicesMainState = devicesMainState // this should not be needed .. but it does not work without it!! -> why member AND signal with transfer value? i think qml fucks you in the ass right there
+            pageRoot.devicesMainState = devicesMainState // this should not be needed .. but it does not work without it!! -> why member AND signal with transfer value? i think qml ... you in the ... right there
         }
         onAllWearablesAreWaitingForDownload:
         {
@@ -38,13 +38,14 @@ AppPage {
 
     MultiPopup {
         id: catchConfirmPopup
-        popupType: 2
+        popupType: MultiPopupType.type_catch
         onDownloadConfirmed: {
+            // returned from popup .. it does not confirm any download.. tha naming is incorrect, we are receiving catchsuccess from gui, but its not sure that we will download..
             console.log("Ball catched:",catched)
-            catchController.startDownloadFromAllDevices()
-            fileHandler.sendCatchSuccessFromQML(catched)
+            catchController.onCatchSuccessConfirmed( catched )
+            //fileHandler.sendCatchSuccessFromQML(catched)
             multiPopup.visible = false
-            downloadProgressPopup.visible = true
+            downloadProgressPopup.visible = true // ONLY if ble upload is enabled!
         }
     }
     MultiPopup {

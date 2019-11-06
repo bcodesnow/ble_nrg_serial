@@ -48,7 +48,7 @@
 
 #define CMD_OK                          0xBB
 
-//#define CMD_WRITE_CATCH_SUCCESS         0x03
+#define CMD_WRITE_CATCH_SUCCESS         0x03
 #define CMD_SET_SHUT_UP                 0x04 // when set on device it should not send any notifications
 #define CMD_SET_CONN_MODE   						0x05 // from central msg to receive conn period
 

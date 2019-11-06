@@ -1,4 +1,6 @@
 #include "catchcontroller.h"
+#include "catchcontroller.h"
+#include "catchcontroller.h"
 
 
 CatchController::CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHandler* ts_handler,
@@ -10,6 +12,9 @@ CatchController::CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHa
 {
     connect(&m_timesyncTimer, &QTimer::timeout, this, &CatchController::onTimeSyncTimerExpired);
     connect(&m_downloadTimer, &QTimer::timeout, this, &CatchController::onDownloadTimerExpired);
+    connect(&m_nextRequestTimer, &QTimer::timeout, this, &CatchController::onNextRequestTimerExpired);
+    m_nextRequestTimer.setSingleShot(true);
+
     connect(m_timesync_handler_ptr, &TimeSyncHandler::time_sync_finished, this, &CatchController::onTimeSyncOfDevXfinished);
 
 
@@ -46,8 +51,8 @@ void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
 {
     if ( success )
     {
-        qDebug()<<"CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
-        emit invokeQmlError();
+        qDebug()<<"CC --> onTimeSyncOfDevXfinished"<<success<<id;
+        //emit invokeQmlError(); -> here we had success, dont show the devil
         m_device_list->at(id)->deviceIsTimeSynced = true;
     }
     else
@@ -149,7 +154,7 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
             m_downloadTimer.setInterval(45000);
             m_downloadTimer.start();
             download_state = DOWNLOADING;
-            emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure();
+            emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure( m_lastCatchSuccess );
         }
 
         if (sendingStartState == SETTING_CONN_MODE )
@@ -169,12 +174,10 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
 //
 //
 
+//void CatchController::startDownloadFromAllDevices( )
+//{
 
-void CatchController::startDownloadFromAllDevices()
-{
-    id_in_dl = 0;
-    startDownloadOfDevX(id_in_dl);
-}
+//}
 
 
 void CatchController::startDownloadOfDevX(int id)
@@ -186,7 +189,7 @@ void CatchController::startDownloadOfDevX(int id)
     m_downloadTimer.setInterval(90000);
     m_downloadTimer.start();
     download_state = DOWNLOADING;
-    emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure();
+    emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure( m_lastCatchSuccess );
 #endif
 
 #if (defined(Q_OS_ANDROID))
@@ -297,6 +300,7 @@ void CatchController::onSensorDataAvailableArrived(int idx)
         if ( m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable )
             if (m_device_list->at(i)->m_sensorDataWaitingForDownload != true  )
                 notReady++;
+
     if ( !notReady )
         emit allWearablesAreWaitingForDownload();
 
@@ -394,6 +398,12 @@ void CatchController::onConnAliveOfDevXChanged(bool isItAlive, int idx)
         m_devicesConnected = true;
         emit allSelectedDevicesAreConnected(true);
         qDebug()<<"devices connected:"<<m_devicesConnected;
+#if ( START_TS_FROM_CC == 1 )
+        m_nextRequest = NEXT_REQ_START_TS;
+        m_nextRequestTimer.setInterval(2000);
+        m_nextRequestTimer.start();
+        qDebug()<<"TimeSync of All Devices Started through the Catch Controller..";
+#endif
     }
 
     qDebug()<<"onConnAliveOfDevXChanged(bool isItAlive ="<<isItAlive<<"idx="<<idx<<")";
@@ -412,5 +422,48 @@ void CatchController::setLoggingMedia(bool toSd, bool sendOverBle)
         if (m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable)
             m_device_list->at(i)->sendCmdSetLoggingMedia(toSd, sendOverBle);
     }
+    m_sdEnabled = toSd;
+    m_bleUplEnabled = sendOverBle;
+    emit sdEnabledChanged(toSd);
+    emit bleUplEnabledChanged(sendOverBle);
 }
 
+
+void CatchController::onNextRequestTimerExpired()
+{
+    qDebug()<<"onNextRequestTimerExpired()"<<"it starts the time sync";
+    if ( m_nextRequest == NEXT_REQ_START_TS)
+        this->startTimesyncAllDevices();
+}
+
+///
+/// \brief CatchController::onCatchSuccessConfirmed -> happy to be renamed
+/// \param catchSuccess
+///
+
+void CatchController::onCatchSuccessConfirmed( int catchSuccess )
+{
+    m_lastCatchSuccess = catchSuccess;
+    switch( catchSuccess )
+    {
+        case CATCH:
+        case DROP:
+            if ( bleUplEnabled() )
+            {
+                // Start Download of all devices!
+                id_in_dl = 0;
+                startDownloadOfDevX(id_in_dl);
+            }
+            else
+            {
+                // SD Must be enabled as we let to user to select only valid acquisition settings.
+                for (int i = 0; i < m_device_list->size(); i++)
+                    if (m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable )
+                        m_device_list->at(i)->sendCmdWriteCatchSuccessToSd(catchSuccess);
+            }
+        break;
+        case FLOP:
+        // reset if there is something to be resetted
+        break;
+    }
+}

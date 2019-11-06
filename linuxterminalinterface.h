@@ -14,6 +14,8 @@ public:
     explicit LinuxTerminalInterface(QObject *parent = nullptr);
     QString password() const;
 
+    void writeValueToProtectedFile(QString pathToFile, int value);
+    void executeTestCmd();
 private:
     QString m_password;
     QProcess* m_process;
@@ -26,6 +28,7 @@ public slots:
     void executeCmdWithSudo(QString cmd, QString arg1="");
 
     void password(QString password);
+    void onStdOutPut();
 };
 
 #endif // LINUXTERMINALINTERFACE_H

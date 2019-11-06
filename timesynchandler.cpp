@@ -263,6 +263,7 @@ void TimeSyncHandler::start_time_sync(int devIdxToSync)
 
 void TimeSyncHandler::timeout_timer_expired()
 {
+
     qCritical()<<"TimeSync Failed - > Timeout! - > Current State : "<<m_sync_state;
     m_sync_state = STOPPED;
 }

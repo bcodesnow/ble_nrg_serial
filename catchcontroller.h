@@ -7,10 +7,15 @@
 #include <logfilehandler.h>
 #include <deviceinterface.h>
 
+#define START_TS_FROM_CC 1
+
 #define SETTING_CONN_MODE 1u
 #define SYNCING           2u
 #define DOWNLOADING       2u
 #define NOT_RUNNING       3u
+
+#define NEXT_REQ_START_TS 1u
+
 
 class LogFileHandler;
 class TimeSyncHandler;
@@ -23,10 +28,8 @@ class CatchController : public QObject
     Q_OBJECT
     Q_PROPERTY(QString devicesMainState MEMBER m_devicesMainState NOTIFY mainStateOfAllDevicesChanged)
     Q_PROPERTY(bool devicesConnected READ devicesConnected NOTIFY allSelectedDevicesAreConnected)
-
-    //    Q_PROPERTY(bool sdEnabled READ sdEnabled NOTIFY sdEnabledChanged)
-
-    //Q_PROPERTY(QString lastPath MEMBER m_last_path NOTIFY lastPathChanged)
+    Q_PROPERTY(bool sdEnabled READ sdEnabled NOTIFY sdEnabledChanged)
+    Q_PROPERTY(bool bleUplEnabled READ bleUplEnabled NOTIFY bleUplEnabledChanged) // wenn du magst kannst daraus member machen und aus qml setzen
 
 private:
     //quint8 m_appState;
@@ -34,6 +37,7 @@ private:
 
     QTimer m_timesyncTimer;
     QTimer m_downloadTimer;
+    QTimer m_nextRequestTimer;
 
     LogFileHandler* m_logfile_handler_ptr;
     TimeSyncHandler* m_timesync_handler_ptr;
@@ -50,12 +54,19 @@ private:
     int id_in_dl;
     int download_state;
     int sendingStartState = SETTING_CONN_MODE;
+    int m_nextRequest;
+    quint8 m_lastCatchSuccess;
+
 
     ///
     /// todo: is it final like this? group?
     ///
 
     bool m_devicesConnected = false;
+
+    bool m_sdEnabled;
+
+    bool m_bleUplEnabled;
 
 public:
     CatchController(QList<DeviceInterface*>* devicelist, TimeSyncHandler* ts_handler,
@@ -69,6 +80,16 @@ public:
     bool devicesConnected() const
     {
         return m_devicesConnected;
+    }
+
+    bool sdEnabled() const
+    {
+        return m_sdEnabled;
+    }
+
+    bool bleUplEnabled() const
+    {
+        return m_bleUplEnabled;
     }
 
 signals:
@@ -93,6 +114,10 @@ signals:
 
     void invokeQmlError();
 
+    void sdEnabledChanged(bool sdEnabled);
+
+    void bleUplEnabledChanged(bool bleUplEnabled);
+
 public slots:
 
     void startTimesyncAllDevices(); // QML Start this in background during init dialog
@@ -100,7 +125,7 @@ public slots:
     void onTimeSyncOfDevXfinished(bool success, int idx);
     void startTimeSyncOfDevX(int id);
 
-    void startDownloadFromAllDevices(); // QML use this if user clicks catch or drop
+//    void startDownloadFromAllDevices(bool catchSuccess); // QML use this if user clicks catch or drop
     void onDownloadTimerExpired();
     void onDownloadOfDeviceXfinished(bool success, int idx);
     void startDownloadOfDevX(int id);
@@ -121,18 +146,9 @@ public slots:
 
     void setLoggingMedia(bool toSd, bool sendOverBle); // QML, use this during startup dialog
 
+    void onNextRequestTimerExpired();
 
-
-    //#define WAITING_FOR_CONNECTION_TO_COMPLETE 1u
-    //#define
-    //    void handleAppState()
-    //    {
-    //        switch (m_appState)
-    //        {
-    //        case:
-
-    //        }
-    //    }
+    void onCatchSuccessConfirmed(int catchSuccess);
 };
 
 #endif // CATCHCONTROLLER_H

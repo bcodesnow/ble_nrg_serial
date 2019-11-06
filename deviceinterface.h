@@ -56,7 +56,7 @@ public:
     void sendCmdStop();
     void sendCmdStart();
     void sendCmdSetLoggingMedia(bool savingTosdEnabled, bool bleUplEnabled);
-    void sendCmdWriteCatchSuccessToSd(const quint8 &success);
+    void sendCmdWriteCatchSuccessToSd(quint8 success);
     quint8 getLastMainState();
 
 signals:
@@ -78,7 +78,7 @@ signals:
 
     void invokeStartConnModeChangeProcedure(quint8 mode);
 
-    void invokeStartDownloadAllDataProcedure();
+    void invokeStartDownloadAllDataProcedure( quint8 catchSuccess);
 
 
     //void textChanged(QString text);

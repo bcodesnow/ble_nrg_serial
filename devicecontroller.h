@@ -147,7 +147,7 @@ private:
     void setRequestedConnParamsOnDevice(uint8_t mode);
     void sendRequestMissingPackage();
     void sendAckHugeChunk();
-    void sendRequestSensorData();
+    void sendRequestSensorData(quint8 catchSuccess = 0);
 
     void setConnParamsOnCentral(uint8_t mode);
     void hugeChunkDownloadFinished();
@@ -207,7 +207,7 @@ public slots:
     void printThreadId() { qDebug()<<"Thread id of device:"<<QThread::currentThreadId(); }
 
     void startConnModeChangeProcedure(quint8 mode);
-    void startDownloadAllDataProcedure();
+    void startDownloadAllDataProcedure( quint8 catchSuccess );
 
     //void sendStartToDevice();
 private slots:

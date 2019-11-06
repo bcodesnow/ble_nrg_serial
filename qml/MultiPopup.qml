@@ -6,7 +6,7 @@ import QtGraphicalEffects 1.0
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Extras 1.4
 
-
+import "."
 Popup {
     id: multiPopup
     anchors.centerIn: parent
@@ -17,7 +17,7 @@ Popup {
     clip: true
     width:
         switch(popupType) {
-        case type_SATAN:
+        case MultiPopupType.type_satan:
             parent.width
             break;
         default:
@@ -25,35 +25,29 @@ Popup {
         }
     height:
         switch(popupType) {
-        case type_progress:
+        case MultiPopupType.type_progress:
             parent.height / 3
             break;
-        case type_catch:
+        case MultiPopupType.type_catch:
             parent.height / 2
             break;
-        case type_adapter:
+        case MultiPopupType.type_adapter:
             parent.height * 3/5
             break;
-        case type_session:
+        case MultiPopupType.type_session:
             parent.height * 4/5
             break;
-        case type_SATAN:
+        case MultiPopupType.type_satan:
             parent.height
             break;
         }
 
-    property int popupType: 0
+    property int popupType: 0 // currentPopupType?
     property string maintitle: "Main Title"
     property string subtitle: "Sub Title"
     property int currentProgress: 100
     property bool indeterminate: false
-    property double maxOpacity: 0.90
-
-    readonly property int type_progress: 1
-    readonly property int type_catch: 2
-    readonly property int type_adapter: 3
-    readonly property int type_session: 4
-    readonly property int type_SATAN: 666
+    property double maxOpacity: 0.90   
 
     signal downloadConfirmed(bool catched)
 
@@ -67,19 +61,19 @@ Popup {
         anchors.fill: parent
         sourceComponent:
             switch(popupType) {
-            case type_progress:
+            case MultiPopupType.type_progress:
                 progressPopup
                 break;
-            case type_catch:
+            case MultiPopupType.type_catch:
                 catchPopup
                 break;
-            case type_adapter:
+            case MultiPopupType.type_adapter:
                 adapterPopup
                 break;
-            case type_session:
+            case MultiPopupType.type_session:
                 sessionPopup
                 break;
-            case type_SATAN:
+            case MultiPopupType.type_satan:
                 satanPopup
                 break;
             }
@@ -330,7 +324,7 @@ Popup {
                     onClicked:
                     {
                         console.log("Flop: sending stop")
-                        catchController.sendStopToAllDevices() // is this right?
+                        // catchController.sendStopToAllDevices() // is this right? -> no it isnt, we need to tell the device only in sd enabled mode something.. the something is work in progress
                         multiPopup.visible = false
                     }
                     Text {
@@ -347,6 +341,7 @@ Popup {
 
     Component {
         id: adapterPopup
+        // is this unused?
         Rectangle {
             color: Qt.lighter( AppConstants.backgroundColor )
             opacity: maxOpacity
@@ -414,15 +409,16 @@ Popup {
             property int textPadding: parent.width/20
             property int rowHeight: AppConstants.smallFontSize*2
 
-            onVisibleChanged: {
-                if (visible && !timesync)
-                {
-                    console.log("Starting time sync")
-                    if (catchController.devicesConnected) // prevent crash
-                        catchController.startTimesyncAllDevices()
-                    else console.log("Time sync failed")
-                }
-            }
+//            onVisibleChanged: {
+//                if (visible && !timesync)
+//                {
+//                    // i think we should just start the timesync from c++ as all the connections are ready--> moved to catch controller
+//                    console.log("Starting time sync")
+//                    if (catchController.devicesConnected) // prevent crash
+//                        catchController.startTimesyncAllDevices()
+//                    else console.log("Time sync failed")
+//                }
+//            }
 
             Connections {
                 target: catchController
@@ -747,11 +743,12 @@ Popup {
 
                         multiPopup.visible = false
                     }
-                    property bool buttonEnabled:
-                        (usernameInput.acceptableInput && sessionPopupRoot.timesync &&
-                         (sdSwitch.checked || btSwitch.checked) &&
-                         (googleSwitch.enabled && networkManager.authorized === 2 || !googleSwitch.enabled))
-                         || devMode
+                    property bool buttonEnabled: true // TODO
+
+//                        (usernameInput.acceptableInput && sessionPopupRoot.timesync &&
+//                         (sdSwitch.checked || btSwitch.checked) &&
+//                         (googleSwitch.enabled && networkManager.authorized === 2 || !googleSwitch.enabled))
+//                         || devMode
 
                     Text {
                         anchors.centerIn: parent

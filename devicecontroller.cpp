@@ -336,14 +336,14 @@ void DeviceController::searchCharacteristic()
 }
 
 
-void DeviceController::sendRequestSensorData()
+void DeviceController::sendRequestSensorData(quint8 catchSuccess)
 {
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_REQUEST_SENSORDATA;
-    tba[1] = 0xFF;
+    tba[1] = catchSuccess;
     bleUartSendCmdWithResp(tba);
-    qDebug()<<"Sending Req SDATA!";
+    qDebug()<<"Sending Req SDATA and Catch Success!";
 }
 
 
@@ -871,7 +871,7 @@ void DeviceController::onNoChunkAvailableArrived()
     emit allDataDownloaded(true, m_ident_idx);
 }
 
-void DeviceController::startDownloadAllDataProcedure()
+void DeviceController::startDownloadAllDataProcedure( quint8 catchSuccess )
 {
     hc_chopchop_mode = true;
     sendRequestSensorData();
