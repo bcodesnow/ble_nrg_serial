@@ -18,7 +18,7 @@
 #include "deviceinterface.h"
 #include "qmllistadapter.h"
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
-    #include "linuxterminalinterface.h"
+#include "linuxterminalinterface.h"
 #endif
 
 // TODAYS BUG: AFTER DOWNLOAD THE START IS NOT SENT FOR SOME REASON.....
@@ -31,8 +31,13 @@ int main(int argc, char *argv[])
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
+    QQmlApplicationEngine engine;
 
     qmlRegisterType<GraphPainter>("GraphPainterCpp",1,0,"GraphPainterCpp");
+    qRegisterMetaType<DeviceInfo::DeviceType>("DeviceType");
+    qRegisterMetaType<DeviceController::AddressType>("AddressType");
+    qmlRegisterUncreatableType<DeviceInfo>("Shared", 1, 0, "DeviceType", "Enum is not a type");
+    qmlRegisterUncreatableType<DeviceController>("Shared", 1, 0, "AddressType", "Enum is not a type");
 
     QmlListAdapter* ladapter = new QmlListAdapter();
     TerminalToQmlB term; // unused.. remove?
@@ -41,7 +46,7 @@ int main(int argc, char *argv[])
     LogFileHandler* log_file_handler = new LogFileHandler();
     log_file_handler->set_aut_incr(false);
 
-//    QList<DeviceInterface*> device_interfaces;
+    //    QList<DeviceInterface*> device_interfaces;
 
     TimeSyncHandler* time_sync_handler = new TimeSyncHandler(ladapter->getList());
     time_sync_handler->start_time_stamp();
@@ -53,24 +58,23 @@ int main(int argc, char *argv[])
 
     ConnectionHandler connection_handler; // keeps track of local ble interface
 
-//    QBluetoothAddress leftAdapter, rightAdapter; // Local addresses for connection
-//    // search for bt adapters and select an address for both devices
-//    connection_handler.initBtAdapters(leftAdapter, rightAdapter);
+    NetworkManager* ntwMngr = new NetworkManager(log_file_handler);
+
+    //    QBluetoothAddress leftAdapter, rightAdapter; // Local addresses for connection
+    //    // search for bt adapters and select an address for both devices
+    //    connection_handler.initBtAdapters(leftAdapter, rightAdapter);
 
     DeviceFinder device_finder(ladapter, &connection_handler, time_sync_handler,catch_controller,log_file_handler);
     qDebug()<<"MainThread ID"<<QThread::currentThreadId();
 
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
     LinuxTerminalInterface lti;
-    lti.password("SetYourSudoerPW"); // TODO ADD A DIALOG FOR THIS IF QOS_LINUX AND !QOS ANDROID... the property only exists in the class Linux Terminal Interface
-    //lti.executeTestCmd();
-    lti.writeValueToProtectedFile("/sys/kernel/debug/bluetooth/hci0/conn_min_interval", 6);
-//    lti.executeCmdWithSudo("echo 6 > /sys/kernel/debug/bluetooth/hci0/conn_min_interval");
-//    lti.executeCmdWithSudo("echo 9 > /sys/kernel/debug/bluetooth/hci0/conn_max_interval");
-    //lti.executeCmdWithSudo("cat /sys/kernel/debug/bluetooth/hci0/conn_min_interval");
-    //lti.executeCmdWithSudo("cat /sys/kernel/debug/bluetooth/hci0/conn_max_interval");
+    engine.rootContext()->setContextProperty("linuxInterface", &lti);
+    engine.rootContext()->setContextProperty("QML_OS_LINUX", QVariant(true));
+
+#else
+    engine.rootContext()->setContextProperty("QML_OS_LINUX", QVariant(false));
 #endif
-    qDebug()<<"Dominik, wenn du Zeit hast, versuche bitte mit QProcess den Root PW abzufragen oder fix zu hinterlegen, und dann conn_min und conn max zu setzen..\n  echo 16 > /sys/kernel/debug/bluetooth/hci0/conn_min_interval \necho 17 > /sys/kernel/debug/bluetooth/hci0/conn_max_interval ";
 
     //device_finder = new DeviceFinder
     //    devices.at(0).init_device(leftAdapter, );
@@ -84,22 +88,14 @@ int main(int argc, char *argv[])
     //    device_handler[1].setIdentifier("RIGHT", 1, rightAdapter);
     //    device_handler[1].setRefToTimeStampler(&ts);
 
-//    ts.setRefToDevHandlerArr(device_handler);
+    //    ts.setRefToDevHandlerArr(device_handler);
 
-    NetworkManager* ntwMngr = new NetworkManager(log_file_handler);
-
-    QQmlApplicationEngine engine;
-    qRegisterMetaType<DeviceInfo::DeviceType>("DeviceType");
-    qRegisterMetaType<DeviceController::AddressType>("AddressType");
-    qmlRegisterUncreatableType<DeviceInfo>("Shared", 1, 0, "DeviceType", "Enum is not a type");
-    qmlRegisterUncreatableType<DeviceController>("Shared", 1, 0, "AddressType", "Enum is not a type");
-
-//    qmlRegisterUncreatableType<DeviceInfo>("com.dev", 1, 0, "DeviceInfo",  QStringLiteral("We do handle object creation only on c++ side in this project") );
-//    qmlRegisterUncreatableType<DeviceInterface>("com.dev", 1, 0, "DeviceInterface",  QStringLiteral("We do handle object creation only on c++ side in this project") );
+    //    qmlRegisterUncreatableType<DeviceInfo>("com.dev", 1, 0, "DeviceInfo",  QStringLiteral("We do handle object creation only on c++ side in this project") );
+    //    qmlRegisterUncreatableType<DeviceInterface>("com.dev", 1, 0, "DeviceInterface",  QStringLiteral("We do handle object creation only on c++ side in this project") );
 
     ///
-//    qmlRegisterType<QmlListAdapter>("QmlListAdapterCpp",1,0,"QmlListAdapterCpp");
-////
+    //    qmlRegisterType<QmlListAdapter>("QmlListAdapterCpp",1,0,"QmlListAdapterCpp");
+    ////
     engine.rootContext()->setContextProperty("terminalToQml", &term);
     engine.rootContext()->setContextProperty("connectionHandler", &connection_handler);
     engine.rootContext()->setContextProperty("deviceFinder", &device_finder);

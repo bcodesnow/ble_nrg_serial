@@ -104,9 +104,16 @@ Window {
         asynchronous: false
         onStatusChanged: {
             if (status === Loader.Ready)
+            {
                 splashLoader.item.appReady()
+            }
             if (status === Loader.Error)
                 splashLoader.item.errorInLoadingApp();
         }
     }
+
+//    MultiPopup {
+//        id: passwordInputPopup
+//        currentPopupType: MultiPopupType.type_password
+//    }
 }

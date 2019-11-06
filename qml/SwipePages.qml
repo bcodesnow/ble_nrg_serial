@@ -15,6 +15,7 @@ Item {
     {
         opacity = 1.0
         view.currentIndex = 0;
+        if (QML_OS_LINUX) passwordInputPopup.visible = true
     }
 
     Keys.onReleased: {
@@ -35,7 +36,15 @@ Item {
         }
     }
 
+//    Component.onCompleted: {
+//        passwordInputPopup.visible = true
+//    }
+
     // global popups
+    MultiPopup {
+        id: passwordInputPopup
+        currentPopupType: MultiPopupType.type_password
+    }
     //    MultiPopup {
     //        // todo: fill list with adapters from c++ (only showing, no interaction)
     //        id: btAdapterPopup

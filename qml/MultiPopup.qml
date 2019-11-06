@@ -17,11 +17,14 @@ Popup {
     clip: true
     width:
         switch(currentPopupType) {
+        case MultiPopupType.type_password:
+            parent.width - AppConstants.fieldMargin*2
+            break;
         case MultiPopupType.type_satan:
             parent.width
             break;
         default:
-            parent.width - 30
+            parent.width - AppConstants.fieldMargin
         }
     height:
         switch(currentPopupType) {
@@ -36,6 +39,9 @@ Popup {
             break;
         case MultiPopupType.type_session:
             parent.height * 4/5
+            break;
+        case MultiPopupType.type_password:
+            parent.height / 3
             break;
         case MultiPopupType.type_satan:
             parent.height
@@ -73,11 +79,19 @@ Popup {
             case MultiPopupType.type_session:
                 sessionPopup
                 break;
+            case MultiPopupType.type_password:
+                if (QML_OS_LINUX) passwordPopup
+                break;
             case MultiPopupType.type_satan:
                 satanPopup
                 break;
             }
     }
+
+    //        Loader {
+    //            id: linuxInterfaceLoader
+    //            sourceComponent: if (QML_OS_LINUX) linuxInterfaceConnection
+    //        }
 
     Component {
         id: progressPopup
@@ -469,6 +483,7 @@ Popup {
                             color: AppConstants.textColor
                             height: parent.height
                             width: parent.width
+                            layer.enabled: true
                             validator: RegExpValidator { regExp: /[a-zA-Z,]{1,12}/ }
                             focus: true
                             leftPadding: 5
@@ -748,9 +763,81 @@ Popup {
     } // !Component
 
     Component {
+        id: passwordPopup
+        Rectangle {
+            id: passwordPopupRoot
+            color: Qt.lighter( AppConstants.backgroundColor )
+            opacity: maxOpacity
+            radius: AppConstants.buttonRadius*2
+            Connections {
+                target: linuxInterface
+                Component.onCompleted: {
+                    console.log("linuxInterface completed")
+                    multiPopup.modal = true
+                }
+            }
+            ColumnLayout {
+                anchors.fill: parent
+                Text {
+                    Layout.preferredHeight: AppConstants.fieldHeight
+                    Layout.preferredWidth: multiPopup.width
+                    text: "Linux detected.\nEnter admin password:"
+                    font.pixelSize: AppConstants.mediumFontSize
+                    color: AppConstants.textColor
+                    verticalAlignment: TextEdit.AlignVCenter
+                    horizontalAlignment: TextEdit.AlignHCenter
+                    lineHeight: 1.4
+                }
+                Rectangle {
+                    Layout.alignment: Qt.AlignCenter
+                    Layout.preferredHeight: AppConstants.fieldHeight*2/3
+                    Layout.preferredWidth: multiPopup.width * 0.8
+                    color: AppConstants.backgroundColor
+                    border.width: 1
+                    border.color: "black"
+                    radius: 5
+                    TextInput {
+                        id: passwordInput
+                        anchors.fill: parent
+                        echoMode: TextInput.Password
+                        font.pixelSize: AppConstants.giganticFontSize
+                        color: AppConstants.textColor
+                        height: parent.height
+                        width: parent.width
+                        layer.enabled: true
+                        focus: true
+                        leftPadding: 5
+                        rightPadding: 5
+                    }
+                }
+                AppButton {
+                    Layout.alignment: Qt.AlignCenter
+                    Layout.preferredHeight: AppConstants.fieldHeight
+                    Layout.preferredWidth: multiPopup.width/2
+                    pressedColor: AppConstants.infoColor
+                    enabled: passwordInput.text != "" || devMode
+                    onClicked: {
+                        linuxInterface.password = passwordInput.text
+                        // linuxInterface.setPassword(passwordInput.text)
+                        multiPopup.visible = false
+                        linuxInterface.writeAllSudoCommands()
+                    }
+                    Text {
+                        anchors.centerIn: parent
+                        font.pixelSize: AppConstants.mediumFontSize
+                        text: qsTr("Apply")
+                        color: parent.enabled ? AppConstants.textColor : AppConstants.disabledTextColor
+                    }
+                }
+
+            }
+        }
+    }
+
+    Component {
         id: satanPopup
         Rectangle {
-            id: bg
+            id: satanPopupRoot
             color: "black"
             opacity: 1
             radius: AppConstants.buttonRadius*2

@@ -8,14 +8,17 @@ class LinuxTerminalInterface : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString password READ password WRITE password NOTIFY passwordChanged)
+    Q_PROPERTY(QString password READ password WRITE setPassword NOTIFY passwordChanged)
 
 public:
     explicit LinuxTerminalInterface(QObject *parent = nullptr);
     QString password() const;
+    void setPassword(QString password);
 
     void writeValueToProtectedFile(QString pathToFile, int value);
     void executeTestCmd();
+
+
 private:
     QString m_password;
     QProcess* m_process;
@@ -27,7 +30,8 @@ signals:
 public slots:
     void executeCmdWithSudo(QString cmd, QString arg1="");
 
-    void password(QString password);
+
+    void writeAllSudoCommands();
     void onStdOutPut();
 };
 
