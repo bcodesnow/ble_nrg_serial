@@ -108,6 +108,9 @@ void DeviceInterface::onAliveArrived(QByteArray value)
     tptr =  (alive_msg_t *) &data[1];
     alive_msg = *tptr;
 
+    if (lastAliveMsg.isSDMounted)
+        qDebug()<<"SD mounted";
+
     if (lastAliveMsg.mainState != alive_msg.mainState)
     {
         this->setDeviceMainState( stateToString(tptr->mainState) );

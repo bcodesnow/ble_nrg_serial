@@ -108,7 +108,8 @@ signals:
     //    void progressFinished();
 
     //void mainStateOfAllDevicesChanged(const QString& devicesMainState);
-    void mainStateOfAllDevicesChanged(QString devicesMainState);
+   // void mainStateOfAllDevicesChanged(QString devicesMainState);
+   void mainStateOfAllDevicesChanged();
 
     void devicesAliveChanged(bool devicesAlive);
 

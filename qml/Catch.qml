@@ -42,7 +42,7 @@ AppPage {
         onPopupConfirmed: {
             console.log("Ball catched:",index)
             catchController.onCatchSuccessConfirmed( index )
-            multiPopup.visible = false
+            catchConfirmPopup.visible = false
             if (catchController.bleUplEnabled)
                 downloadProgressPopup.visible = true
         }
@@ -179,6 +179,10 @@ AppPage {
             enabled: pageRoot.devicesConnected
             state: "Start"
 
+            onStateChanged: {
+                console.log("start stop button changed to:",state)
+            }
+
             states: [
                 State {
                     name: "Start"; when: (pageRoot.devicesMainState == "Stopped" || pageRoot.devicesMainState == "")
@@ -198,10 +202,6 @@ AppPage {
                     NumberAnimation { property: "opacity"; easing.type: Easing.InOutQuad; duration: 2500  }
                 }
             ]
-
-            onStateChanged: {
-                console.log("button state changed to:",state)
-            }
 
             onClicked: {
                 if (state === "Start")

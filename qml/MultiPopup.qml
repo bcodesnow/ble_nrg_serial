@@ -966,7 +966,7 @@ Popup {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        popupAccepted()
+                        multiPopup.visible = false;
                     }
                 }
             }

@@ -15,7 +15,7 @@ Item {
     {
         opacity = 1.0
         view.currentIndex = 0;
-        if (QML_OS_LINUX) passwordInputPopup.visible = true
+       // if (QML_OS_LINUX) passwordInputPopup.visible = true
     }
 
     Keys.onReleased: {
