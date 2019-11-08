@@ -63,15 +63,12 @@ public:
 
 
 
-    void fin_log_fil(QString ident);
+    void fin_log_fil();
 
     QString getHomeLocation();
 
 
     QVariant getPaintDataList();
-
-    Q_INVOKABLE void sendCatchSuccessFromQML(bool wasItCatched);
-    //Q_INVOKABLE void confirm (QString ident, bool bcatch);
 
     Q_INVOKABLE void rst_idx();
     quint64 get_idx();

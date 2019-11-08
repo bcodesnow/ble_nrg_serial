@@ -93,13 +93,11 @@ AppPage {
         Connections {
             target: fileHandler
             onNewPaintData: {
-                console.log("NewPaintData:",dataname,dataptr)
                 var painterItem
                 for (var i=0;i<graphGrid.count;i++)
                 {
                     if (graphGrid.itemAtIndex(i).paintName === dataname)
                     {
-                        console.log("fillPaintData(",dataptr,",",dataname,")")
                         painterItem = graphGrid.itemAtIndex(i).children[1].children[0]
                         painterItem.fillPaintData(dataptr,dataname)
                     }

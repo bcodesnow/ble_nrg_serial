@@ -121,6 +121,14 @@ void DeviceFinder::addDevice(const QBluetoothDeviceInfo &device)
     // If device is LowEnergy-device, add it to the list
     if (device.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
         m_foundDevices.append(new DeviceInfo(device));
+
+        if ( ( ( (DeviceInfo*) m_foundDevices.last() )->getName() == "bluenrg" ) ||
+             ( ( (DeviceInfo*) m_foundDevices.last() )->getName() == "Catch?!" ) )
+        {
+            qDebug()<<"wearable found..";
+            ((DeviceInfo*) m_foundDevices.last() )->setDeviceType(DeviceInfo::Wearable);
+        }
+
         setInfo(tr("Low Energy device found. Scanning more..."));
         qDebug()<<"Low Energy device found. Scanning more..."<<device.address().toString();
         //! [devicediscovery-3]
@@ -168,17 +176,11 @@ void DeviceFinder::connectToSelectedDevices()
         if  ( ((DeviceInfo*) m_foundDevices.at(i) )->getDeviceFlags() & DEVICE_SELECTED )
         {
             ( (DeviceInfo*) m_foundDevices.at(i) )->setDeviceIndex( deviceListSize );
-            if ( ( ( (DeviceInfo*) m_foundDevices.at(i) )->getName() == "bluenrg" ) ||
-                ( ( (DeviceInfo*) m_foundDevices.at(i) )->getName() == "Catch?!" ) )
-            {
-                qDebug()<<"wearable found..";
-                ((DeviceInfo*) m_foundDevices.at(i) )->setDeviceType(DeviceInfo::Wearable);
-            }
 
             m_deviceList->append(new DeviceInterface(m_timesync_handler_ptr, m_catch_controller_ptr, m_logfile_handler_ptr, (DeviceInfo*) m_foundDevices[i]));
             m_deviceListAdapter->rst_model();
-//            tidx = ( m_deviceList->size() - 1 );
-//            m_deviceList->last()->setDeviceIndex(tidx);
+            //            tidx = ( m_deviceList->size() - 1 );
+            //            m_deviceList->last()->setDeviceIndex(tidx);
             m_deviceList->last()->initializeDevice( &m_conn_handler_ptr->m_adapterList[k]);
             deviceListSize++;
             k++;
@@ -202,13 +204,30 @@ QVariant DeviceFinder::devices()
     return QVariant::fromValue(m_foundDevices);
 }
 
+bool m_leftIdentifierSet = false;
+int  m_currentlySelectedWearables = 0;
+
 void DeviceFinder::addDeviceToSelection(const quint8 &idx)
 {
     if ( m_selectedDevicesCount < 2 )
     {
         ((DeviceInfo*) m_foundDevices.at(idx) )->setDeviceFlags( ( (DeviceInfo*) m_foundDevices.at(idx) )->getDeviceFlags() | DEVICE_SELECTED);
         m_selectedDevicesCount++;
-//        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
+
+        if ( ((DeviceInfo*) m_foundDevices.at(idx) )->getDeviceType() == DeviceInfo::Wearable )
+        {
+            m_currentlySelectedWearables++;
+
+            switch (m_currentlySelectedWearables)
+            {
+            case 1:
+                ((DeviceInfo*) m_foundDevices.at(idx) )->setDeviceIdentifier("LEFT");
+                break;
+            case 2:
+                ((DeviceInfo*) m_foundDevices.at(idx) )->setDeviceIdentifier("RIGHT");
+                break;
+            }
+        }
     }
 }
 
@@ -218,6 +237,9 @@ void DeviceFinder::removeDeviceFromSelection(const quint8 &idx)
     {
         ((DeviceInfo*) m_foundDevices.at(idx) )->setDeviceFlags( 0 );
         m_selectedDevicesCount--;
-//        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
+        if ( ((DeviceInfo*) m_foundDevices.at(idx) )->getDeviceType() == DeviceInfo::Wearable )
+            m_currentlySelectedWearables--;
+
+        //        emit ((DeviceInfo*) m_foundDevices.at(idx) )->deviceChanged();
     }
 }

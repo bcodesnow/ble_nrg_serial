@@ -568,6 +568,8 @@ inline bool DeviceController::isDeviceInRequestedConnState()
 
 void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
+
+    static uint16_t debug_cunter = 0;
     // it would have been the best to only move the send receive functions to an own thread.. with this solution we will have a bit faster dispatch of time sync and receive..
 
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
@@ -691,6 +693,9 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) -> One of the TX_POOL Characteristics
     {
+        debug_cunter++;
+        if (debug_cunter % 10 == 0)
+            qDebug()<<"ten pkkgs more";
         // this is the ble rx pooled part.. it could be also moved to an own handler
         uint16_t tidx;
         huge_chunk_indexed_byterray_t hc_tmp_iba_struct;
@@ -737,6 +742,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
         if ( tidx == hc_transfer_struct.incoming_package_count - 1 )
         {
             qDebug()<<"HC -> Last PKG!";
+            debug_cunter = 0;
             printThroughput();
             hc_helper_struct.last_received = true;
         }
@@ -816,14 +822,17 @@ void DeviceController::onStartHugeChunkArrived()
     emit invokeAddToLogFile(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
     emit invokeAddToLogFile(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
     emit invokeAddToLogFile(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
-    emit invokeAddToLogFile(m_ident_str, QString("RecordingTime"), QString::number(2500)+" ms");
-    emit invokeAddToLogFile(m_ident_str, QString("freq_AUDIO"), QString::number(8000));
-    emit invokeAddToLogFile(m_ident_str, QString("freq_ACC"), QString::number(1000));
-    emit invokeAddToLogFile(m_ident_str, QString("freq_GYR"), QString::number(1000));
-    emit invokeAddToLogFile(m_ident_str, QString("freq_MAG"), QString::number(100));
-    emit invokeAddToLogFile(m_ident_str, QString("freq_PRS"), QString::number(100));
 
     bleUartSendCmdOk();
+
+    // TODO DOMINIK
+//    emit invokeAddToLogFile(m_ident_str, QString("RecordingTime"), QString::number(2500)+" ms");
+//    emit invokeAddToLogFile(m_ident_str, QString("freq_AUDIO"), QString::number(8000));
+//    emit invokeAddToLogFile(m_ident_str, QString("freq_ACC"), QString::number(1000));
+//    emit invokeAddToLogFile(m_ident_str, QString("freq_GYR"), QString::number(1000));
+//    emit invokeAddToLogFile(m_ident_str, QString("freq_MAG"), QString::number(100));
+//    emit invokeAddToLogFile(m_ident_str, QString("freq_PRS"), QString::number(100));
+
 }
 
 

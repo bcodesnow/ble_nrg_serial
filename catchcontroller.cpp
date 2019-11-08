@@ -242,6 +242,7 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
     {
         m_downloadTimer.stop();
         download_state = NOT_RUNNING;
+        m_logfile_handler_ptr->fin_log_fil();
         emit downloadOfAllDevFinished(true);
         qDebug()<<"Downloaded everything from all connected devices";
     }
@@ -329,7 +330,7 @@ void CatchController::onMainStateOfDevXChanged(quint16 state, int idx)
     }
     if ( !notTheSame )
     {
-       // emit mainStateOfAllDevicesChanged(stateToString(state));
+        // emit mainStateOfAllDevicesChanged(stateToString(state));
         m_devicesMainState = stateToString(state);
         emit mainStateOfAllDevicesChanged();
         qDebug()<<"MainStateOfAllDevicesChanged";
@@ -449,6 +450,8 @@ void CatchController::onCatchSuccessConfirmed( quint8 catchSuccess )
     switch( catchSuccess )
     {
         case CATCH:
+            m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "CATCH");
+
         case DROP:
             if ( bleUplEnabled() )
             {
@@ -463,9 +466,12 @@ void CatchController::onCatchSuccessConfirmed( quint8 catchSuccess )
                     if (m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable )
                         m_device_list->at(i)->sendCmdWriteCatchSuccessToSd(catchSuccess);
             }
-        break;
+            m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "DROP");
+            break;
         case FLOP:
-        // reset if there is something to be resetted
-        break;
+            m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "FLOP");
+
+            // reset if there is something to be resetted
+            break;
     }
 }

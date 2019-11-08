@@ -17,6 +17,7 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
     //    QVector<QObject*> reserver = QVector<QObject*>(TYPE_COUNT*2);
     //   // QVector<QVariant> nullvec = {0};
     //    m_paintDataList = reserver.toList();
+
     //    for (int i=0;i<m_paintDataList.size();i++) {
     //        m_paintDataList.replace(i, new PaintData(this));
     //    }
@@ -207,13 +208,13 @@ void LogFileHandler::demo(QString ident, int type)
 
 void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, quint8 type, quint16 wp)
 {
-    qDebug()<<"write_type_to_file_slot"<<data->size();
+    qDebug()<<"write_type_to_file_slot"<<ident<<type<<wp<<data->size();
 
     QVector<QVariant> dataVec(QVector<QVariant>(0));
     static quint64 counter;
 
     // get target location
-    QString tmpLocation = m_homeLocation+"/"+m_curr_dir+"/";
+    QString tmpLocation = m_homeLocation+m_curr_dir+"/";
     qDebug()<<"File Path: "<<tmpLocation;
     QString idx_str = tr("%1_%2_").arg(m_curr_idx).arg(ident);
     tmpLocation.append( idx_str );
@@ -268,14 +269,13 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
         for (int i=0;i<m_paintDataList.size();i++) {
             emit newPaintData(m_paintDataList.at(i),((PaintData*)m_paintDataList.at(i))->getName());
         }
-        // save as csv
         // saveToCsv(tmpLocation, dataVec);
     }
     //    else {
     // save as text
     QFile file(tmpLocation);
-    qDebug()<<file.open(QIODevice::WriteOnly);
-    qDebug()<<file.write(*data);
+    //    qDebug()<<file.open(QIODevice::WriteOnly);
+    //    qDebug()<<file.write(*data);
     file.close();
     //    }
 
@@ -292,6 +292,7 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
             }
         }
     }
+
 }
 
 void LogFileHandler::add_to_log_fil_slot(QString ident, QString key, QString val)
@@ -300,17 +301,8 @@ void LogFileHandler::add_to_log_fil_slot(QString ident, QString key, QString val
     m_log_fil_buf->append(tmpString);
 }
 
-void LogFileHandler::sendCatchSuccessFromQML(bool wasItCatched)
-{
-    add_to_log_fil_slot("Info","Username",m_curr_user);
-    add_to_log_fil_slot("Info","CatchMode",m_curr_catch_mode);
-    qDebug()<<"USE here the lastCatchSuccess from the Catch controller, make a qproperty daraus";
-
-    //add_to_log_fil_slot("Info","SUCCESS", wasItCatched ? "CATCH" : "DROP");
-
-
-    // fin_log_fil(QString("Info"));
-}
+//add_to_log_fil_slot("Info","Username",m_curr_user);
+//add_to_log_fil_slot("Info","CatchMode",m_curr_catch_mode);
 
 void LogFileHandler::rst_idx()
 {
@@ -368,11 +360,11 @@ void LogFileHandler::set_curr_catch_mode(QString mode)
 //    add_to_log_fil_slot(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
 //}
 
-void LogFileHandler::fin_log_fil(QString ident)
+void LogFileHandler::fin_log_fil()
 {
     QByteArray ba; // get rid of this..
     ba =  m_log_fil_buf->toUtf8();
-    write_type_to_file_slot(ident, &ba, TYPE_LOG, 0);
+    write_type_to_file_slot("LR", &ba, TYPE_LOG, 0);
     m_log_fil_buf->clear();
 }
 

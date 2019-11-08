@@ -138,7 +138,7 @@ Popup {
                 onDownloadOfAllDevFinished: {
                     console.log("download finished:",success)
                     multiPopup.visible = false
-                    fileHandler.fin_log_fil("Info");
+//                    fileHandler.fin_log_fil("Info");
                 }
             }
 
