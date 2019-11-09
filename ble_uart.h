@@ -72,7 +72,7 @@
 #define CMD_SENSORDATA_AVAILABLE            0x10 // emitted by the sensor  data can be requested or saved to sd
 #define CMD_CONNECTION_VALID                0xCC
 
-
+#define FAKEDEFINE
 // CMD NUMBER RANGE
 //
 

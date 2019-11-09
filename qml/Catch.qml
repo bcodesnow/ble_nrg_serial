@@ -15,10 +15,10 @@ AppPage {
         target: catchController
         onMainStateOfAllDevicesChanged:
         {
-            switch(devicesMainState)
+            switch(catchController.devicesMainState)
             {
             case "Unknown":
-                console.log("Unknown devices main state:",devicesMainState);
+                console.log("Unknown devices main state:", catchController.devicesMainState);
                 break;
             case "Stopped":
 
@@ -28,7 +28,7 @@ AppPage {
             case "Ready to Trigger":
                 break;
             }
-            pageRoot.devicesMainState = devicesMainState // this should not be needed .. but it does not work without it!! -> why member AND signal with transfer value? i think qml ... you in the ... right there
+            pageRoot.devicesMainState = catchController.devicesMainState // this should not be needed .. but it does not work without it!! -> why member AND signal with transfer value? i think qml ... you in the ... right there
         }
         onAllWearablesAreWaitingForDownload:
         {
@@ -185,13 +185,13 @@ AppPage {
 
             states: [
                 State {
-                    name: "Start"; when: (pageRoot.devicesMainState == "Stopped" || pageRoot.devicesMainState == "")
+                    name: "Start"; when: (pageRoot.devicesMainState == "Stopped")
                     PropertyChanges { target: startImg; opacity: 1}
                     PropertyChanges { target: stopImg; opacity: 0}
                     // PropertyChanges { target: startStopImg; source: "images/playbtn.png" }
                 },
                 State {
-                    name: "Stop"; when: (pageRoot.devicesMainState != "Stopped" && pageRoot.devicesMainState != "")
+                    name: "Stop"; when: (pageRoot.devicesMainState != "Stopped" )
                     PropertyChanges { target: startImg; opacity: 0}
                     PropertyChanges { target: stopImg; opacity: 1}
                     // PropertyChanges { target: startStopImg; source: "images/stopbtn.png" }

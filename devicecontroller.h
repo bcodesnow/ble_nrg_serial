@@ -73,6 +73,10 @@ private:
     QElapsedTimer* m_debugTimer; // temp
     QTimer* m_connParamTimer;
     QTimer* m_cmdTimer;
+    QTimer* m_bleUartSendCmdWithRespBacklogTimer;
+
+    int m_bleUartSendCmdWithRespBacklogRetries;
+    QList<QByteArray*> m_bleUartSendCmdWithRespBacklog;
 
     bool m_bleUartServiceFound;
 
@@ -223,6 +227,7 @@ private slots:
 
     void onCmdTimerExpired();
     void onNextRequestTimerExpired();
+    void onBleUartSendCmdWithRespTimerExpired();
 
     void onConnected(void);
     void onDisconnected(void);

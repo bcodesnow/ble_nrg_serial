@@ -231,7 +231,7 @@ void DeviceController::updateCurrentService()
 {
     connect(m_service, &QLowEnergyService::stateChanged, this, &DeviceController::serviceStateChanged);
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &DeviceController::bleUartRx);
-    connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceController::confirmedDescriptorWrite);
+
     connect(m_service, QOverload<QLowEnergyService::ServiceError>::of(&QLowEnergyService::error),
             [=](QLowEnergyService::ServiceError newError){ qCritical()<<"ERR - QlowEnergyServiceError!"; Q_UNUSED(newError);});
     connect(m_service, SIGNAL(characteristicRead(QLowEnergyCharacteristic,QByteArray)), this, SLOT(onCharacteristicRead(QLowEnergyCharacteristic,QByteArray)));
@@ -248,6 +248,7 @@ void DeviceController::updateCurrentService()
 
 void DeviceController::searchCharacteristic()
 {
+
     quint8 ble_uart_rx_tx_char_found = 0;
     if(m_service){
         foreach (QLowEnergyCharacteristic c, m_service->characteristics())
@@ -321,17 +322,18 @@ void DeviceController::searchCharacteristic()
 
                 }
             }
+            if ( m_writeCharacteristic.isValid() && m_readCharacteristic.isValid() && !connectionValidSent && c == m_service->characteristics().last() )
+            {
+                QByteArray ba;
+                ba.append(CMD_CONNECTION_VALID);
+                bleUartSendCmdWithResp(ba);
+                connectionValidSent = 1;
+                qDebug()<<"READ WRITE REGISTERED, SENDING CONN VALID!";
+                emit connectionAlive(true, m_ident_idx); // todo move this to the point where all the characteristics are registered...
+                // todo -> this is much more relevant than ble connected-> pass this to catch controller
+                connect(m_service, &QLowEnergyService::descriptorWritten, this, &DeviceController::confirmedDescriptorWrite);
+            }
         }
-    }
-    if ( m_writeCharacteristic.isValid() && m_readCharacteristic.isValid() && !connectionValidSent )
-    {
-        QByteArray ba;
-        ba.append(CMD_CONNECTION_VALID);
-        bleUartSendCmdWithResp(ba);
-        connectionValidSent = 1;
-        qDebug()<<"READ WRITE REGISTERED, SENDING CONN VALID!";
-        emit connectionAlive(true, m_ident_idx); // todo move this to the point where all the characteristics are registered...
-        // todo -> this is much more relevant than ble connected-> pass this to catch controller
     }
 }
 
@@ -409,6 +411,12 @@ void DeviceController::initializeDevice(QBluetoothHostInfo* hostInfo, QBluetooth
 
     m_cmdTimer = new QTimer();
     m_nextRequestTimer = new QTimer();
+    m_nextRequestTimer->setSingleShot(true);
+
+
+    m_bleUartSendCmdWithRespBacklogTimer = new QTimer();
+    m_bleUartSendCmdWithRespBacklogTimer->setInterval(250);
+    m_bleUartSendCmdWithRespBacklogTimer->setSingleShot(true);
 
     qDebug()<<"device will be initialized";
     qDebug()<<"received adapter add"<<hostInfo->address();
@@ -420,8 +428,8 @@ void DeviceController::initializeDevice(QBluetoothHostInfo* hostInfo, QBluetooth
     connect(this, &DeviceController::startHugeChunkAckProcArrived, this, &DeviceController::onStartHugeChunkAckProcArrived);
     connect(this, &DeviceController::replyMissingPackageArrived, this, &DeviceController::onReplyMissingPackageArrived);
     connect(m_nextRequestTimer, &QTimer::timeout, this, &DeviceController::onNextRequestTimerExpired);
-    m_nextRequestTimer->setSingleShot(true);
 
+    connect(m_bleUartSendCmdWithRespBacklogTimer, &QTimer::timeout, this, &DeviceController::onBleUartSendCmdWithRespTimerExpired);
 
     // TODO: trigger request sensor data if it did not work and missing packages were requested!!! (nextRequestTimer->singleShot!!)
 
@@ -494,14 +502,22 @@ void DeviceController::setConnParamsOnCentral(uint8_t mode)
 ///
 ///
 ///
+///
+
 
 bool DeviceController::bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout, quint8 retry)
 {
+
+
     qDebug()<<"The Default Timeout is:"<< timeout;
     if (m_cmdTimer->isActive())
     {
+        qWarning()<<"SHOW THE DEVIL -> COMMAND COULD NOT BE SENT! Trying to resend!"<<cmd_resp_struct.last_cmd;
+        m_bleUartSendCmdWithRespBacklogRetries = 3;
+        m_bleUartSendCmdWithRespBacklog.append( new QByteArray (value) );
+        m_bleUartSendCmdWithRespBacklogTimer->start();
+
         return true;
-        qWarning()<<"SHOW THE DEVIL -> COMMAND COULD NOT BE SENT!";
     }
     cmd_resp_struct.last_cmd.clear();
     cmd_resp_struct.last_cmd.append(value);
@@ -693,9 +709,9 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) -> One of the TX_POOL Characteristics
     {
-        debug_cunter++;
-        if (debug_cunter % 10 == 0)
-            qDebug()<<"ten pkkgs more";
+//        debug_cunter++;
+//        if (debug_cunter % 10 == 0)
+//            qDebug()<<"ten pkkgs more";
         // this is the ble rx pooled part.. it could be also moved to an own handler
         uint16_t tidx;
         huge_chunk_indexed_byterray_t hc_tmp_iba_struct;
@@ -928,6 +944,43 @@ void DeviceController::onNextRequestTimerExpired()
     case NEXT_REQ_SEND_SENS_DATA:
         sendRequestSensorData();
         break;
+    }
+}
+
+
+
+void DeviceController::onBleUartSendCmdWithRespTimerExpired()
+{
+    if (m_bleUartSendCmdWithRespBacklog.size())
+    {
+        QByteArray tba;
+        tba.append(*m_bleUartSendCmdWithRespBacklog.last());
+        qDebug()<<"COPIED:"<<tba;
+            if ( bleUartSendCmdWithResp(tba) )
+            {
+                qWarning()<<"Resend Failed!";
+                if (m_bleUartSendCmdWithRespBacklogRetries)
+                {
+                    m_bleUartSendCmdWithRespBacklogRetries--;
+                    m_bleUartSendCmdWithRespBacklogTimer->start();
+                }
+                else
+                {
+                    qWarning()<<"REALLY SHOW THE DEVIL!";
+                }
+            }
+            else
+            {
+                qDebug()<<"Successfully resent!!";
+                qDebug()<<"BARR SIZE BEFOR"<<                m_bleUartSendCmdWithRespBacklog.size();
+
+                m_bleUartSendCmdWithRespBacklog.last()->~QByteArray();
+                m_bleUartSendCmdWithRespBacklog.pop_back();
+                qDebug()<<"BARR SIZE AFTER"<<                m_bleUartSendCmdWithRespBacklog.size();
+
+            }
+
+
     }
 }
 
