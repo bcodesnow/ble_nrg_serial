@@ -40,26 +40,20 @@ signals:
     void lastPathChanged(void);
     void idxChanged(quint64 tidx);
     void confirmNeeded();
+
     void paintDataListChanged();
-    void qmltestsignal(int idx);
-    void newPaintData(QObject *dataptr, QString dataname);
+    void updateAllPainters(QList<QObject*> datalist);
     void invokeGoogleUpload(QString filename, QByteArray data);
 
 public:
     explicit LogFileHandler(QObject *parent = nullptr);
-
-    Q_INVOKABLE void demo(QString ident, int type);
 
     void sortArray(QByteArray *arr, uint16_t wp);
     QVector<QVariant> bytesToInt16(QByteArray arr);
     QVector<QVariant> bytesToUint16(QByteArray arr);
     QVector<QVariant> bytesToFloat32(QByteArray arr);
 
-    int typeToIndex(uint8_t type);
 
-    //void saveToCsv(QString location, QVector<QVariant> data);
-
-    QByteArray loadFromFile(QString ident, uint8_t type);
     QString getHomeLocation();
     QVariant getPaintDataList();
 

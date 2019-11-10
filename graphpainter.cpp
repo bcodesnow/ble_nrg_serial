@@ -7,14 +7,8 @@ GraphPainter::GraphPainter(QQuickItem *parent) :
 
 void GraphPainter::paint(QPainter *painter)
 {
-    // prepare data
     if (m_paintData == nullptr)
     {
-        qDebug()<<"Painter: PaintData empty";
-        return;
-    }
-    if (! ((PaintData*) m_paintData)->getEnabled()) {
-        qDebug()<<"Painter: Painter not enabled";
         return;
     }
     QRectF borders = QQuickItem::boundingRect();
@@ -22,7 +16,6 @@ void GraphPainter::paint(QPainter *painter)
     QVector<double> timeVector;
     timeVector = ((PaintData*) m_paintData)->getTimeVector();
     if (ampVector.isEmpty() || timeVector.isEmpty()) {
-        qDebug()<<"Painter: buffer empty";
         return;
     }
 

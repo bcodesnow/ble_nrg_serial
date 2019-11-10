@@ -141,7 +141,7 @@ Popup {
             Connections {
                 target: catchController
                 onDownloadOfAllDevFinished: {
-                    console.log("download finished:",success)
+                    console.log("Download of all devices finished",success)
                     multiPopup.visible = false
 //                    fileHandler.fin_log_fil("Info");
                 }

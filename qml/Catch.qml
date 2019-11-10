@@ -106,7 +106,7 @@ AppPage {
                 Text {
                     id: deviceIdentifierText
                     font.pixelSize: AppConstants.smallTinyFontSize
-                    text: "#" + (model.item.deviceIndex+1) + ": " + model.item.deviceIdentifier + " " + model.item.deviceName
+                    text: "#" + (model.item.deviceIndex+1) + " " + model.item.deviceIdentifier + ": " + model.item.deviceName
                     anchors.top: parent.top
                     anchors.topMargin: parent.height * 0.1
                     anchors.leftMargin: parent.height * 0.1

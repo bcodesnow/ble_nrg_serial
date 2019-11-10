@@ -150,7 +150,8 @@ private:
     void sendSetShutUp(bool shutUp);
     void setRequestedConnParamsOnDevice(uint8_t mode);
     void sendRequestMissingPackage();
-    void sendAckHugeChunk();
+    void sendAckOkHugeChunk();
+    void sendStartOkHugeChunk();
     void sendRequestSensorData(quint8 catchSuccess = 0);
 
     void setConnParamsOnCentral(uint8_t mode);
@@ -168,6 +169,7 @@ public:
     Q_ENUM(AddressType)
 
     void setIdentifier(QString str, quint8 idx); // make this only changeable through public member -> deviceInfo
+
 
 signals:
     // Connection

@@ -1,4 +1,4 @@
-#include "devicecontroller.h"
+﻿#include "devicecontroller.h"
 #include "ble_uart.h"
 #include "deviceinfo.h"
 #include <QtEndian>
@@ -802,7 +802,7 @@ void DeviceController::onReplyMissingPackageArrived(QByteArray value)
     }
     else
     {
-        this->sendAckHugeChunk();
+        this->sendAckOkHugeChunk();
         writeReceivedChunkToFile( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type );
         hugeChunkDownloadFinished();
         // reset variables
@@ -839,7 +839,7 @@ void DeviceController::onStartHugeChunkArrived()
     emit invokeAddToLogFile(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
     emit invokeAddToLogFile(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
 
-    bleUartSendCmdOk();
+    sendStartOkHugeChunk();
 
     // TODO DOMINIK
 //    emit invokeAddToLogFile(m_ident_str, QString("RecordingTime"), QString::number(2500)+" ms");
@@ -902,13 +902,23 @@ void DeviceController::startDownloadAllDataProcedure( quint8 catchSuccess )
     sendRequestSensorData();
 }
 
-void DeviceController::sendAckHugeChunk()
+void DeviceController::sendAckOkHugeChunk()
 {
     // add timeout timer..
     QByteArray tba;
     tba.resize(2);
-    tba[0] = CMD_HC_OK;
+    tba[0] = CMD_HC_ACK_OK;
     qInfo()<<"ackHugeChunk()";
+    this->bleUartSendCmdWithResp(tba);
+}
+
+void DeviceController::sendStartOkHugeChunk()
+{
+    // add timeout timer..
+    QByteArray tba;
+    tba.resize(2);
+    tba[0] = CMD_HC_START_OK;
+    qInfo()<<"sendStartOkHugeChunk()";
     this->bleUartSendCmdWithResp(tba);
 }
 
@@ -918,7 +928,7 @@ void DeviceController::hugeChunkDownloadFinished()
 
     emit invokeAddToLogFile("TODOSTRING", QString("AllArrived"), QString("TRUE"));
 
-    sendAckHugeChunk();
+    sendAckOkHugeChunk();
     writeReceivedChunkToFile( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type);
     qDebug()<<"Written";
     if (hc_chopchop_mode)

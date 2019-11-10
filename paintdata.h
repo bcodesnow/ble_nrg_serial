@@ -54,7 +54,6 @@ public:
             qDebug()<<"Can't paint an unknown file";
             break;
         }
-        m_enabled = true;
         emit typeChanged();
         emit sideChanged();
         //qDebug()<<"New Paintdata:"<<m_name<<m_paintBuffer.size();
@@ -129,11 +128,6 @@ public:
         return QString(m_side);
     }
 
-    bool getEnabled()
-    {
-        return m_enabled;
-    }
-
 
 private:
     QString m_name;
@@ -141,7 +135,6 @@ private:
     char m_side;
     double m_samplingFreq;
     double m_step;
-    bool m_enabled = false;
     QVector<QVariant> m_paintBuffer;
     QVector<double> m_timeVec;
 

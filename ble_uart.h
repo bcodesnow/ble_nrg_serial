@@ -62,7 +62,8 @@
 #define CMD_START_HUGE_CHUNK_ACK_PROC   0x09 // from device
 #define CMD_REQUEST_MISSING_PACKAGE     0x0A // from central
 #define REPLY_MISSED_PACKAGE            0x0B // from device
-#define CMD_HC_OK                       0x0C // from central
+#define CMD_HC_ACK_OK                       0x0C // from central
+#define CMD_HC_START_OK                     0xDC
 
 #define TRIGGERED                       0x0D
 //#define DATA_SAVED_TO_SD                0x0E // used when data is saved to sd... DATA_COLLECTED
