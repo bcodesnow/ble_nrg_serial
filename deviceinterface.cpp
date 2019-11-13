@@ -59,7 +59,7 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
 
     m_thread_controller.start();
 
-#ifdef USE_DEBUG
+#if (USE_DEBUG >= 1)
     QBluetoothDeviceInfo tdi = this->getDevice(); // todo test if we cann pass it directly
     qDebug()<<"The name is there"<<this->getName();
 #endif

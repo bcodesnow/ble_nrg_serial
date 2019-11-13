@@ -50,7 +50,6 @@ private:
     quint8 time_sync_state;
     int    remaining_c;
     int    id_in_sync;
-    bool change_conn_of_other_devices;
     int id_in_dl;
     int download_state;
     int sendingStartState = SETTING_CONN_MODE;

@@ -169,7 +169,6 @@ void DeviceFinder::connectToSelectedDevices()
     int adapterListSize = m_conn_handler_ptr->m_adapterList.size();
     int deviceListSize = m_deviceList->size();
     int k = 0;
-    quint8 tidx;
 
     for (int i = 0; i < m_foundDevices.size(); i++)
     {

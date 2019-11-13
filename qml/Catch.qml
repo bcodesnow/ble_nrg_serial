@@ -176,7 +176,7 @@ AppPage {
             anchors.margins: 4
             width: parent.width - anchors.margins*1.5
             height: parent.height * 0.9
-            enabled: pageRoot.devicesConnected
+            enabled: pageRoot.devicesConnected && AppConstants.sessionPopupFinished
             state: "Start"
 
             onStateChanged: {

@@ -420,7 +420,6 @@ Popup {
             property bool timesync: false
             property int textPadding: parent.width/20
             property int rowHeight: AppConstants.smallFontSize*2
-
             //            onVisibleChanged: {
             //                if (visible && !timesync)
             //                {
@@ -747,7 +746,7 @@ Popup {
                         fileHandler.set_curr_dir(usernameInput.text)
                         fileHandler.set_curr_catch_mode(catchModeCB.currentText)
                         // networkManager
-
+                        AppConstants.sessionPopupFinished = true;
                         multiPopup.visible = false
                     }
                     property bool buttonEnabled:

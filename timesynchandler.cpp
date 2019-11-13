@@ -18,7 +18,7 @@ void TimeSyncHandler::slot_time_sync_msg_sent(int idx)
 {
     // toDo m_last_msg_ts is only relevant if we are mesuring...
     // toDo check if idx is in sync;
-#ifdef USE_DEBUG
+#if (USE_DEBUG >= 1)
     qInfo()<<"TS: Sync Msg. Sent!"<<"";
 #endif
     m_last_msg_ts = get_timestamp_us();
@@ -63,7 +63,7 @@ void TimeSyncHandler::send_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
-#ifdef USE_DEBUG
+#if (USE_DEBUG >= 1)
     qDebug()<<"TS: send_time_sync_msg() -> "<<tstamp;
 #endif
     //m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
@@ -156,7 +156,7 @@ void TimeSyncHandler::slot_time_sync_msg_arrived(const QByteArray &msg)
         //
     case MEASURING_TRAVELING_TIME:
         travelling_times.append( get_diff_in_us_to_current_ts( m_last_msg_ts ) );
-#ifdef USE_DEBUG
+#if (USE_DEBUG >= 1)
         qDebug()<<"TS: Travelling Time -> "<< travelling_times.last() << " us";
 #endif
         if (int(msg.at(2)) != m_send_repeat_count)

@@ -89,7 +89,7 @@ void CatchController::startTimeSyncOfDevX(int id)
 #if (defined(Q_OS_ANDROID))
     m_device_list->at(id)->invokeStartConnModeChangeProcedure(FAST);
 
-    if ( change_conn_of_other_devices)
+    if ( CHANGE_CONN_PARAM_OF_OTHER_DEVICES )
     {
         for (int i = 0; i< m_device_list->size(); i++)
         {
@@ -196,11 +196,7 @@ void CatchController::startDownloadOfDevX(int id)
     qDebug()<<"Android Download Version";
     m_device_list->at(id)->invokeStartConnModeChangeProcedure(FAST);
 
-    ///
-    change_conn_of_other_devices = true;
-    ///
-
-    if ( change_conn_of_other_devices)
+    if ( CHANGE_CONN_PARAM_OF_OTHER_DEVICES )
     {
         for (int i = 0; i< m_device_list->size(); i++)
         {
@@ -215,7 +211,7 @@ void CatchController::startDownloadOfDevX(int id)
     }
     download_state = SETTING_CONN_MODE;
 
-    m_downloadTimer.setInterval(8500 );
+    m_downloadTimer.setInterval( 12000 );
     m_downloadTimer.start();
 #endif
 }
@@ -451,27 +447,31 @@ void CatchController::onCatchSuccessConfirmed( quint8 catchSuccess )
     {
         case CATCH:
             m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "CATCH");
+            break;
 
         case DROP:
-            if ( bleUplEnabled() )
-            {
-                // Start Download of all devices!
-                id_in_dl = 0;
-                startDownloadOfDevX(id_in_dl);
-            }
-            else
-            {
-                // SD Must be enabled as we let to user to select only valid acquisition settings.
-                for (int i = 0; i < m_device_list->size(); i++)
-                    if (m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable )
-                        m_device_list->at(i)->sendCmdWriteCatchSuccessToSd(catchSuccess);
-            }
             m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "DROP");
             break;
         case FLOP:
             m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "FLOP");
-
             // reset if there is something to be resetted
             break;
+    }
+
+    if ( catchSuccess == CATCH || catchSuccess == DROP )
+    {
+        if ( bleUplEnabled() )
+        {
+            // Start Download of all devices!
+            id_in_dl = 0;
+            startDownloadOfDevX(id_in_dl);
+        }
+        else
+        {
+            // SD Must be enabled as we let to user to select only valid acquisition settings.
+            for (int i = 0; i < m_device_list->size(); i++)
+                if (m_device_list->at(i)->getDeviceType() == DeviceInfo::Wearable )
+                    m_device_list->at(i)->sendCmdWriteCatchSuccessToSd(catchSuccess);
+        }
     }
 }

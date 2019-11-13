@@ -84,13 +84,18 @@ QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray arr)
 
 void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, quint8 type, quint16 wp)
 {
-    if (false)
+
+#if (PLOT_DATA == 1)
+    #if (USE_DEBUG >= 1)
         qDebug()<<"write_type_to_file_slot"<<ident<<type<<wp<<data->size();
-    else
-    {
-        qDebug()<<"write_type_to_file_slot disabled";
+    #endif
+#else
+#if (USE_DEBUG >= 1)
+    qDebug()<<"write_type_to_file_slot disabled";
+#endif
         return;
-    }
+#endif
+
     QElapsedTimer filetimer;
     filetimer.start();
 
@@ -107,8 +112,9 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
     if (type != TYPE_LOG && !data->isEmpty())
         sortArray(data, wp);
 
+#if (USE_DEBUG >= 1)
     qDebug()<<"after sorting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-
+#endif
     // Byte conversion
     switch (type)
     {
@@ -138,9 +144,9 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
     default:
         tmpLocation.append( QString("SOMEFILE") );
     }
-
+#if (USE_DEBUG >= 1)
     qDebug()<<"after conversion:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-
+#endif
     if (type != TYPE_LOG && !dataVec.isEmpty())
     {
         for (int i=0;i<m_paintDataList.size();i++) {
@@ -172,8 +178,9 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
         //            emit newPaintData(m_paintDataList.at(i),((PaintData*)m_paintDataList.at(i))->getName());
         //        }
     }
-
+#if (USE_DEBUG >= 1)
     qDebug()<<"after painting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+#endif
 
     // save as text
     QFile file(tmpLocation);
@@ -181,7 +188,9 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
     file.write(*data);
     file.close();
 
+#if (USE_DEBUG >= 1)
     qDebug()<<"after saving:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+#endif
 
     // increment file index
     if ( m_is_aut_incr_en )
@@ -196,9 +205,9 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
             }
         }
     }
-
+#if (USE_DEBUG >= 1)
     qDebug()<<"write_type_to_file_slot took:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-
+#endif
 
 
 

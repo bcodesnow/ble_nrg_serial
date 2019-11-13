@@ -5,6 +5,9 @@ Item {
     property int wHeight
     property int wWidth
 
+    property bool sessionPopupFinished
+
+
     // Colors
     readonly property color backgroundColor: "#2d3037"
     readonly property color buttonColor: "#202227"

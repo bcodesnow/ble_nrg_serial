@@ -8,6 +8,8 @@
 #include <QDir>
 #include <QDebug>
 
+#define PLOT_DATA 1
+#define USE_DEBUG 0
 
 #include <graphpainter.h>
 #include <paintdata.h>

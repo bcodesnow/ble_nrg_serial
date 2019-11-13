@@ -167,6 +167,7 @@ AppPage {
                 state = "connected"
                 deviceFinder.connectToSelectedDevices();
                 view.setCurrentIndex(1);
+                AppConstants.sessionPopupFinished = false;
             }
             else
             {

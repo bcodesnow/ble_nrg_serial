@@ -86,6 +86,10 @@ QString stateToString(uint16_t tmp)
     }
 }
 
+QString intToHexDebug(int x)
+{
+    return QString("%1").arg(x, 0, 16);
+}
 
 void printProperties(QLowEnergyCharacteristic::PropertyTypes props)
 {
@@ -120,3 +124,4 @@ void  DeviceController::printThroughput()
     kbit_ps = kbyte_ps * 8.0;
     qInfo()<<"HC -> Throughput of raw data is" <<kbyte_ps<< "kbyte / s : "<<"or "<<kbit_ps<<"kbit/s";
 }
+

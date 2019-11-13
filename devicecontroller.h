@@ -1,6 +1,11 @@
 #ifndef DEVICEHANDLER_H
 #define DEVICEHANDLER_H
 
+#define USE_DEBUG 0
+#define PRINT_THROUGHPUT 1
+#define WAIT_X_MS_BETWEEN_CHUNKS 250
+#define CHANGE_CONN_PARAM_OF_OTHER_DEVICES 0
+
 #include "logfilehandler.h"
 #include "timesynchandler.h"
 #include <QElapsedTimer>
@@ -24,6 +29,7 @@ class DeviceInfo;
 class TimeSyncHandler;
 
 extern QString stateToString(uint16_t tmp);
+extern QString intToHexDebug(int x);
 
 struct huge_chunk_indexed_byterray_t
 {

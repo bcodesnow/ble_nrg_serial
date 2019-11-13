@@ -145,13 +145,15 @@ void DeviceController::serviceStateChanged(QLowEnergyService::ServiceState s)
 
 void DeviceController::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value)
 {
-    qWarning()<<"confirmedDescriptorWrite.. if this needs to be used, we need to keep track of our m_notificationDescriptors..";
+#if (USE_DEBUG >= 2)
+    qDebug()<<"confirmedDescriptorWrite"<<d.name();
+#endif
     if (d.isValid() && d == m_notificationDescriptor && value == QByteArray::fromHex("0000"))
     {
         //disabled notifications -> assume disconnect intent
         m_control->disconnectFromDevice();
         delete m_service;
-        m_service = 0;
+        m_service = nullptr;
     }
 }
 
@@ -200,7 +202,7 @@ void DeviceController::onCharacteristicRead(const QLowEnergyCharacteristic &c, c
 
 void DeviceController::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
-#ifdef USE_DEBUG
+#if (USE_DEBUG >= 1 )
     qInfo() << "Characteristic Written! - Payload: " << value;
 #endif
     const quint8 *data;
@@ -248,43 +250,48 @@ void DeviceController::updateCurrentService()
 
 void DeviceController::searchCharacteristic()
 {
-
-    quint8 ble_uart_rx_tx_char_found = 0;
     if(m_service){
         foreach (QLowEnergyCharacteristic c, m_service->characteristics())
         {
             if( c.isValid() )
             {
+#if (USE_DEBUG >= 2)
                 qDebug()<<"Characteristic UUID:"<<c.uuid();
-#ifdef DEBUG_ALL_OUT
                 printProperties(c.properties());
 #endif
                 if ( c.uuid() == QBluetoothUuid( BLE_UART_RX_CHAR) && ( c.properties() & QLowEnergyCharacteristic::WriteNoResponse || c.properties() & QLowEnergyCharacteristic::Write) )
                 {
+#if (USE_DEBUG >= 2)
                     qDebug()<<"Write Characteristic Registered";
+#endif
                     m_writeCharacteristic = c;
-                    //emit writeValidChanged();
                     if(c.properties() & QLowEnergyCharacteristic::WriteNoResponse)
                     {
+#if (USE_DEBUG >= 2)
                         qInfo()<<"QLowEnergyService::WriteWithoutResponse";
+#endif
                         m_writeMode = QLowEnergyService::WriteWithoutResponse;
                     }
                     else
                     {
+#if (USE_DEBUG >= 2)
                         qInfo()<<"QLowEnergyService::WriteWithResponse";
+#endif
                         m_writeMode = QLowEnergyService::WriteWithResponse;
                     }
                 }
                 else if ( c.uuid() == QBluetoothUuid( BLE_UART_TX_CHAR ) )
                 {
-#ifdef DEBUG_ALL_OUT
+#if (USE_DEBUG >= 2)
                     qDebug()<<"Read (Notify) Characteristic Registered";
 #endif
                     m_readCharacteristic = c;
                     m_notificationDescriptor = c.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
 
                     if (m_notificationDescriptor.isValid()) {
+#if (USE_DEBUG >= 2)
                         qDebug()<<"Characteristic Descriptor: ClientCharacteristicConfiguration, writing 0100 to descriptor";
+#endif
                         m_service->writeDescriptor(m_notificationDescriptor, QByteArray::fromHex("0100"));
                     }
                     else
@@ -345,7 +352,9 @@ void DeviceController::sendRequestSensorData(quint8 catchSuccess)
     tba[0] = CMD_REQUEST_SENSORDATA;
     tba[1] = catchSuccess;
     bleUartSendCmdWithResp(tba);
-    qDebug()<<"Sending Req SDATA and Catch Success!";
+#if (USE_DEBUG >= 1)
+    qDebug()<<"Sending Request Sensor Data and in the first message also the Catch Success!";
+#endif
 }
 
 
@@ -418,9 +427,8 @@ void DeviceController::initializeDevice(QBluetoothHostInfo* hostInfo, QBluetooth
     m_bleUartSendCmdWithRespBacklogTimer->setInterval(250);
     m_bleUartSendCmdWithRespBacklogTimer->setSingleShot(true);
 
-    qDebug()<<"device will be initialized";
-    qDebug()<<"received adapter add"<<hostInfo->address();
-    qDebug()<<"received device name"<<deviceInfo->name();
+    qInfo()<<"| INIT"<<"Device: "<<m_ident_str<<"-"<<m_ident_idx<<"| Adapter: "<<hostInfo->address()<<"|";
+
     connect(m_cmdTimer, &QTimer::timeout, this, &DeviceController::onCmdTimerExpired);
     connect(m_connParamTimer, &QTimer::timeout, this, &DeviceController::onConnParamTimerExpired);
     connect(this, &DeviceController::startHugeChunkArrived, this, &DeviceController::onStartHugeChunkArrived);
@@ -450,7 +458,7 @@ void DeviceController::writeReceivedChunkToFile (uint16_t tmp_write_pointer, uin
     {
         m_last_hc_payload_ptr->append( m_hc_vec.at(i).barr);
     }
-    qDebug()<<"Received" << m_last_hc_payload_ptr->size() <<"bytes raw data after filling it to a qbyterray:";
+    qInfo()<<"Received" << m_last_hc_payload_ptr->size() <<"bytes, handling over to fileHandler!";
 
     emit invokeWriteTypeToFile(m_ident_str, m_last_hc_payload_ptr, type, tmp_write_pointer);
 }
@@ -507,12 +515,13 @@ void DeviceController::setConnParamsOnCentral(uint8_t mode)
 
 bool DeviceController::bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout, quint8 retry)
 {
+#if ( USE_DEBUG >= 1)
+    qDebug()<<"bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout, quint8 retry)"<<"Timeout"<<timeout;
+#endif
 
-
-    qDebug()<<"The Default Timeout is:"<< timeout;
     if (m_cmdTimer->isActive())
     {
-        qWarning()<<"SHOW THE DEVIL -> COMMAND COULD NOT BE SENT! Trying to resend!"<<cmd_resp_struct.last_cmd;
+        qWarning()<<"!!! bleUartSendCmdWithResp() -- Resend needed!"<<cmd_resp_struct.last_cmd;
         m_bleUartSendCmdWithRespBacklogRetries = 3;
         m_bleUartSendCmdWithRespBacklog.append( new QByteArray (value) );
         m_bleUartSendCmdWithRespBacklogTimer->start();
@@ -531,7 +540,6 @@ bool DeviceController::bleUartSendCmdWithResp(const QByteArray &value, quint16 t
     if (value.size())
         m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithoutResponse); /*  m_writeMode */
 
-    qDebug()<<"bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout, quint8 retry)";
     return false;
 }
 
@@ -558,7 +566,9 @@ void DeviceController::onCmdTimerExpired()
 
 void DeviceController::bleUartSendCmdOk()
 {
+#if (USE_DEBUG >= 1)
     qDebug()<<"Sending CMD OK!";
+#endif
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_OK;
@@ -568,8 +578,9 @@ void DeviceController::bleUartSendCmdOk()
 
 void DeviceController::bleUartTx(const QByteArray &value)
 {
-#ifdef USE_DEBUG
-    qDebug()<<"bleUartTx(const QByteArray &value)";
+
+#if (USE_DEBUG >= 1 )
+    qDebug()<<"bleUartTx(const QByteArray &value)"<<*value;
 #endif
     if (value.size())
         m_service->writeCharacteristic(m_writeCharacteristic, value, QLowEnergyService::WriteWithResponse); /*  m_writeMode todo -> I JUST CHANGED IT TO FIXED WITHOUT */
@@ -577,7 +588,9 @@ void DeviceController::bleUartTx(const QByteArray &value)
 
 inline bool DeviceController::isDeviceInRequestedConnState()
 {
+#if (USE_DEBUG >= 1)
     qDebug()<<"isDeviceInRequestedConnState()";
+#endif
     // todo: the required conn mode is always true in the catch controller...
     return ( ( m_dev_conn_param_info.current_mode == m_dev_requested_conn_mode ) && ( m_dev_conn_param_info.requested_mode == m_dev_requested_conn_mode ));
 }
@@ -585,7 +598,6 @@ inline bool DeviceController::isDeviceInRequestedConnState()
 void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
 
-    static uint16_t debug_cunter = 0;
     // it would have been the best to only move the send receive functions to an own thread.. with this solution we will have a bit faster dispatch of time sync and receive..
 
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
@@ -595,15 +607,16 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
     if ( c.uuid() == ble_uart_receive )
     {
-#ifdef USE_DEBUG
+#if (USE_DEBUG >= 1 )
         qDebug()<<"BLE UART RX FIRST BYTE:"<<hex;
 #endif
         switch ( data[0] )
         {
         case CMD_OK:
             m_cmdTimer->stop();
+#if (USE_DEBUG >= 1)
             qDebug()<<"CMD OK Received..!"<<m_ident_idx;
-
+#endif
             break;
         case TRIGGERED:
 
@@ -709,9 +722,6 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) -> One of the TX_POOL Characteristics
     {
-//        debug_cunter++;
-//        if (debug_cunter % 10 == 0)
-//            qDebug()<<"ten pkkgs more";
         // this is the ble rx pooled part.. it could be also moved to an own handler
         uint16_t tidx;
         huge_chunk_indexed_byterray_t hc_tmp_iba_struct;
@@ -737,11 +747,20 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
             hc_helper_struct.hc_highest_index = tidx;
         }
-        //  qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx;
-
-        hc_tmp_iba_struct.barr.append(value.size()-1, data[1]); // add the 19 bytes
+#if (USE_DEBUG >= 1 )
+        qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx << "  package size" << value.size()-1;
+#endif
+        // THAT WAS A DIRTY BUG
+        //        hc_tmp_iba_struct.barr.append(value.size()-1, data[1]); // add the 19 bytes -> it looks like it could work... but :/
+        hc_tmp_iba_struct.barr = value.right(value.size()-1);
         hc_tmp_iba_struct.received = 1;
 
+#if (USE_DEBUG >= 1 )
+        QByteArray testArr = value.right(value.size()-1);
+        qDebug()<<"\n";
+        qDebug()<<testArr;
+        qDebug()<<"\n";
+#endif
         if (tidx < hc_transfer_struct.incoming_package_count)
             m_hc_vec.replace(tidx,hc_tmp_iba_struct);
         else
@@ -757,9 +776,12 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
         if ( tidx == hc_transfer_struct.incoming_package_count - 1 )
         {
+#if (USE_DEBUG >= 1)
             qDebug()<<"HC -> Last PKG!";
-            debug_cunter = 0;
+#endif
+#if (PRINT_THROUGHPUT == 1)
             printThroughput();
+#endif
             hc_helper_struct.last_received = true;
         }
         else if (tidx > hc_transfer_struct.incoming_package_count )
@@ -813,23 +835,20 @@ void DeviceController::onReplyMissingPackageArrived(QByteArray value)
 void DeviceController::onStartHugeChunkArrived()
 {
     m_cmdTimer->stop();
+#if (USE_DEBUG >= 1)
     qDebug()<<"onStartHugeChunkArrived()";
-
     if ( hc_transfer_struct.incoming_byte_count )
     {
-        qDebug()<<"HC -> Multi Chunk Transfer Starts! "<< hc_transfer_struct.incoming_byte_count << " Bytes to Receive!";
+        qDebug()<<"#HC -> Multi Chunk Transfer Starts! "<< hc_transfer_struct.incoming_byte_count << " Bytes to Receive!";
     }
     else
     {
-        // show the devil
+        // Todo: Show the Devil!
     }
-
-    //if ( hc_transfer_struct.incoming_byte_count % 19 )
-    //   val = 1;
-    //incoming_package_count = (incoming_byte_count/19) + val;
+    qDebug()<<"HC -> Pkg Count"<< hc_transfer_struct.incoming_package_count;
+#endif
 
     m_hc_vec = QVector<huge_chunk_indexed_byterray_t> ( hc_transfer_struct.incoming_package_count );
-    qDebug()<<"HC -> Pkg Count"<< hc_transfer_struct.incoming_package_count;
     hc_helper_struct.hc_highest_index = 0;
     hc_helper_struct.first_multi_chunk = true;
     hc_helper_struct.missed_pkg_cnt_to_request = 0;
@@ -842,12 +861,12 @@ void DeviceController::onStartHugeChunkArrived()
     sendStartOkHugeChunk();
 
     // TODO DOMINIK
-//    emit invokeAddToLogFile(m_ident_str, QString("RecordingTime"), QString::number(2500)+" ms");
-//    emit invokeAddToLogFile(m_ident_str, QString("freq_AUDIO"), QString::number(8000));
-//    emit invokeAddToLogFile(m_ident_str, QString("freq_ACC"), QString::number(1000));
-//    emit invokeAddToLogFile(m_ident_str, QString("freq_GYR"), QString::number(1000));
-//    emit invokeAddToLogFile(m_ident_str, QString("freq_MAG"), QString::number(100));
-//    emit invokeAddToLogFile(m_ident_str, QString("freq_PRS"), QString::number(100));
+    //    emit invokeAddToLogFile(m_ident_str, QString("RecordingTime"), QString::number(2500)+" ms");
+    //    emit invokeAddToLogFile(m_ident_str, QString("freq_AUDIO"), QString::number(8000));
+    //    emit invokeAddToLogFile(m_ident_str, QString("freq_ACC"), QString::number(1000));
+    //    emit invokeAddToLogFile(m_ident_str, QString("freq_GYR"), QString::number(1000));
+    //    emit invokeAddToLogFile(m_ident_str, QString("freq_MAG"), QString::number(100));
+    //    emit invokeAddToLogFile(m_ident_str, QString("freq_PRS"), QString::number(100));
 
 }
 
@@ -856,11 +875,14 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 {
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
 
-    qDebug()<<"HUGE_CHUNK_ACK_PROC : started!";
-
+#if (USE_DEBUG >= 3)
+    qDebug()<<"onStartHugeChunkAckProcArrived : started!";
+#endif
     if ( hc_helper_struct.skipped | !hc_helper_struct.last_received )
     {
-        qDebug()<<"HUGE_CHUNK_ACK_PROC : arrived_package_count != incoming_package_count!";
+#if (USE_DEBUG >= 3)
+        qDebug()<<"onStartHugeChunkAckProcArrived : arrived_package_count != incoming_package_count!";
+#endif
         m_hc_missed.clear();
         for ( int i = 0; i < m_hc_vec.size(); i++)
         {
@@ -872,25 +894,30 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
             }
         }
         hc_helper_struct.skipped = false;
-        qDebug()<<"HUGE_CHUNK_ACK_PROC : need to request"<<m_hc_missed.size()<<"packages ;( ;";
+#if (USE_DEBUG>=1)
+        qDebug()<<"HUGE_CHUNK_ACK_PROC : need to request"<<m_hc_missed.size()<<"packages ;( ";
+#endif
     }
 
+#if (USE_DEBUG >= 1)
     qDebug()<<"m_missed_to_request"<<hc_helper_struct.missed_pkg_cnt_to_request;
-
+#endif
     if ( hc_helper_struct.missed_pkg_cnt_to_request == 0 )
     {
         hugeChunkDownloadFinished();
     }
     else
     {
+#if (USE_DEBUG >= 1)
         qDebug()<<"Requesting missed";
+#endif
         sendRequestMissingPackage();
     }
 }
 
 void DeviceController::onNoChunkAvailableArrived()
 {
-    qDebug()<<"NO CHUNK!";
+    qInfo()<<"onNoChunkAvailableArrived()";
     m_cmdTimer->stop(); //todo dont forget to add this on all replies!
     bleUartSendCmdOk();
     emit allDataDownloaded(true, m_ident_idx);
@@ -908,7 +935,9 @@ void DeviceController::sendAckOkHugeChunk()
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_HC_ACK_OK;
+#if (USE_DEBUG >= 1)
     qInfo()<<"ackHugeChunk()";
+#endif
     this->bleUartSendCmdWithResp(tba);
 }
 
@@ -918,25 +947,30 @@ void DeviceController::sendStartOkHugeChunk()
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_HC_START_OK;
+#if (USE_DEBUG >= 1)
     qInfo()<<"sendStartOkHugeChunk()";
+#endif
     this->bleUartSendCmdWithResp(tba);
 }
 
 void DeviceController::hugeChunkDownloadFinished()
 {
+#if (USE_DEBUG >= 1)
     qDebug()<<"All Received";
-
+#endif
     emit invokeAddToLogFile("TODOSTRING", QString("AllArrived"), QString("TRUE"));
 
     sendAckOkHugeChunk();
     writeReceivedChunkToFile( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type);
-    qDebug()<<"Written";
+
     if (hc_chopchop_mode)
     {
         m_nextRequest = NEXT_REQ_SEND_SENS_DATA;
-        m_nextRequestTimer->setInterval(50);
+        m_nextRequestTimer->setInterval(WAIT_X_MS_BETWEEN_CHUNKS);
         m_nextRequestTimer->start();
-        qDebug()<<"Next Requested";
+#if (USE_DEBUG >= 1)
+        qDebug()<<"Next HC has been requested";
+#endif
     }
 }
 
@@ -966,29 +1000,29 @@ void DeviceController::onBleUartSendCmdWithRespTimerExpired()
         QByteArray tba;
         tba.append(*m_bleUartSendCmdWithRespBacklog.last());
         qDebug()<<"COPIED:"<<tba;
-            if ( bleUartSendCmdWithResp(tba) )
+        if ( bleUartSendCmdWithResp(tba) )
+        {
+            qWarning()<<"Resend Failed!";
+            if (m_bleUartSendCmdWithRespBacklogRetries)
             {
-                qWarning()<<"Resend Failed!";
-                if (m_bleUartSendCmdWithRespBacklogRetries)
-                {
-                    m_bleUartSendCmdWithRespBacklogRetries--;
-                    m_bleUartSendCmdWithRespBacklogTimer->start();
-                }
-                else
-                {
-                    qWarning()<<"REALLY SHOW THE DEVIL!";
-                }
+                m_bleUartSendCmdWithRespBacklogRetries--;
+                m_bleUartSendCmdWithRespBacklogTimer->start();
             }
             else
             {
-                qDebug()<<"Successfully resent!!";
-                qDebug()<<"BARR SIZE BEFOR"<<                m_bleUartSendCmdWithRespBacklog.size();
-
-                m_bleUartSendCmdWithRespBacklog.last()->~QByteArray();
-                m_bleUartSendCmdWithRespBacklog.pop_back();
-                qDebug()<<"BARR SIZE AFTER"<<                m_bleUartSendCmdWithRespBacklog.size();
-
+                qWarning()<<"REALLY SHOW THE DEVIL!";
             }
+        }
+        else
+        {
+            qDebug()<<"Successfully resent!!";
+            qDebug()<<"BARR SIZE BEFOR"<<                m_bleUartSendCmdWithRespBacklog.size();
+
+            m_bleUartSendCmdWithRespBacklog.last()->~QByteArray();
+            m_bleUartSendCmdWithRespBacklog.pop_back();
+            qDebug()<<"BARR SIZE AFTER"<<                m_bleUartSendCmdWithRespBacklog.size();
+
+        }
 
 
     }
