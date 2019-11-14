@@ -35,30 +35,6 @@
 #define AUDIO_PCM_BYTES_PRO_MS                (AUDIO_PCM_SAMPLES_PRO_MS*2)
 #define R_BUFF_SIZE_AUDIO			(AUDIO_PCM_SAMPLES_PRO_MS * CD_TOTAL_BUFFERED_DATA_IN_MS)
 
-
-/* STATE MACHINE STUFF */
-typedef struct
-{
-    uint16_t mainState;
-    uint16_t lastMainState;
-
-    uint8_t subState;
-
-    uint8_t bleUplState;
-    uint8_t lastBleUplState;
-
-    uint8_t lastError;
-
-    uint8_t isSDenabled;
-    uint8_t isSendingOverBLEenabled;
-
-    uint8_t notifyTriggered;
-    uint8_t notifyHoldingData;
-
-    uint8_t currentFileIndex;
-    uint8_t* ptrToLastBuf;
-}	catch_detection_state_machine_t;
-
 /* Trigger Source */
 #define MAGNETO_TRIG 		 1<<1
 #define ACC_TRIG		 1<<2

@@ -225,8 +225,8 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
 {
     if ( !success )
     {
-        qDebug()<<"CC-DL --> onDownloadOfDeviceXfinished"<<success<<id; // show the devil they must have a look at it...
-        emit invokeQmlError();
+        qWarning()<<"CC-DL --> onDownloadOfDeviceXfinished"<<success<<id; // show the devil they must have a look at it...
+        emit invokeQmlError(); // todo pass a string here to show what faield..
     }
     // todo -> modify this to differentiate by dev type, wearable or not../add this property to deviceinfo in deviceinterface
     if ( (id + 1) < m_device_list->size() )
@@ -238,9 +238,15 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
     {
         m_downloadTimer.stop();
         download_state = NOT_RUNNING;
-        m_logfile_handler_ptr->fin_log_fil();
+
         emit downloadOfAllDevFinished(true);
-        qDebug()<<"Downloaded everything from all connected devices";
+
+        m_logfile_handler_ptr->finishLogFile();
+        m_logfile_handler_ptr->incrementFileIndex();
+
+#if (VERBOSITY_LEVEL >= 0)
+        qInfo()<<"Downloaded everything from all connected devices";
+#endif
     }
 }
 
@@ -382,7 +388,9 @@ void CatchController::onConnAliveOfDevXChanged(bool isItAlive, int idx)
     {
         m_devicesConnected = false;
         emit allSelectedDevicesAreConnected(false);
-        qDebug()<<"devices connected:"<<m_devicesConnected;
+
+        qWarning()<<"!!! Device"<<idx<<"failed to Connect!";
+
         return;
     }
 
@@ -396,16 +404,19 @@ void CatchController::onConnAliveOfDevXChanged(bool isItAlive, int idx)
     {
         m_devicesConnected = true;
         emit allSelectedDevicesAreConnected(true);
-        qDebug()<<"devices connected:"<<m_devicesConnected;
+#if ( VERBOSITY_LEVEL >= 0 )
+        qInfo()<<"All Devices connected:";
+#endif
 #if ( START_TS_FROM_CC == 1 )
         m_nextRequest = NEXT_REQ_START_TS;
         m_nextRequestTimer.setInterval(2000);
         m_nextRequestTimer.start();
-        qDebug()<<"TimeSync of All Devices Started through the Catch Controller..";
+    #if ( VERBOSITY_LEVEL >= 1 )
+            qInfo()<<"TimeSync of All Devices Started by the Catch Controller..";
+    #endif
 #endif
     }
 
-    qDebug()<<"onConnAliveOfDevXChanged(bool isItAlive ="<<isItAlive<<"idx="<<idx<<")";
 }
 
 
@@ -445,17 +456,17 @@ void CatchController::onCatchSuccessConfirmed( quint8 catchSuccess )
     m_lastCatchSuccess = catchSuccess;
     switch( catchSuccess )
     {
-        case CATCH:
-            m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "CATCH");
-            break;
+    case CATCH:
+        m_logfile_handler_ptr->addToLogFil("Info","SUCCESS", "CATCH");
+        break;
 
-        case DROP:
-            m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "DROP");
-            break;
-        case FLOP:
-            m_logfile_handler_ptr->add_to_log_fil_slot("Info","SUCCESS", "FLOP");
-            // reset if there is something to be resetted
-            break;
+    case DROP:
+        m_logfile_handler_ptr->addToLogFil("Info","SUCCESS", "DROP");
+        break;
+    case FLOP:
+        m_logfile_handler_ptr->addToLogFil("Info","SUCCESS", "FLOP");
+        // reset if there is something to be resetted
+        break;
     }
 
     if ( catchSuccess == CATCH || catchSuccess == DROP )

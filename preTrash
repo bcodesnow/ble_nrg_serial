@@ -297,7 +297,7 @@ indicator: Rectangle {
 //void DeviceHandler::sendCatchSuccessFromQML(bool wasItCatched)
 //{
 //    m_refToFileHandler->add_to_log_fil(m_ident_str,"SUCCESS", wasItCatched ? "CATCH" : "DROP");
-//    m_refToFileHandler->fin_log_fil();
+//    m_refToFileHandler->finishLogFile();
 //}
 
 

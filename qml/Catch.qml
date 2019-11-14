@@ -40,7 +40,7 @@ AppPage {
         id: catchConfirmPopup
         currentPopupType: MultiPopupType.type_catch
         onPopupConfirmed: {
-            console.log("Ball catched:",index)
+            console.log("Ball catched:", index)
             catchController.onCatchSuccessConfirmed( index )
             catchConfirmPopup.visible = false
             if (catchController.bleUplEnabled)

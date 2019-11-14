@@ -8,11 +8,19 @@
 #include <QElapsedTimer> // delete later
 
 LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
-    m_curr_idx(0), m_fil_src_cnt(0), m_is_aut_incr_en(0), m_last_type(0),
-    m_last_path("NONE")
+    m_currFileIndex(0), m_lastType(0),
+    m_lastPath("NONE")
 {
-    m_log_fil_buf = new QString();
-    m_homeLocation = QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory);
+    m_logFilBuf = new QString();
+
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+    m_fileLocation = QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory);
+
+#endif
+
+#if (defined(Q_OS_ANDROID))
+    m_fileLocation = QStandardPaths::locate(QStandardPaths::DownloadLocation, QString(), QStandardPaths::LocateDirectory);
+#endif
 
     m_paintDataList.reserve(TYPE_COUNT*2);
     m_paintDataList.append(new PaintData(TYPE_AUD, QString("L").at(0).toLatin1(), QVector<QVariant>(0)));
@@ -82,37 +90,35 @@ QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray arr)
     return floatvec;
 }
 
-void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, quint8 type, quint16 wp)
+void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 type, quint16 wp)
 {
 
 #if (PLOT_DATA == 1)
-    #if (USE_DEBUG >= 1)
-        qDebug()<<"write_type_to_file_slot"<<ident<<type<<wp<<data->size();
-    #endif
-#else
-#if (USE_DEBUG >= 1)
-    qDebug()<<"write_type_to_file_slot disabled";
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"writeTypeToLogFil"<<ident<<type<<wp<<data->size();
 #endif
-        return;
+#else
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"writeTypeToLogFil disabled";
+#endif
+    return;
 #endif
 
     QElapsedTimer filetimer;
     filetimer.start();
 
     QVector<QVariant> dataVec(QVector<QVariant>(0));
-    static quint64 counter;
-
     // get target location
-    QString tmpLocation = m_homeLocation+m_curr_dir+"/";
+    QString tmpLocation = m_fileLocation+m_currDir+"/";
     qDebug()<<"File Path: "<<tmpLocation;
-    QString idx_str = tr("%1_%2_").arg(m_curr_idx).arg(ident);
+    QString idx_str = tr("%1_%2_").arg(m_currFileIndex).arg(ident);
     tmpLocation.append( idx_str );
 
     // sort by writepointer
     if (type != TYPE_LOG && !data->isEmpty())
         sortArray(data, wp);
 
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"after sorting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
     // Byte conversion
@@ -144,12 +150,13 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
     default:
         tmpLocation.append( QString("SOMEFILE") );
     }
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"after conversion:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
     if (type != TYPE_LOG && !dataVec.isEmpty())
     {
-        for (int i=0;i<m_paintDataList.size();i++) {
+        for (int i=0;i<m_paintDataList.size();i++)
+        {
             if (((PaintData*)m_paintDataList.at(i))->getType() == type &&
                     ((PaintData*)m_paintDataList.at(i))->getSide() == ident.at(0).toLatin1())
             {
@@ -157,28 +164,8 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
                 emit paintDataListChanged();
             }
         }
-
-        //  emit updateAllPainters(m_paintDataList);
-
-
-
-
-        //        // remove previous paint data
-        //        for (int i=0;i<m_paintDataList.size();i++) {
-        //            if (((PaintData*)m_paintDataList.at(i))->getType() == type &&
-        //                    ((PaintData*)m_paintDataList.at(i))->getSide() == ident.at(0).toLatin1())
-        //            {
-        //                m_paintDataList.removeAt(i);
-        //            }
-        //        }
-        //        // add data to painters
-        //        m_paintDataList.append(new PaintData(type, ident.at(0).toLatin1(), dataVec));
-        //        emit paintDataListChanged();
-        //        for (int i=0;i<m_paintDataList.size();i++) {
-        //            emit newPaintData(m_paintDataList.at(i),((PaintData*)m_paintDataList.at(i))->getName());
-        //        }
     }
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"after painting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
 
@@ -188,108 +175,83 @@ void LogFileHandler::write_type_to_file_slot(QString ident, QByteArray* data, qu
     file.write(*data);
     file.close();
 
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"after saving:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
 
-    // increment file index
-    if ( m_is_aut_incr_en )
-    {
-        if (type == m_last_type)
-        {
-            counter++;
-            if ( counter % m_fil_src_cnt == 0)
-            {
-                m_curr_idx++;
-                emit idxChanged(m_curr_idx);
-            }
-        }
-    }
-#if (USE_DEBUG >= 1)
-    qDebug()<<"write_type_to_file_slot took:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"writeTypeToLogFil took:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
-
-
-
-
 }
 
-void LogFileHandler::add_to_log_fil_slot(QString ident, QString key, QString val)
+void LogFileHandler::addToLogFil(QString ident, QString key, QString val)
 {
-    //    QString tmpString = ident + SEP_CHAR + key + SEP_CHAR + val + LINE_END;
-    //    m_log_fil_buf->append(tmpString);
+#ifdef ALLOW_WRITE_TO_FILE
+    QString tmpString = ident + SEP_CHAR + key + SEP_CHAR + val + LINE_END;
+    m_logFilBuf->append(tmpString);
+#endif
 }
 
-//add_to_log_fil_slot("Info","Username",m_curr_user);
-//add_to_log_fil_slot("Info","CatchMode",m_curr_catch_mode);
-
-void LogFileHandler::rst_idx()
+void LogFileHandler::resetFileIndex()
 {
-    m_curr_idx = 0;
-    emit idxChanged(m_curr_idx);
+    m_currFileIndex = 0;
+    emit fileIndexChanged();
 }
 
-quint64 LogFileHandler::get_idx()
-{
-    return m_curr_idx;
-}
-
-void LogFileHandler::set_aut_incr(bool onoff)
-{
-    m_is_aut_incr_en = onoff;
-}
-
-void LogFileHandler::incr_idx()
-{
-    m_curr_idx++;
-    emit idxChanged(m_curr_idx);
-}
-
-void LogFileHandler::set_last_type(uint8_t type)
-{
-    m_last_type = type;
-}
-
-void LogFileHandler::set_fil_src_cnt(quint16 cunt)
-{
-    m_fil_src_cnt = cunt;
-}
-
-void LogFileHandler::set_curr_dir(QString username)
+void LogFileHandler::setCurrDir(QString username)
 {
     if (username.isEmpty())
-        m_curr_user = "dev";
+        m_currUser = "dev";
     else
-        m_curr_user = username;
+        m_currUser = username;
 
-    m_curr_dir = "catch_data_WD_"+m_curr_user+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
+    m_currDir = "catch_data_WD_"+m_currUser+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
     QDir dir;
-    dir.setPath(m_homeLocation);
-    dir.mkdir(m_curr_dir);
-    qDebug()<<"Created folder"<<m_curr_dir<<"in"<<m_homeLocation;
+    dir.setPath(m_fileLocation);
+    dir.mkdir(m_currDir);
+#if ( VERBOSITY_LEVEL >= 0 )
+    qInfo()<<"LogFileHandler::setCurrDir(QString username)"<< "\nCreated folder"<<m_currDir<<"in"<<m_fileLocation;
+#endif
 }
 
-void LogFileHandler::set_curr_catch_mode(QString mode)
+void LogFileHandler::setCurrCatchMode(QString mode)
 {
-    m_curr_catch_mode = mode;
+    m_currCatchMode = mode;
 }
 
 //void LogFileHandler::confirm (QString ident, bool bcatch)
 //{
-//    add_to_log_fil_slot(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
+//    addToLogFil(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
 //}
 
-void LogFileHandler::fin_log_fil()
+void LogFileHandler::finishLogFile()
 {
-    //    QByteArray ba; // get rid of this..
-    //    ba =  m_log_fil_buf->toUtf8();
-    //    write_type_to_file_slot("LR", &ba, TYPE_LOG, 0);
-    //    m_log_fil_buf->clear();
+#if ( WRITE_BERNHARD_INFO_TO_LOG_FILE == 1 )
+    addToLogFil("Info","Username",m_currUser);
+    addToLogFil("Info","CatchMode",m_currCatchMode);
+    addToLogFil("Info", QString("RecordingTime"), QString::number(2500)+" ms"); // todo use define from mci catch det
+    addToLogFil("Info", QString("freq_AUDIO"), QString::number(8000));
+    addToLogFil("Info", QString("freq_ACC"), QString::number(1000));
+    addToLogFil("Info", QString("freq_GYR"), QString::number(1000));
+    addToLogFil("Info", QString("freq_MAG"), QString::number(100));
+    addToLogFil("Info", QString("freq_PRS"), QString::number(100));
+#endif
+#ifdef ALLOW_WRITE_TO_FILE
+    QByteArray ba; // get rid of this..
+    ba =  m_logFilBuf->toUtf8();
+    writeTypeToLogFil("LR", &ba, TYPE_LOG, 0);
+    m_logFilBuf->clear();
+#endif
+}
+
+void LogFileHandler::incrementFileIndex()
+{
+    m_currFileIndex++;
 }
 
 QString LogFileHandler::getHomeLocation()
 {
-    return m_homeLocation;
+    return m_fileLocation;
 }
 
 QVariant LogFileHandler::getPaintDataList()

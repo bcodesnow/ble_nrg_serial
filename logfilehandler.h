@@ -9,7 +9,9 @@
 #include <QDebug>
 
 #define PLOT_DATA 1
-#define USE_DEBUG 0
+#define VERBOSITY_LEVEL 0
+#define ALLOW_WRITE_TO_FILE 1
+#define WRITE_BERNHARD_INFO_TO_LOG_FILE 1
 
 #include <graphpainter.h>
 #include <paintdata.h>
@@ -21,31 +23,32 @@ class LogFileHandler : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(quint64 idx MEMBER m_curr_idx NOTIFY idxChanged)
-    Q_PROPERTY(QString lastPath MEMBER m_last_path NOTIFY lastPathChanged)
+    Q_PROPERTY(quint64 fileIndex MEMBER m_currFileIndex NOTIFY fileIndexChanged)
+    Q_PROPERTY(QString lastPath MEMBER m_lastPath NOTIFY lastPathChanged)
     Q_PROPERTY(QVariant paintDataList READ getPaintDataList NOTIFY paintDataListChanged)
 
 private:
-    quint64 m_curr_idx;
-    QString m_last_path;
-    quint32 m_fil_src_cnt; // file source count
-    quint8  m_last_type; // and last type make out when it increments.
-    QString* m_log_fil_buf;
-    QString m_homeLocation;
-    QString m_curr_user;
-    QString m_curr_dir;
-    QString m_curr_catch_mode;
-    bool m_is_aut_incr_en;
+    quint64 m_currFileIndex;
+    QString m_lastPath;
+    quint8  m_lastType; // and last type make out when it increments.
+    QString* m_logFilBuf;
+    QString m_fileLocation;
+    QString m_currUser;
+    QString m_currDir;
+    QString m_currCatchMode;
     QList<QObject*> m_paintDataList;
+
+    quint64 m_fileIndex;
 
 signals:
     void lastPathChanged(void);
     void idxChanged(quint64 tidx);
-    void confirmNeeded();
 
     void paintDataListChanged();
     void updateAllPainters(QList<QObject*> datalist);
     void invokeGoogleUpload(QString filename, QByteArray data);
+
+    void fileIndexChanged();
 
 public:
     explicit LogFileHandler(QObject *parent = nullptr);
@@ -59,21 +62,16 @@ public:
     QString getHomeLocation();
     QVariant getPaintDataList();
 
-    Q_INVOKABLE void rst_idx();
-    quint64 get_idx();
-    void set_aut_incr(bool onoff);
-    Q_INVOKABLE void incr_idx();
-    void set_last_type (uint8_t type);
-    void set_fil_src_cnt (quint16 cunt);
-    Q_INVOKABLE void set_curr_dir (QString username);
-    Q_INVOKABLE void set_curr_catch_mode (QString mode);
-
 
 public slots:
-    void fin_log_fil();
-    void add_to_log_fil_slot(QString ident, QString key, QString val);
-    void write_type_to_file_slot(QString ident, QByteArray* data, quint8 type, quint16 wp);
+    void finishLogFile();
+    void incrementFileIndex();
+    void addToLogFil(QString ident, QString key, QString val);
+    void writeTypeToLogFil(QString ident, QByteArray* data, quint8 type, quint16 wp);
+    void resetFileIndex(); // UNUSED TODO
 
+    void setCurrDir (QString username); //TODO Dominique
+    void setCurrCatchMode (QString mode);
 };
 
 #endif // LOGFILEHANDLER_H

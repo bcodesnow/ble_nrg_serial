@@ -145,7 +145,7 @@ void DeviceController::serviceStateChanged(QLowEnergyService::ServiceState s)
 
 void DeviceController::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const QByteArray &value)
 {
-#if (USE_DEBUG >= 2)
+#if (VERBOSITY_LEVEL >= 2)
     qDebug()<<"confirmedDescriptorWrite"<<d.name();
 #endif
     if (d.isValid() && d == m_notificationDescriptor && value == QByteArray::fromHex("0000"))
@@ -202,7 +202,7 @@ void DeviceController::onCharacteristicRead(const QLowEnergyCharacteristic &c, c
 
 void DeviceController::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
-#if (USE_DEBUG >= 1 )
+#if (VERBOSITY_LEVEL >= 1 )
     qInfo() << "Characteristic Written! - Payload: " << value;
 #endif
     const quint8 *data;
@@ -255,26 +255,26 @@ void DeviceController::searchCharacteristic()
         {
             if( c.isValid() )
             {
-#if (USE_DEBUG >= 2)
+#if (VERBOSITY_LEVEL >= 2)
                 qDebug()<<"Characteristic UUID:"<<c.uuid();
                 printProperties(c.properties());
 #endif
                 if ( c.uuid() == QBluetoothUuid( BLE_UART_RX_CHAR) && ( c.properties() & QLowEnergyCharacteristic::WriteNoResponse || c.properties() & QLowEnergyCharacteristic::Write) )
                 {
-#if (USE_DEBUG >= 2)
+#if (VERBOSITY_LEVEL >= 2)
                     qDebug()<<"Write Characteristic Registered";
 #endif
                     m_writeCharacteristic = c;
                     if(c.properties() & QLowEnergyCharacteristic::WriteNoResponse)
                     {
-#if (USE_DEBUG >= 2)
+#if (VERBOSITY_LEVEL >= 2)
                         qInfo()<<"QLowEnergyService::WriteWithoutResponse";
 #endif
                         m_writeMode = QLowEnergyService::WriteWithoutResponse;
                     }
                     else
                     {
-#if (USE_DEBUG >= 2)
+#if (VERBOSITY_LEVEL >= 2)
                         qInfo()<<"QLowEnergyService::WriteWithResponse";
 #endif
                         m_writeMode = QLowEnergyService::WriteWithResponse;
@@ -282,14 +282,14 @@ void DeviceController::searchCharacteristic()
                 }
                 else if ( c.uuid() == QBluetoothUuid( BLE_UART_TX_CHAR ) )
                 {
-#if (USE_DEBUG >= 2)
+#if (VERBOSITY_LEVEL >= 2)
                     qDebug()<<"Read (Notify) Characteristic Registered";
 #endif
                     m_readCharacteristic = c;
                     m_notificationDescriptor = c.descriptor(QBluetoothUuid::ClientCharacteristicConfiguration);
 
                     if (m_notificationDescriptor.isValid()) {
-#if (USE_DEBUG >= 2)
+#if (VERBOSITY_LEVEL >= 2)
                         qDebug()<<"Characteristic Descriptor: ClientCharacteristicConfiguration, writing 0100 to descriptor";
 #endif
                         m_service->writeDescriptor(m_notificationDescriptor, QByteArray::fromHex("0100"));
@@ -352,7 +352,7 @@ void DeviceController::sendRequestSensorData(quint8 catchSuccess)
     tba[0] = CMD_REQUEST_SENSORDATA;
     tba[1] = catchSuccess;
     bleUartSendCmdWithResp(tba);
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"Sending Request Sensor Data and in the first message also the Catch Success!";
 #endif
 }
@@ -515,7 +515,7 @@ void DeviceController::setConnParamsOnCentral(uint8_t mode)
 
 bool DeviceController::bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout, quint8 retry)
 {
-#if ( USE_DEBUG >= 1)
+#if ( VERBOSITY_LEVEL >= 1)
     qDebug()<<"bleUartSendCmdWithResp(const QByteArray &value, quint16 timeout, quint8 retry)"<<"Timeout"<<timeout;
 #endif
 
@@ -566,7 +566,7 @@ void DeviceController::onCmdTimerExpired()
 
 void DeviceController::bleUartSendCmdOk()
 {
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"Sending CMD OK!";
 #endif
     QByteArray tba;
@@ -579,7 +579,7 @@ void DeviceController::bleUartSendCmdOk()
 void DeviceController::bleUartTx(const QByteArray &value)
 {
 
-#if (USE_DEBUG >= 1 )
+#if (VERBOSITY_LEVEL >= 1 )
     qDebug()<<"bleUartTx(const QByteArray &value)"<<*value;
 #endif
     if (value.size())
@@ -588,7 +588,7 @@ void DeviceController::bleUartTx(const QByteArray &value)
 
 inline bool DeviceController::isDeviceInRequestedConnState()
 {
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"isDeviceInRequestedConnState()";
 #endif
     // todo: the required conn mode is always true in the catch controller...
@@ -607,14 +607,14 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
     if ( c.uuid() == ble_uart_receive )
     {
-#if (USE_DEBUG >= 1 )
+#if (VERBOSITY_LEVEL >= 1 )
         qDebug()<<"BLE UART RX FIRST BYTE:"<<hex;
 #endif
         switch ( data[0] )
         {
         case CMD_OK:
             m_cmdTimer->stop();
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
             qDebug()<<"CMD OK Received..!"<<m_ident_idx;
 #endif
             break;
@@ -747,7 +747,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
             hc_helper_struct.hc_highest_index = tidx;
         }
-#if (USE_DEBUG >= 1 )
+#if (VERBOSITY_LEVEL >= 1 )
         qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx << "  package size" << value.size()-1;
 #endif
         // THAT WAS A DIRTY BUG
@@ -755,7 +755,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
         hc_tmp_iba_struct.barr = value.right(value.size()-1);
         hc_tmp_iba_struct.received = 1;
 
-#if (USE_DEBUG >= 1 )
+#if (VERBOSITY_LEVEL >= 1 )
         QByteArray testArr = value.right(value.size()-1);
         qDebug()<<"\n";
         qDebug()<<testArr;
@@ -776,7 +776,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
         if ( tidx == hc_transfer_struct.incoming_package_count - 1 )
         {
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
             qDebug()<<"HC -> Last PKG!";
 #endif
 #if (PRINT_THROUGHPUT == 1)
@@ -835,7 +835,7 @@ void DeviceController::onReplyMissingPackageArrived(QByteArray value)
 void DeviceController::onStartHugeChunkArrived()
 {
     m_cmdTimer->stop();
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"onStartHugeChunkArrived()";
     if ( hc_transfer_struct.incoming_byte_count )
     {
@@ -860,14 +860,6 @@ void DeviceController::onStartHugeChunkArrived()
 
     sendStartOkHugeChunk();
 
-    // TODO DOMINIK
-    //    emit invokeAddToLogFile(m_ident_str, QString("RecordingTime"), QString::number(2500)+" ms");
-    //    emit invokeAddToLogFile(m_ident_str, QString("freq_AUDIO"), QString::number(8000));
-    //    emit invokeAddToLogFile(m_ident_str, QString("freq_ACC"), QString::number(1000));
-    //    emit invokeAddToLogFile(m_ident_str, QString("freq_GYR"), QString::number(1000));
-    //    emit invokeAddToLogFile(m_ident_str, QString("freq_MAG"), QString::number(100));
-    //    emit invokeAddToLogFile(m_ident_str, QString("freq_PRS"), QString::number(100));
-
 }
 
 
@@ -875,12 +867,12 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 {
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
 
-#if (USE_DEBUG >= 3)
+#if (VERBOSITY_LEVEL >= 3)
     qDebug()<<"onStartHugeChunkAckProcArrived : started!";
 #endif
     if ( hc_helper_struct.skipped | !hc_helper_struct.last_received )
     {
-#if (USE_DEBUG >= 3)
+#if (VERBOSITY_LEVEL >= 3)
         qDebug()<<"onStartHugeChunkAckProcArrived : arrived_package_count != incoming_package_count!";
 #endif
         m_hc_missed.clear();
@@ -894,12 +886,12 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
             }
         }
         hc_helper_struct.skipped = false;
-#if (USE_DEBUG>=1)
+#if (VERBOSITY_LEVEL>=1)
         qDebug()<<"HUGE_CHUNK_ACK_PROC : need to request"<<m_hc_missed.size()<<"packages ;( ";
 #endif
     }
 
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"m_missed_to_request"<<hc_helper_struct.missed_pkg_cnt_to_request;
 #endif
     if ( hc_helper_struct.missed_pkg_cnt_to_request == 0 )
@@ -908,7 +900,7 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
     }
     else
     {
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
         qDebug()<<"Requesting missed";
 #endif
         sendRequestMissingPackage();
@@ -935,7 +927,7 @@ void DeviceController::sendAckOkHugeChunk()
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_HC_ACK_OK;
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qInfo()<<"ackHugeChunk()";
 #endif
     this->bleUartSendCmdWithResp(tba);
@@ -947,7 +939,7 @@ void DeviceController::sendStartOkHugeChunk()
     QByteArray tba;
     tba.resize(2);
     tba[0] = CMD_HC_START_OK;
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qInfo()<<"sendStartOkHugeChunk()";
 #endif
     this->bleUartSendCmdWithResp(tba);
@@ -955,7 +947,7 @@ void DeviceController::sendStartOkHugeChunk()
 
 void DeviceController::hugeChunkDownloadFinished()
 {
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"All Received";
 #endif
     emit invokeAddToLogFile("TODOSTRING", QString("AllArrived"), QString("TRUE"));
@@ -968,7 +960,7 @@ void DeviceController::hugeChunkDownloadFinished()
         m_nextRequest = NEXT_REQ_SEND_SENS_DATA;
         m_nextRequestTimer->setInterval(WAIT_X_MS_BETWEEN_CHUNKS);
         m_nextRequestTimer->start();
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
         qDebug()<<"Next HC has been requested";
 #endif
     }

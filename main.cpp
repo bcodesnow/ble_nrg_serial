@@ -44,7 +44,6 @@ int main(int argc, char *argv[])
     term.setActive (true); // true
 
     LogFileHandler* log_file_handler = new LogFileHandler();
-    log_file_handler->set_aut_incr(false);
 
     //    QList<DeviceInterface*> device_interfaces;
 
@@ -52,9 +51,6 @@ int main(int argc, char *argv[])
     time_sync_handler->start_time_stamp();
 
     CatchController* catch_controller = new CatchController(ladapter->getList(), time_sync_handler,log_file_handler);
-
-    //log_file_handler.set_fil_src_cnt(2);
-    //log_file_handler.set_last_type(TYPE_PRS);
 
     ConnectionHandler connection_handler; // keeps track of local ble interface
 

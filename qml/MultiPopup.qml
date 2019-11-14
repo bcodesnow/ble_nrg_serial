@@ -141,9 +141,7 @@ Popup {
             Connections {
                 target: catchController
                 onDownloadOfAllDevFinished: {
-                    console.log("Download of all devices finished",success)
                     multiPopup.visible = false
-//                    fileHandler.fin_log_fil("Info");
                 }
             }
 
@@ -743,8 +741,8 @@ Popup {
                         console.log("MODE:",catchModeCB.currentText)
                         console.log("SD:",sdSwitch.checked,"BT:",btSwitch.checked,"G:",googleSwitch.checked)
                         catchController.setLoggingMedia(sdSwitch.checked,btSwitch.checked)
-                        fileHandler.set_curr_dir(usernameInput.text)
-                        fileHandler.set_curr_catch_mode(catchModeCB.currentText)
+                        fileHandler.setCurrDir(usernameInput.text)
+                        fileHandler.setCurrCatchMode(catchModeCB.currentText)
                         // networkManager
                         AppConstants.sessionPopupFinished = true;
                         multiPopup.visible = false

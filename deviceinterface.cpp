@@ -40,8 +40,8 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
 
     connect(m_deviceController, &DeviceController::aliveArrived, this, &DeviceInterface::onAliveArrived, Qt::QueuedConnection);
 
-    connect(m_deviceController, &DeviceController::invokeWriteTypeToFile, m_logfile_handler_ptr, &LogFileHandler::write_type_to_file_slot, Qt::QueuedConnection);
-    connect(m_deviceController, &DeviceController::invokeAddToLogFile, m_logfile_handler_ptr, &LogFileHandler::add_to_log_fil_slot, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::invokeWriteTypeToFile, m_logfile_handler_ptr, &LogFileHandler::writeTypeToLogFil, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::invokeAddToLogFile, m_logfile_handler_ptr, &LogFileHandler::addToLogFil, Qt::QueuedConnection);
 
     connect(&m_thread_controller, &QThread::started, this, &DeviceInterface::onDeviceThreadStarted); // new syntax
 
@@ -59,7 +59,7 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
 
     m_thread_controller.start();
 
-#if (USE_DEBUG >= 1)
+#if (VERBOSITY_LEVEL >= 1)
     QBluetoothDeviceInfo tdi = this->getDevice(); // todo test if we cann pass it directly
     qDebug()<<"The name is there"<<this->getName();
 #endif
@@ -88,16 +88,16 @@ void DeviceInterface::onTriggeredArrived(QByteArray value)
     rec_ts |=( (uint32_t) data[4] )<< 8;
     rec_ts |= ( (uint32_t) data[5] );
 
-    m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"TS in Trigger MSG", QString::number(rec_ts));
+    m_logfile_handler_ptr->addToLogFil(this->getDeviceIdentifier(),"TS in Trigger MSG", QString::number(rec_ts));
     //
     if (data[6] == 1<<1)
-        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Trigger Source", "MAG");
+        m_logfile_handler_ptr->addToLogFil(this->getDeviceIdentifier(),"Trigger Source", "MAG");
     else if (data[6] == 1<<2)
-        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Trigger Source", "ACC");
+        m_logfile_handler_ptr->addToLogFil(this->getDeviceIdentifier(),"Trigger Source", "ACC");
     else
-        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Trigger Source", "Things got messed up..");
+        m_logfile_handler_ptr->addToLogFil(this->getDeviceIdentifier(),"Trigger Source", "Things got messed up..");
 
-    m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Trigger MSG Received", QString::number(m_timesync_handler_ptr->get_timestamp_us()));
+    m_logfile_handler_ptr->addToLogFil(this->getDeviceIdentifier(),"Trigger MSG Received", QString::number(m_timesync_handler_ptr->get_timestamp_us()));
 }
 
 void DeviceInterface::onAliveArrived(QByteArray value)
@@ -118,7 +118,7 @@ void DeviceInterface::onAliveArrived(QByteArray value)
     }
 
     if (alive_msg.lastError)
-        m_logfile_handler_ptr->add_to_log_fil_slot(this->getDeviceIdentifier(),"Last Error", QString(alive_msg.lastError)); // there is something bad!
+        m_logfile_handler_ptr->addToLogFil(this->getDeviceIdentifier(),"Last Error", QString(alive_msg.lastError)); // there is something bad!
 
     qDebug()<<this->getDeviceIndex()<<this->getDeviceIdentifier()<<" --- ALIVE: -STATE- "<<this->getDeviceMainState()<<" -LAST ERROR- "<<alive_msg.lastError;
 
