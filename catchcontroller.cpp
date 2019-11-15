@@ -37,11 +37,11 @@ void CatchController::onTimeSyncTimerExpired()
     {
     case SETTING_CONN_MODE:
         qDebug()<<"TS-> Setting Conn Mode failed!"; // show the devil..
-        emit invokeQmlError();
+        emit invokeQmlError("TS-> Setting Conn Mode failed!");
         break;
     case SYNCING:
         qDebug()<<"TS-> Sync failed!"; // show the devil..
-        emit invokeQmlError();
+        emit invokeQmlError("TS-> Sync failed!");
         break;
     }
     m_timesyncTimer.stop();
@@ -52,13 +52,12 @@ void CatchController::onTimeSyncOfDevXfinished(bool success, int id)
     if ( success )
     {
         qDebug()<<"CC --> onTimeSyncOfDevXfinished"<<success<<id;
-        //emit invokeQmlError(); -> here we had success, dont show the devil
         m_device_list->at(id)->deviceIsTimeSynced = true;
     }
     else
     {
         qDebug()<<"ERROR! CC --> onTimeSyncOfDevXfinished"<<success<<id; // show the devil they must have a look at it...
-        emit invokeQmlError();
+        emit invokeQmlError("ERROR! CC --> onTimeSyncOfDevXfinished "+QString(success)+QString(" ")+QString::number(id));
     }
     if ( (id + 1) < m_device_list->size() )
     {   // this relies on it that we started with 0 and continue upwards..
@@ -133,7 +132,7 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
     {
         remaining_c = 0; // TODO -> thia is stupid...
         qDebug()<<"CC -->  FAILED! onConnUpdateOfDevXfinished"<<success<<id; // show the devil if its till unknown to the audience..
-        emit invokeQmlError();
+        emit invokeQmlError("CC -->  FAILED! onConnUpdateOfDevXfinished"+QString(success)+QString(" ")+QString::number(id));
     }
     remaining_c--;
     if ( !remaining_c )
@@ -226,7 +225,8 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
     if ( !success )
     {
         qWarning()<<"CC-DL --> onDownloadOfDeviceXfinished"<<success<<id; // show the devil they must have a look at it...
-        emit invokeQmlError(); // todo pass a string here to show what faield..
+        emit invokeQmlError("CC-DL --> onDownloadOfDeviceXfinished"+QString(success)+QString(" ")+QString::number(id)); // todo pass a string here to show what faield..
+
     }
     // todo -> modify this to differentiate by dev type, wearable or not../add this property to deviceinfo in deviceinterface
     if ( (id + 1) < m_device_list->size() )
@@ -349,12 +349,12 @@ void CatchController::onDownloadTimerExpired()
     {
     case SETTING_CONN_MODE:
         qDebug()<<"CC-DL-> Setting Conn Mode failed!"; // show the devil..
-        emit invokeQmlError();
+        emit invokeQmlError("CC-DL-> Setting Conn Mode failed!");
         break;
     case DOWNLOADING:
         qDebug()<<"CC-DL-> "
                   "Download failed!"; // show the devil..
-        emit invokeQmlError();
+        emit invokeQmlError("CC-DL-> Download failed!");
         break;
     }
     m_downloadTimer.stop();
@@ -416,7 +416,7 @@ void CatchController::onConnAliveOfDevXChanged(bool isItAlive, int idx)
         emit allSelectedDevicesAreConnected(false);
 
         qWarning()<<"!!! Device"<<idx<<"CONNECTION FAILED / Disconnected";
-        this->invokeQmlError();
+        this->invokeQmlError("!!! Device "+QString::number(idx)+" CONNECTION FAILED / Disconnected");
 
         return;
     }

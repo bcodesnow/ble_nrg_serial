@@ -61,7 +61,7 @@ Item {
             target: catchController
             onInvokeQmlError: {
                 showTheDevilPopup.visible = true
-                console.log("Woops...")
+                console.log("Woops...",error)
             }
         }
     }

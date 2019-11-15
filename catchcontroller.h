@@ -112,7 +112,7 @@ signals:
 
     void devicesAliveChanged(bool devicesAlive);
 
-    void invokeQmlError();
+    void invokeQmlError(QString error);
 
     void sdEnabledChanged(bool sdEnabled);
 

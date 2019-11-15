@@ -11,16 +11,19 @@ import QtGraphicalEffects 1.0
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Extras 1.4
 
+import QtQuick.Dialogs 1.2
+
 import "."
 Popup {
     id: multiPopup
     anchors.centerIn: parent
     closePolicy: Popup.NoAutoClose
-    focus: visible
+    // focus: visible
     modal: true
     dim: false
     padding: 0.0
-    clip: true
+    //  clip: true
+
     width:
         switch(currentPopupType) {
         case MultiPopupType.type_password:
@@ -70,6 +73,7 @@ Popup {
         NumberAnimation { property: "opacity"; from: maxOpacity; to: 0.0; duration: 500}
     }
     Loader {
+        id: popupLoader
         anchors.fill: parent
         sourceComponent:
             switch(currentPopupType) {
@@ -92,12 +96,13 @@ Popup {
                 satanPopup
                 break;
             }
+        onLoaded: {
+            if (status == Loader.Ready)
+            {
+                console.log("Loader is READY",width,height)
+            }
+        }
     }
-
-    //        Loader {
-    //            id: linuxInterfaceLoader
-    //            sourceComponent: if (QML_OS_LINUX) linuxInterfaceConnection
-    //        }
 
     Component {
         id: progressPopup
@@ -847,18 +852,33 @@ Popup {
             id: satanPopupRoot
             color: "black"
             opacity: 1
-            radius: AppConstants.buttonRadius*2
+            property bool animationsActive: false
+            property int step_duration: 5000
+            Component.onCompleted: {
+                satanMessage.visible = true
+            }
+
+            onWindowChanged: {
+                console.log("popup root window changed!",window.width,window.height)
+            }
+
+            onWidthChanged: {
+                console.log("popup root width changed!",width)
+            }
+
+            onHeightChanged: {
+                console.log("popup root height changed!",height)
+            }
+
+
+
 
             Image {
-                id: satanBG
+                id: satanBG1
                 source: "images/flames_big.png"
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
-                property double heightRate: this.height/parent.height
-                onHeightRateChanged: {
-                    this.height = heightRate*parent.height
-                }
             }
 
             Image {
@@ -867,10 +887,6 @@ Popup {
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
-                property double heightRate: this.height/parent.height
-                onHeightRateChanged: {
-                    this.height = heightRate*parent.height
-                }
             }
 
             Image {
@@ -878,15 +894,48 @@ Popup {
                 source: "images/devil_full.png"
                 fillMode: Image.PreserveAspectFit
                 sourceSize.width: 300
+                x: 0
+                y: maxY
                 property int maxX: parent.width - satanDevil.width
                 property int maxY: parent.height - satanDevil.height
-                property double xRate: this.x/maxX
-                property double yRate: this.y/maxY
-                onXRateChanged: {
-                    this.x = xRate*maxX
+                property int currentX: 0
+                property int targetX: maxX
+                property int currentY: maxY
+                property int targetY: maxY
+                property int hoppihoppiY: 50
+
+                signal hoppihoppi()
+
+                onXChanged: {
+                    if (satanPopupRoot.animationsActive && parent.width > this.width && parent.height > this.height)
+                    {
+                        if (x >= maxX )
+                        {
+                            bodyMovementX.stop()
+                            currentX = x
+                            targetX = 0
+                            bodyMovementX.start()
+                        }
+                        else if (x <= 0)
+                        {
+                            bodyMovementX.stop()
+                            currentX = x
+                            targetX = maxX
+                            bodyMovementX.start()
+                        }
+                        else if (!bodyMovementY.running && x >= maxX/2 - 1 && x <= maxX/2 + 1 )
+                        {
+                            console.log("hoppi!",x,maxX)
+                            hoppihoppi()
+                        }
+                    }
                 }
-                onYRateChanged: {
-                    this.y = yRate*maxY
+
+                onHoppihoppi: {
+                    bodyMovementY.stop()
+                    currentY = y
+                    targetY = maxY-hoppihoppiY
+                    bodyMovementY.start()
                 }
             }
 
@@ -897,16 +946,48 @@ Popup {
                 x: parent.width/2
                 y: parent.height/2
                 sourceSize.width: 100
+
                 property int maxX: parent.width - satanHead.width
                 property int maxY: parent.height - satanHead.height
                 property point currentPos: Qt.point(x, y)
                 property point targetPos: Qt.point(0, 0)
                 property double randomNumX: 0
                 property double randomNumY: 0
+
                 signal borderHit
 
+                onXChanged: {
+                    if (satanPopupRoot.animationsActive && parent.width > this.width && parent.height > this.height)
+                    {
+                        if (x <= 0)
+                        {
+                            headMovementY.running = false
+                            headMovementX.running = false
+                            targetPos.x = maxX
+                            currentPos.x = this.x
+                            targetPos.y = targetPos.y + randomNumX
+                            currentPos.y = this.y
+                            borderHit()
+                            headMovementX.start()
+                            headMovementY.start()
+                        }
+                        else if (x >= maxX)
+                        {
+                            headMovementY.running = false
+                            headMovementX.running = false
+                            targetPos.x = 0
+                            currentPos.x = this.x
+                            targetPos.y = targetPos.y + randomNumX
+                            currentPos.y = this.y
+                            borderHit()
+                            headMovementX.start()
+                            headMovementY.start()
+                        }
+                    }
+                }
+
                 onYChanged: {
-                    if (parent.width > this.width && parent.height > this.height)
+                    if (animationsActive && parent.width > this.width && parent.height > this.height)
                     {
                         if (y <= 0)
                         {
@@ -935,41 +1016,13 @@ Popup {
                     }
                 }
 
-                onXChanged: {
-                    if (parent.width > this.width && parent.height > this.height)
-                    {
-                        if (x <= 0)
-                        {
-                            headMovementY.running = false
-                            headMovementX.running = false
-                            targetPos.x = maxX
-                            currentPos.x = this.x
-                            targetPos.y = targetPos.y + randomNumX
-                            currentPos.y = this.y
-                            borderHit()
-                            headMovementX.start()
-                            headMovementY.start()
-                        }
-                        else if (x >= maxX)
-                        {
-                            headMovementY.running = false
-                            headMovementX.running = false
-                            targetPos.x = 0
-                            currentPos.x = this.x
-                            targetPos.y = targetPos.y + randomNumX
-                            currentPos.y = this.y
-                            borderHit()
-                            headMovementX.start()
-                            headMovementY.start()
-                        }
-                    }
-                }
                 onBorderHit: {
                     if (!headMovementR.running)
                         headMovementR.start()
                     randomNumX = Math.random()*parent.width
                     randomNumY = Math.random()*parent.height
                 }
+
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
@@ -978,79 +1031,104 @@ Popup {
                 }
             }
 
-            // Animations
+            Rectangle {
+                id: satanMessage
+                color: AppConstants.backgroundColor
+                border.color: "black"
+                border.width: 1
+                radius: AppConstants.buttonRadius
+                opacity: 1
+                visible: false
+                anchors.centerIn: parent
+                width: parent.width-AppConstants.fieldHeight
+                height: 100
+
+            }
+
+            // Animation - Background
             SequentialAnimation  {
-                id: headMovementY
-                NumberAnimation { target: satanHead; property: "y";
-                    from: satanHead.currentPos.y; to: satanHead.targetPos.y;
-                    duration: satanAnimations.step_duration/2 }
+                id: bgAnimation1
+                running: satanPopupRoot.animationsActive
+                NumberAnimation { target: satanBG1; property: "height";
+                    from: satanPopupRoot.height*0.97; to: satanPopupRoot.height; duration: satanPopupRoot.step_duration }
+                NumberAnimation { target: satanBG1; property: "height";
+                    from: satanPopupRoot.height; to: satanPopupRoot.height*0.97; duration: satanPopupRoot.step_duration }
                 loops: Animation.Infinite
-                running: true
             }
             SequentialAnimation  {
+                id: bgAnimation2
+                running: satanPopupRoot.animationsActive
+                NumberAnimation { target: satanBG2; property: "height";
+                    from: satanPopupRoot.height*0.92; to: satanPopupRoot.height; duration: satanPopupRoot.step_duration*0.6 }
+                NumberAnimation { target: satanBG2; property: "height";
+                    from: satanPopupRoot.height; to: satanPopupRoot.height*0.92; duration: satanPopupRoot.step_duration*0.6 }
+                loops: Animation.Infinite
+            }
+            // Animation - Head
+            SequentialAnimation  {
                 id: headMovementX
+                running: satanPopupRoot.animationsActive
                 NumberAnimation { target: satanHead; property: "x";
                     from: satanHead.currentPos.x; to: satanHead.targetPos.x;
-                    duration: satanAnimations.step_duration/2 }
+                    duration: satanPopupRoot.step_duration/2 }
                 loops: Animation.Infinite
-                running: true
+            }
+            SequentialAnimation  {
+                id: headMovementY
+                running: satanPopupRoot.animationsActive
+                NumberAnimation { target: satanHead; property: "y";
+                    from: satanHead.currentPos.y; to: satanHead.targetPos.y;
+                    duration: satanPopupRoot.step_duration/2 }
+                loops: Animation.Infinite
             }
             SequentialAnimation  {
                 id: headMovementR
-                NumberAnimation { target: satanHead; property: "rotation"; from: 0; to: 360; duration: satanAnimations.step_duration*0.1 }
                 running: false
+                NumberAnimation { target: satanHead; property: "rotation"; from: 0; to: 360;
+                    duration: satanPopupRoot.step_duration*0.2 }
+            }
+            // Animation - Body
+            SequentialAnimation  {
+                id: bodyMovementX
+                running: satanPopupRoot.animationsActive
+                NumberAnimation { target: satanDevil; property: "x";
+                    from: satanDevil.currentX; to: satanDevil.targetX; duration: satanPopupRoot.step_duration }
+            }
+            SequentialAnimation  {
+                id: bodyMovementY
+                running: false
+                NumberAnimation { target: satanDevil; property: "y";
+                    from: satanDevil.currentY; to: satanDevil.targetY; duration: satanPopupRoot.step_duration*0.1 }
+                NumberAnimation { target: satanDevil; property: "y";
+                    from: satanDevil.targetY; to: satanDevil.currentY; duration: satanPopupRoot.step_duration*0.1 }
+                NumberAnimation { target: satanDevil; property: "y";
+                    from: satanDevil.currentY; to: satanDevil.targetY; duration: satanPopupRoot.step_duration*0.1 }
+                NumberAnimation { target: satanDevil; property: "y";
+                    from: satanDevil.targetY; to: satanDevil.currentY; duration: satanPopupRoot.step_duration*0.1 }
+            }
+            SequentialAnimation  {
+                id: bodyMovementR
+                running: satanPopupRoot.animationsActive
+                NumberAnimation { target: satanDevil; property: "rotation"; from: -10; to: 10; duration: satanPopupRoot.step_duration*0.2 }
+                NumberAnimation { target: satanDevil; property: "rotation"; from: 10; to: -10; duration: satanPopupRoot.step_duration*0.2 }
+                loops: Animation.Infinite
             }
 
-            ParallelAnimation {
-                id: satanAnimations
-                running: true
-                property int step_duration: 10000
-                loops: Animation.Infinite
-                SequentialAnimation  {
-                    NumberAnimation { target: satanBG; property: "heightRate";
-                        from: 0.97; to: 1; duration: satanAnimations.step_duration }
-                    NumberAnimation { target: satanBG; property: "heightRate";
-                        from: 1; to: 0.97; duration: satanAnimations.step_duration }
-                    loops: Animation.Infinite
+            // update width/height from loader
+            // this is somehow only neccessary for this popup type ...
+            Connections {
+                target: popupLoader
+                onWindowChanged: {
+                    console.log(this,"window changed")
+                    if (window)
+                    {
+                        satanPopupRoot.width = window.width
+                        satanPopupRoot.height = window.height
+                        satanPopupRoot.animationsActive = true
+                    }
                 }
-                SequentialAnimation  {
-                    NumberAnimation { target: satanBG2; property: "heightRate";
-                        from: 0.92; to: 1; duration: satanAnimations.step_duration*0.6 }
-                    NumberAnimation { target: satanBG2; property: "heightRate";
-                        from: 1; to: 0.92; duration: satanAnimations.step_duration*0.6 }
-                    loops: Animation.Infinite
-                }
-                SequentialAnimation  {
-                    id: xMovement
-                    NumberAnimation { target: satanDevil; property: "xRate";
-                        from: 0; to: 1; duration: satanAnimations.step_duration }
-                    NumberAnimation { target: satanDevil; property: "xRate";
-                        from: 1; to: 0; duration: satanAnimations.step_duration }
-                    loops: Animation.Infinite
-                }
-                SequentialAnimation  {
-                    id: yMovement
-                    NumberAnimation { target: satanDevil; property: "yRate";
-                        from: 1; to: 1; duration: satanAnimations.step_duration*0.4 }
-                    NumberAnimation { target: satanDevil; property: "yRate";
-                        from: 1; to: 0.9; duration: satanAnimations.step_duration*0.05 }
-                    NumberAnimation { target: satanDevil; property: "yRate";
-                        from: 0.9; to: 1; duration: satanAnimations.step_duration*0.05 }
-                    NumberAnimation { target: satanDevil; property: "yRate";
-                        from: 1; to: 0.9; duration: satanAnimations.step_duration*0.05 }
-                    NumberAnimation { target: satanDevil; property: "yRate";
-                        from: 0.9; to: 1; duration: satanAnimations.step_duration*0.05 }
-                    NumberAnimation { target: satanDevil; property: "yRate";
-                        from: 1; to: 1; duration: satanAnimations.step_duration*0.4 }
-                    loops: Animation.Infinite
-                }
-                SequentialAnimation  {
-                    id: rotationMovement
-                    NumberAnimation { target: satanDevil; property: "rotation"; from: -10; to: 10; duration: satanAnimations.step_duration*0.2 }
-                    NumberAnimation { target: satanDevil; property: "rotation"; from: 10; to: -10; duration: satanAnimations.step_duration*0.2 }
-                    loops: Animation.Infinite
-                }
-            } // !ParallelAnimation
+            }
+
         } // !Rectangle
     } // !Component
 
