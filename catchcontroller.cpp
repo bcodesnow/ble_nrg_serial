@@ -157,9 +157,9 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
             emit m_device_list->at(id_in_dl)->invokeStartDownloadAllDataProcedure( m_lastCatchSuccess );
         }
 
-        if (sendingStartState == SETTING_CONN_MODE )
+        if (sending_start_state == SETTING_CONN_MODE )
         {
-            sendingStartState = STOPPED;
+            sending_start_state = NOT_RUNNING;
             for(int i=0; i<m_device_list->size(); i++)
                 emit m_device_list->at(i)->sendCmdStart();
         }
@@ -265,6 +265,7 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
 ///
 void CatchController::sendStartToAllDevices()
 {
+    m_triggerTimestamp = 0;
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
     for(int i=0; i<m_device_list->size(); i++)
         emit m_device_list->at(i)->sendCmdStart();
@@ -275,7 +276,7 @@ void CatchController::sendStartToAllDevices()
         m_device_list->at(i)->invokeStartConnModeChangeProcedure(FAST);
     }
     remaining_c = m_device_list->size();
-    sendingStartState = SETTING_CONN_MODE;
+    sending_start_state = SETTING_CONN_MODE;
 #endif
 }
 
@@ -367,10 +368,35 @@ void CatchController::onDownloadTimerExpired()
 ///
 void CatchController::onRequestDispatchToOtherDevices(QByteArray value, int idx)
 {
-    for ( int i=0; i<m_device_list->size(); i++)
+    uint32_t rec_ts;
+    const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
+
+    if (data[0] == TRIGGERED )
     {
-        if (i != idx)
-            m_device_list->at(i)->invokeBleUartSendCmdWithResp(value);
+        rec_ts = 0;
+        rec_ts = ( (uint32_t) data[2] ) << 24;
+        rec_ts |=( (uint32_t) data[3] )<< 16;
+        rec_ts |=( (uint32_t) data[4] )<< 8;
+        rec_ts |= ( (uint32_t) data[5] );
+
+        if (m_triggerTimestamp)
+        {
+            // we have already received a trigger with timestamp x in this session
+            if (rec_ts > m_triggerTimestamp)
+            {
+                // lucky us, the received on is a younger trigger than the one we already distributed
+                return;
+            }
+        }
+
+        for ( int i=0; i<m_device_list->size(); i++)
+        {
+            if (i != idx)
+                m_device_list->at(i)->invokeBleUartSendCmdWithResp(value);
+        }
+#if (VERBOSITY_LEVEL >= 0)
+        qInfo()<<"Trigger Dispatched";
+#endif
     }
 }
 
@@ -389,7 +415,8 @@ void CatchController::onConnAliveOfDevXChanged(bool isItAlive, int idx)
         m_devicesConnected = false;
         emit allSelectedDevicesAreConnected(false);
 
-        qWarning()<<"!!! Device"<<idx<<"failed to Connect!";
+        qWarning()<<"!!! Device"<<idx<<"CONNECTION FAILED / Disconnected";
+        this->invokeQmlError();
 
         return;
     }
@@ -411,9 +438,9 @@ void CatchController::onConnAliveOfDevXChanged(bool isItAlive, int idx)
         m_nextRequest = NEXT_REQ_START_TS;
         m_nextRequestTimer.setInterval(2000);
         m_nextRequestTimer.start();
-    #if ( VERBOSITY_LEVEL >= 1 )
-            qInfo()<<"TimeSync of All Devices Started by the Catch Controller..";
-    #endif
+#if ( VERBOSITY_LEVEL >= 1 )
+        qInfo()<<"TimeSync of All Devices Started by the Catch Controller..";
+#endif
 #endif
     }
 
@@ -465,6 +492,10 @@ void CatchController::onCatchSuccessConfirmed( quint8 catchSuccess )
         break;
     case FLOP:
         m_logfile_handler_ptr->addToLogFil("Info","SUCCESS", "FLOP");
+
+        m_logfile_handler_ptr->finishLogFile();
+        m_logfile_handler_ptr->incrementFileIndex();
+
         // reset if there is something to be resetted
         break;
     }

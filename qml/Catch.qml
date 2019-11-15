@@ -1,4 +1,5 @@
 import QtQuick 2.9
+import QtQuick.Extras 1.4
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 import QtGraphicalEffects 1.0
@@ -43,7 +44,7 @@ AppPage {
             console.log("Ball catched:", index)
             catchController.onCatchSuccessConfirmed( index )
             catchConfirmPopup.visible = false
-            if (catchController.bleUplEnabled)
+            if (catchController.bleUplEnabled && (index != 3 ))
                 downloadProgressPopup.visible = true
         }
     }
@@ -137,7 +138,7 @@ AppPage {
                     height: deviceTypeImg.height
                     Image {
                         id: deviceTypeImg
-                        source: ( model.item.deviceType === DeviceType.Wearable ) ? "images/wearable.png" : "images/stationary.png"
+                        source: ( model.item.deviceType === DeviceType.Wearable ) ? ( model.item.connectionAlive ? "images/w_conn.png" : "images/w_disc.png" ): "images/stationary.png"
                         height: AppConstants.largeFontSize
                         fillMode: Image.PreserveAspectFit
                     }

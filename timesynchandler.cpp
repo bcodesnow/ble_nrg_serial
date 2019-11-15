@@ -21,7 +21,9 @@ void TimeSyncHandler::slot_time_sync_msg_sent(int idx)
 #if (VERBOSITY_LEVEL >= 1)
     qInfo()<<"TS: Sync Msg. Sent!"<<"";
 #endif
+#if ( USE_CHAR_WRITTEN_CALLBACK == 1 )
     m_last_msg_ts = get_timestamp_us();
+#endif
 }
 
 uint32_t TimeSyncHandler::get_diff_in_us_to_current_ts(uint32_t some_ts)
@@ -63,11 +65,14 @@ void TimeSyncHandler::send_time_sync_msg()
     tba[4] = ( tstamp >> 16 ) & 0xFF ;
     tba[5] = ( tstamp >>  8 ) & 0xFF ;
     tba[6] =   tstamp & 0xFF ;
-#if (VERBOSITY_LEVEL >= 1)
+#if ( VERBOSITY_LEVEL >= 1 )
     qDebug()<<"TS: send_time_sync_msg() -> "<<tstamp;
 #endif
     //m_deviceHandler[m_dev_idx_in_sync].ble_uart_tx(tba);
     m_device_interfaces_ptr->at(m_dev_idx_in_sync)->invokeBleUartTx(tba); // emit the signal directly in the interface..
+#if ( USE_CHAR_WRITTEN_CALLBACK == 0 )
+    m_last_msg_ts = get_timestamp_us();
+#endif
     m_timeout_timer.start();
 }
 
@@ -87,11 +92,16 @@ void TimeSyncHandler::send_compensated_time_sync_msg()
     tba[6] =   tstamp & 0xFF ;
     m_device_interfaces_ptr->at(m_dev_idx_in_sync)->invokeBleUartTx(tba); // emit the signal directly in the interface..
 
+#if ( USE_CHAR_WRITTEN_CALLBACK == 0 )
+    m_last_msg_ts = get_timestamp_us();
+#endif
 
     m_timeout_timer.start();
 
+#if ( VERBOSITY_LEVEL >= 2 )
     qDebug()<<"TS: send_compensated_time_sync_msg() -> "<<tstamp;
     qDebug()<<"TS: Amount of Compensation -> "<<( m_travelling_time_acceptance_trsh / 2 );
+#endif
 }
 
 void TimeSyncHandler::calculate_compensation()
@@ -100,12 +110,14 @@ void TimeSyncHandler::calculate_compensation()
     quint32 max = *std::max_element(travelling_times.constBegin(), travelling_times.constEnd());
     quint32 avg = std::accumulate(travelling_times.constBegin(), travelling_times.constEnd(), 0) / travelling_times.size() ;
 
+#if (VERBOSITY_LEVEL >= 2)
     qInfo()<<"TS: Travelling Times Calculated: ";
     qInfo()<<"TS: Minimum: "<<min;
     qInfo()<<"TS: Maximum: "<<max;
     qInfo()<<"TS: Avarage: "<<avg;
 
     qDebug()<<"Removing 3 Smallest and Biggest..";
+#endif
     for (int i=0; i<3; i++)
     {
         QVector<quint32>::ConstIterator it =  std::min_element(travelling_times.constBegin(), travelling_times.constEnd());
@@ -117,12 +129,14 @@ void TimeSyncHandler::calculate_compensation()
     max = *std::max_element(travelling_times.constBegin(), travelling_times.constEnd());
     avg = std::accumulate(travelling_times.constBegin(), travelling_times.constEnd(), 0) / travelling_times.size() ;
 
+    #if (VERBOSITY_LEVEL >= 0)
     qInfo()<<"TS: Travelling Times Calculated: ";
     qInfo()<<"TS: Minimum: "<<min;
     qInfo()<<"TS: Maximum: "<<max;
     qInfo()<<"TS: Avarage: "<<avg;
+    #endif
 
-    m_travelling_time_acceptance_trsh =int ( (float) min *  TS_TRSH_FACTOR );
+    m_travelling_time_acceptance_trsh = int ( (float) min *  TS_TRSH_FACTOR );
     //m_travelling_time_acceptance_trsh = avg;
 
     //QThread::msleep(8); // give it just a few msecs to breathe

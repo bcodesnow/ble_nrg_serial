@@ -15,10 +15,17 @@
  *          -> TimeSync -Pushalike NTP ove BLE UART
  *          -> Travelling Time Measurement
  */
+#define USE_CHAR_WRITTEN_CALLBACK   0
+
 #define TS_MEASURE_MSG_CNT          30 //10
 #define TS_COMPENSATED_MSG_CNT      60 //40
 #define TS_TIMEOUT_DELAY_MS         250
-#define TS_TRSH_FACTOR              (float)1.5 //(float)2.5
+#if ( USE_CHAR_WRITTEN_CALLBACK == 1)
+    #define TS_TRSH_FACTOR              (float)1.5
+#else
+    #define TS_TRSH_FACTOR              (float)1.1
+#endif
+
 
 #define START_WAITS_FOR_ACK         (1<<0)
 #define MEASURING_TRAVELING_TIME    (1<<1)

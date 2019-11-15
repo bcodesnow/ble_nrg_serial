@@ -109,6 +109,7 @@ void DeviceInfo::setDeviceType(DeviceInfo::DeviceType type)
 void DeviceInfo::setConnectionAlive(bool isItAlive)
 {
     m_connectionAlive = isItAlive;
+    emit aliveChanged(m_connectionAlive);
 }
 
 bool DeviceInfo::connectionAlive() const

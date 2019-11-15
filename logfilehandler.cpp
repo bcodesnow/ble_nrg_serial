@@ -94,15 +94,15 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
 {
 
 #if (PLOT_DATA == 1)
-#if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"writeTypeToLogFil"<<ident<<type<<wp<<data->size();
-#endif
-#else
-#if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"writeTypeToLogFil disabled";
-#endif
-    return;
-#endif
+    #if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"writeTypeToLogFil"<<ident<<type<<wp<<data->size();
+    #endif
+    #else
+    #if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"writeTypeToLogFil disabled";
+    #endif
+        return;
+    #endif
 
     QElapsedTimer filetimer;
     filetimer.start();
@@ -118,9 +118,9 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     if (type != TYPE_LOG && !data->isEmpty())
         sortArray(data, wp);
 
-#if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"after sorting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-#endif
+    #if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"after sorting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+    #endif
     // Byte conversion
     switch (type)
     {
@@ -150,9 +150,9 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     default:
         tmpLocation.append( QString("SOMEFILE") );
     }
-#if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"after conversion:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-#endif
+    #if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"after conversion:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+    #endif
     if (type != TYPE_LOG && !dataVec.isEmpty())
     {
         for (int i=0;i<m_paintDataList.size();i++)
@@ -205,7 +205,7 @@ void LogFileHandler::setCurrDir(QString username)
     else
         m_currUser = username;
 
-    m_currDir = "catch_data_WD_"+m_currUser+"_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
+    m_currDir = "catch_data_WD_" + m_currUser + "_" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
     QDir dir;
     dir.setPath(m_fileLocation);
     dir.mkdir(m_currDir);

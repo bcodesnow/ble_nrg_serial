@@ -50,12 +50,12 @@ private:
     quint8 time_sync_state;
     int    remaining_c;
     int    id_in_sync;
-    int id_in_dl;
-    int download_state;
-    int sendingStartState = SETTING_CONN_MODE;
-    int m_nextRequest;
+    int    id_in_dl;
+    int    download_state;
+    int    sending_start_state;
+    int    m_nextRequest;
     quint8 m_lastCatchSuccess;
-
+    quint32 m_triggerTimestamp;
 
     ///
     /// todo: is it final like this? group?

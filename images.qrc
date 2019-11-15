@@ -23,5 +23,7 @@
         <file>qml/images/download-icon.png</file>
         <file>qml/images/playbtn.png</file>
         <file>qml/images/stopbtn.png</file>
+        <file>qml/images/w_conn.png</file>
+        <file>qml/images/w_disc.png</file>
     </qresource>
 </RCC>

@@ -603,6 +603,10 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     static const QBluetoothUuid ble_uart_receive = QBluetoothUuid(BLE_UART_TX_CHAR); // TX CHAR OF THE SERVER
 
+    static uint64_t rxPoolPkgCount = 0;
+    uint16_t tidx;
+    huge_chunk_indexed_byterray_t hc_tmp_iba_struct; // todo -> there are some very bad namings..
+
     QString hex= QString("%1").arg(data[0] , 0, 16);
 
     if ( c.uuid() == ble_uart_receive )
@@ -621,7 +625,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
         case TRIGGERED:
 
             //inform the other device
-            emit requestDispatchToOtherDevices(value, m_ident_idx); // TODO this will be received by the catch controller
+            emit requestDispatchToOtherDevices(value, m_ident_idx);
             //ble_uart_send_cmd_ok(); // Should we also ACK this to the device?!
             emit triggeredArrived(value); // TODO this is handled by the deviceinterface
             this->bleUartSendCmdOk();
@@ -723,9 +727,6 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) -> One of the TX_POOL Characteristics
     {
         // this is the ble rx pooled part.. it could be also moved to an own handler
-        uint16_t tidx;
-        huge_chunk_indexed_byterray_t hc_tmp_iba_struct;
-
         tidx = data[0];
 
         if (hc_helper_struct.first_multi_chunk && !tidx )
@@ -733,7 +734,10 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             tidx = 0;
             hc_helper_struct.first_multi_chunk = false;
             hc_helper_struct.last_idx = 0;
+
             m_debugTimer->start();
+//            m_progress = 0;
+//            m_transfSpeed = 0;
         }
         else if ( tidx > hc_helper_struct.hc_highest_index )
         {
@@ -751,7 +755,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
         qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx << "  package size" << value.size()-1;
 #endif
         // THAT WAS A DIRTY BUG
-        //        hc_tmp_iba_struct.barr.append(value.size()-1, data[1]); // add the 19 bytes -> it looks like it could work... but :/
+        // hc_tmp_iba_struct.barr.append(value.size()-1, data[1]); // add the 19 bytes -> it looks like it could work... but :/
         hc_tmp_iba_struct.barr = value.right(value.size()-1);
         hc_tmp_iba_struct.received = 1;
 
@@ -865,7 +869,8 @@ void DeviceController::onStartHugeChunkArrived()
 
 void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 {
-    const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
+    Q_UNUSED(value)
+    //const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
 
 #if (VERBOSITY_LEVEL >= 3)
     qDebug()<<"onStartHugeChunkAckProcArrived : started!";
@@ -917,8 +922,7 @@ void DeviceController::onNoChunkAvailableArrived()
 
 void DeviceController::startDownloadAllDataProcedure( quint8 catchSuccess )
 {
-    hc_chopchop_mode = true;
-    sendRequestSensorData();
+    sendRequestSensorData(catchSuccess);
 }
 
 void DeviceController::sendAckOkHugeChunk()
@@ -950,20 +954,18 @@ void DeviceController::hugeChunkDownloadFinished()
 #if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"All Received";
 #endif
-    emit invokeAddToLogFile("TODOSTRING", QString("AllArrived"), QString("TRUE"));
+    emit invokeAddToLogFile(m_ident_str, QString("AllArrived"), QString("TRUE"));
 
     sendAckOkHugeChunk();
     writeReceivedChunkToFile( hc_transfer_struct.write_pointer, hc_transfer_struct.incoming_type);
 
-    if (hc_chopchop_mode)
-    {
-        m_nextRequest = NEXT_REQ_SEND_SENS_DATA;
-        m_nextRequestTimer->setInterval(WAIT_X_MS_BETWEEN_CHUNKS);
-        m_nextRequestTimer->start();
+    m_nextRequest = NEXT_REQ_SEND_SENS_DATA;
+    m_nextRequestTimer->setInterval(WAIT_X_MS_BETWEEN_CHUNKS);
+    m_nextRequestTimer->start();
 #if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"Next HC has been requested";
+    qDebug()<<"Next HC has been requested";
 #endif
-    }
+
 }
 
 

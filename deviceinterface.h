@@ -98,6 +98,7 @@ public slots:
     void onDeviceThreadStarted();
     void onTriggeredArrived(QByteArray value);
     void onAliveArrived(QByteArray value);
+    void onConnectionAliveChanged(bool isItAlive, int deviceIdx );
 };
 //Q_DECLARE_METATYPE(DeviceInterface)
 

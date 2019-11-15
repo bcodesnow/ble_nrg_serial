@@ -92,10 +92,8 @@ private:
     QTimer* m_nextRequestTimer;
     int m_nextRequest;
 
-    quint8 hc_chopchop_mode;
-
-    quint8 downloading_sensor_data_active;
-
+//    quint8 m_progress;
+//    float m_transfSpeed;
 
     QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
     QList<quint16> m_hc_missed; // list of missed package ids

@@ -39,6 +39,7 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
     connect(m_deviceController, &DeviceController::timeSyncMsgSent, m_timesync_handler_ptr, &TimeSyncHandler::slot_time_sync_msg_sent, Qt::QueuedConnection);
 
     connect(m_deviceController, &DeviceController::aliveArrived, this, &DeviceInterface::onAliveArrived, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::triggeredArrived, this, &DeviceInterface::onTriggeredArrived, Qt::QueuedConnection);
 
     connect(m_deviceController, &DeviceController::invokeWriteTypeToFile, m_logfile_handler_ptr, &LogFileHandler::writeTypeToLogFil, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::invokeAddToLogFile, m_logfile_handler_ptr, &LogFileHandler::addToLogFil, Qt::QueuedConnection);
@@ -51,6 +52,8 @@ void DeviceInterface::initializeDevice(QBluetoothHostInfo *hostInfo)
 //    connect(this, &DeviceInterface::invokeSendCmdStart, m_deviceController, &DeviceController::sendStartToDevice, Qt::QueuedConnection);
 
     connect(m_deviceController, &DeviceController::connectionAlive, m_catch_controller_ptr, &CatchController::onConnAliveOfDevXChanged, Qt::QueuedConnection);
+    connect(m_deviceController, &DeviceController::connectionAlive, this, &DeviceInterface::onConnectionAliveChanged, Qt::QueuedConnection);
+
     connect(m_deviceController, &DeviceController::requestedConnModeReached, m_catch_controller_ptr, &CatchController::onConnUpdateOfDevXfinished, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::allDataDownloaded, m_catch_controller_ptr, &CatchController::onDownloadOfDeviceXfinished, Qt::QueuedConnection);
     connect(m_deviceController, &DeviceController::requestDispatchToOtherDevices, m_catch_controller_ptr, &CatchController::onRequestDispatchToOtherDevices, Qt::QueuedConnection);
@@ -75,12 +78,11 @@ void DeviceInterface::onDeviceThreadStarted()
 
 void DeviceInterface::onTriggeredArrived(QByteArray value)
 {
-    // todo
-    //            if (m_sdEnabled)
-    //                m_refToFileHandler->add_to_log_fil(m_ident_str,"File ID on Device", QString::number(data[1]));
-
     uint32_t rec_ts;
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
+
+    if (m_catch_controller_ptr->sdEnabled())
+        m_logfile_handler_ptr->addToLogFil( this->getDeviceIdentifier(),"File ID on Device", QString::number(data[1]) );
 
     rec_ts = 0;
     rec_ts = ( (uint32_t) data[2] ) << 24;
@@ -127,6 +129,11 @@ void DeviceInterface::onAliveArrived(QByteArray value)
     //setInfo("Alive!");
 }
 
+void DeviceInterface::onConnectionAliveChanged(bool isItAlive, int deviceIdx)
+{
+    this->setConnectionAlive(isItAlive);
+}
+
 
 void DeviceInterface::sendCmdStop()
 {
@@ -147,8 +154,10 @@ void DeviceInterface::sendCmdStart()
 
 void DeviceInterface::sendCmdSetLoggingMedia(bool savingTosdEnabled, bool bleUplEnabled)
 {
+#if ( VERBOSITY_LEVEL >= 2 )
+    qDebug()<<"Sending Set Logging Media"<<m_deviceIdx;
+#endif
     QByteArray tba;
-    qDebug()<<"Sending Set Logging Media";
     tba.resize(3);
     tba[0] = CMD_SET_LOGGING_MEDIA;
     tba[1] = savingTosdEnabled;

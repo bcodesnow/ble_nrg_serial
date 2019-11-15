@@ -17,7 +17,8 @@ Popup {
     anchors.centerIn: parent
     closePolicy: Popup.NoAutoClose
     focus: visible
-    dim: modal
+    modal: true
+    dim: false
     padding: 0.0
     clip: true
     width:
@@ -191,7 +192,7 @@ Popup {
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: parent.width*(2/3)
-                        height: 30
+                        height: parent.height
                         from: 0
                         to: 100
                         value: currentProgress
@@ -248,6 +249,10 @@ Popup {
                         }
                     } //!ProgressBar
                 } // !Rectangle
+                Rectangle {
+                    //placeholder
+                    Layout.preferredHeight: parent.height/12
+                } //!Rectangle
             } // !ColumnLayout
         } // !Rectangle
     } // !Component
