@@ -96,12 +96,6 @@ Popup {
                 satanPopup
                 break;
             }
-        onLoaded: {
-            if (status == Loader.Ready)
-            {
-                console.log("Loader is READY",width,height)
-            }
-        }
     }
 
     Component {
@@ -858,21 +852,6 @@ Popup {
                 satanMessage.visible = true
             }
 
-            onWindowChanged: {
-                console.log("popup root window changed!",window.width,window.height)
-            }
-
-            onWidthChanged: {
-                console.log("popup root width changed!",width)
-            }
-
-            onHeightChanged: {
-                console.log("popup root height changed!",height)
-            }
-
-
-
-
             Image {
                 id: satanBG1
                 source: "images/flames_big.png"
@@ -887,56 +866,6 @@ Popup {
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
-            }
-
-            Image {
-                id: satanDevil
-                source: "images/devil_full.png"
-                fillMode: Image.PreserveAspectFit
-                sourceSize.width: 300
-                x: 0
-                y: maxY
-                property int maxX: parent.width - satanDevil.width
-                property int maxY: parent.height - satanDevil.height
-                property int currentX: 0
-                property int targetX: maxX
-                property int currentY: maxY
-                property int targetY: maxY
-                property int hoppihoppiY: 50
-
-                signal hoppihoppi()
-
-                onXChanged: {
-                    if (satanPopupRoot.animationsActive && parent.width > this.width && parent.height > this.height)
-                    {
-                        if (x >= maxX )
-                        {
-                            bodyMovementX.stop()
-                            currentX = x
-                            targetX = 0
-                            bodyMovementX.start()
-                        }
-                        else if (x <= 0)
-                        {
-                            bodyMovementX.stop()
-                            currentX = x
-                            targetX = maxX
-                            bodyMovementX.start()
-                        }
-                        else if (!bodyMovementY.running && x >= maxX/2 - 1 && x <= maxX/2 + 1 )
-                        {
-                            console.log("hoppi!",x,maxX)
-                            hoppihoppi()
-                        }
-                    }
-                }
-
-                onHoppihoppi: {
-                    bodyMovementY.stop()
-                    currentY = y
-                    targetY = maxY-hoppihoppiY
-                    bodyMovementY.start()
-                }
             }
 
             Image {
@@ -1031,18 +960,54 @@ Popup {
                 }
             }
 
-            Rectangle {
-                id: satanMessage
-                color: AppConstants.backgroundColor
-                border.color: "black"
-                border.width: 1
-                radius: AppConstants.buttonRadius
-                opacity: 1
-                visible: false
-                anchors.centerIn: parent
-                width: parent.width-AppConstants.fieldHeight
-                height: 100
+            Image {
+                id: satanDevil
+                source: "images/devil_full.png"
+                fillMode: Image.PreserveAspectFit
+                sourceSize.width: 300
 
+                y: maxY
+                property int maxX: parent.width - satanDevil.width
+                property int maxY: parent.height - satanDevil.height
+                property int currentX: 0
+                property int targetX: maxX
+                property int currentY: maxY
+                property int targetY: maxY
+                property int hoppihoppiY: 50
+
+                signal hoppihoppi()
+
+                onXChanged: {
+                    if (satanPopupRoot.animationsActive && parent.width > this.width && parent.height > this.height)
+                    {
+                        var intX = parseInt(x, 10)
+                        if (intX >= maxX )
+                        {
+                            bodyMovementX.stop()
+                            currentX = x-1
+                            targetX = 0
+                            bodyMovementX.start()
+                        }
+                        else if (intX <= 0)
+                        {
+                            bodyMovementX.stop()
+                            currentX = x+1
+                            targetX = maxX
+                            bodyMovementX.start()
+                        }
+                        else if (!bodyMovementY.running && intX >= maxX/2 - 1 && x <= maxX/2 + 1 )
+                        {
+                            hoppihoppi()
+                        }
+                    }
+                }
+
+                onHoppihoppi: {
+                    bodyMovementY.stop()
+                    currentY = y
+                    targetY = maxY-hoppihoppiY
+                    bodyMovementY.start()
+                }
             }
 
             // Animation - Background
@@ -1114,12 +1079,37 @@ Popup {
                 loops: Animation.Infinite
             }
 
+            Rectangle {
+                id: satanMessage
+                color: AppConstants.backgroundColor
+                border.color: "black"
+                border.width: 1
+                radius: AppConstants.buttonRadius
+                opacity: 1
+                visible: false
+                anchors.centerIn: parent
+                width: parent.width-AppConstants.fieldHeight
+                height: AppConstants.fieldHeight * 2
+                clip: true
+                ColumnLayout {
+                    anchors.fill: parent
+
+                    Text {
+                        Layout.alignment: Text.AlignHCenter
+                        height: AppConstants.fieldHeight
+                        text: maintitle
+                        font.pixelSize: AppConstants.mediumFontSize
+                        color: AppConstants.textColor
+                    }
+
+                }
+            }
+
             // update width/height from loader
             // this is somehow only neccessary for this popup type ...
             Connections {
                 target: popupLoader
                 onWindowChanged: {
-                    console.log(this,"window changed")
                     if (window)
                     {
                         satanPopupRoot.width = window.width

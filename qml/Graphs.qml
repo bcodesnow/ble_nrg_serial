@@ -33,6 +33,7 @@ AppPage {
                 objectName: "label"
                 width: parent.width
                 height: label.font.pixelSize+10
+                radius: AppConstants.buttonRadius
                 color: AppConstants.buttonColor
                 Text {
                     id: label
@@ -49,7 +50,7 @@ AppPage {
                 anchors.topMargin: 2
                 width: parent.width
                 height: parent.height - labelRect.height
-                radius: 10
+                radius: AppConstants.buttonRadius
                 color: AppConstants.buttonColor
                 border.color: Qt.lighter(AppConstants.backgroundColor)
                 GraphPainterCpp {

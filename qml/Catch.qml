@@ -138,9 +138,17 @@ AppPage {
                     height: deviceTypeImg.height
                     Image {
                         id: deviceTypeImg
-                        source: ( model.item.deviceType === DeviceType.Wearable ) ? ( model.item.connectionAlive ? "images/w_conn.png" : "images/w_disc.png" ): "images/stationary.png"
+                        source: model.item.deviceType === DeviceType.Wearable ? "images/wearable.bmp" : "images/stationary.png"
                         height: AppConstants.largeFontSize
                         fillMode: Image.PreserveAspectFit
+                        smooth: true
+                        mipmap: true
+                        antialiasing: true
+                        ColorOverlay {
+                            anchors.fill: parent
+                            source: parent
+                            color: model.item.connectionAlive ? AppConstants.infoColor : AppConstants.errorColor
+                        }
                     }
                 }
 

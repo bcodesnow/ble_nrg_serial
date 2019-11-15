@@ -60,8 +60,9 @@ Item {
         Connections {
             target: catchController
             onInvokeQmlError: {
+                showTheDevilPopup.maintitle = error
                 showTheDevilPopup.visible = true
-                console.log("Woops...",error)
+                console.log("Woops...",error)                
             }
         }
     }
