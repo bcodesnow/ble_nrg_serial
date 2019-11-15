@@ -130,16 +130,17 @@ void TimeSyncHandler::calculate_compensation()
     avg = std::accumulate(travelling_times.constBegin(), travelling_times.constEnd(), 0) / travelling_times.size() ;
 
     #if (VERBOSITY_LEVEL >= 0)
-    qInfo()<<"TS: Travelling Times Calculated: ";
-    qInfo()<<"TS: Minimum: "<<min;
-    qInfo()<<"TS: Maximum: "<<max;
-    qInfo()<<"TS: Avarage: "<<avg;
+        qInfo()<<"TS: Travelling Times Calculated: ";
+        qInfo()<<"TS: Minimum: "<<min;
+        qInfo()<<"TS: Maximum: "<<max;
+        qInfo()<<"TS: Avarage: "<<avg;
     #endif
 
-    m_travelling_time_acceptance_trsh = int ( (float) min *  TS_TRSH_FACTOR );
-    //m_travelling_time_acceptance_trsh = avg;
-
-    //QThread::msleep(8); // give it just a few msecs to breathe
+    #if ( USE_CHAR_WRITTEN_CALLBACK == 1)
+        m_travelling_time_acceptance_trsh = int ( (float) min *  TS_TRSH_FACTOR );
+    #else
+        m_travelling_time_acceptance_trsh = min + ( (avg - min) / 2 );
+    #endif
 
     qInfo()<<"Calculated Threshold: "<< m_travelling_time_acceptance_trsh;
 

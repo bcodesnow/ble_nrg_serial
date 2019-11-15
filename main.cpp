@@ -67,7 +67,6 @@ int main(int argc, char *argv[])
     LinuxTerminalInterface lti;
     engine.rootContext()->setContextProperty("linuxInterface", &lti);
     engine.rootContext()->setContextProperty("QML_OS_LINUX", QVariant(true));
-
 #else
     engine.rootContext()->setContextProperty("QML_OS_LINUX", QVariant(false));
 #endif

@@ -58,6 +58,7 @@ private:
 
     QList<DeviceInterface*>* m_deviceList;
     QmlListAdapter* m_deviceListAdapter;
+    bool m_connectionInitiated;
 
 };
 

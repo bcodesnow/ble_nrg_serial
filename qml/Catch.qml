@@ -181,7 +181,7 @@ AppPage {
             state: "Start"
 
             onStateChanged: {
-                console.log("start stop button changed to:",state)
+                //console.log("start stop button changed to:",state)
             }
 
             states: [

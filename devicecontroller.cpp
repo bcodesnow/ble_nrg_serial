@@ -64,12 +64,12 @@ void DeviceController::connectToPeripheral(QBluetoothDeviceInfo *device)
         {
             // Connect with specified bt adapter
             m_control = new QLowEnergyController(m_currentDevice->address(), m_adapterAddress);
-            qDebug()<<m_ident_str<<"connecting with adapter:"<<m_adapterAddress;
         }
 
         m_control->setRemoteAddressType(QLowEnergyController::RandomAddress); //We are using fixed RandomAddressType
+#if (VERBOSITY_LEVEL >= 3)
         qDebug()<<"DeviceController -> Connecting signals.. prepare to launch..";
-
+#endif
         connect(m_control, &QLowEnergyController::serviceDiscovered, this, &DeviceController::serviceDiscovered);
         connect(m_control, &QLowEnergyController::discoveryFinished, this, &DeviceController::serviceScanDone);
         connect(m_control, static_cast<void (QLowEnergyController::*)(QLowEnergyController::Error)>
@@ -301,7 +301,9 @@ void DeviceController::searchCharacteristic()
                 }
                 else
                 {
+                    #if (VERBOSITY_LEVEL >= 2)
                     qDebug()<<"Looking for others";
+                    #endif
                     // Look for TX Pool Characteristics
                     for (int i=0; i < ( BLE_UART_TX_POOL.size() ); i++)
                     {

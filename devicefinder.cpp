@@ -72,7 +72,8 @@ DeviceFinder::DeviceFinder(QmlListAdapter* deviceListAdapter, ConnectionHandler*
     m_conn_handler_ptr(connHandler),
     m_timesync_handler_ptr(ts_handler),
     m_logfile_handler_ptr(logfile_handler),
-    m_catch_controller_ptr(catch_controller)
+    m_catch_controller_ptr(catch_controller),
+    m_connectionInitiated(false)
 
 {
     m_deviceList = m_deviceListAdapter->getList();
@@ -123,14 +124,19 @@ void DeviceFinder::addDevice(const QBluetoothDeviceInfo &device)
         m_foundDevices.append(new DeviceInfo(device));
 
         if ( ( ( (DeviceInfo*) m_foundDevices.last() )->getName() == "bluenrg" ) ||
-             ( ( (DeviceInfo*) m_foundDevices.last() )->getName() == "Catch?!" ) )
+             ( ( (DeviceInfo*) m_foundDevices.last() )->getName() == "Catch?!" ) ||
+             ( ( (DeviceInfo*) m_foundDevices.last() )->getName().left(7) == "Catch?!" ) )
         {
+#if ( VERBOSITY_LEVE >= 3 )
             qDebug()<<"wearable found..";
+#endif
             ((DeviceInfo*) m_foundDevices.last() )->setDeviceType(DeviceInfo::Wearable);
         }
 
         setInfo(tr("Low Energy device found. Scanning more..."));
+#if (VERBOSITY_LEVEL >= 2)
         qDebug()<<"Low Energy device found. Scanning more..."<<device.address().toString();
+#endif
         //! [devicediscovery-3]
         emit devicesChanged();
         //! [devicediscovery-4]
@@ -152,20 +158,25 @@ void DeviceFinder::scanError(QBluetoothDeviceDiscoveryAgent::Error error)
 
 void DeviceFinder::scanFinished()
 {
-    if (m_foundDevices.size() == 0)
-        setError(tr("No Low Energy devices found."));
-    else
-        setInfo(tr("Scanning done."));
-
+    if ( !m_connectionInitiated )
+    {
+        if (m_foundDevices.size() == 0)
+            setError(tr("No Low Energy devices found."));
+        else
+            setInfo(tr("Scanning done."));
+    }
     emit scanningChanged();
     emit devicesChanged();
 
+#if (VERBOSITY_LEVE >= 2 )
     qDebug()<<"Found BLE Devices Count:"<<m_foundDevices.size();
+#endif
 }
 
 
 void DeviceFinder::connectToSelectedDevices()
 {
+    m_connectionInitiated = true;
     int adapterListSize = m_conn_handler_ptr->m_adapterList.size();
     int deviceListSize = m_deviceList->size();
     int k = 0;
@@ -187,7 +198,9 @@ void DeviceFinder::connectToSelectedDevices()
                 k = 0;
         }
     }
-    qDebug()<<"Connection started to"<<m_selectedDevicesCount<<"from"<<m_foundDevices.size()<<"found devices..";
+#if ( VERBOSITY_LEVEL >= 1 )
+    qDebug()<<"DeviceFinder -> Connection started to"<<m_selectedDevicesCount<<"from"<<m_foundDevices.size()<<"found devices..";
+#endif
     clearMessages();
 }
 
