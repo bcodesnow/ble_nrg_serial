@@ -219,9 +219,9 @@ Popup {
                                 end: Qt.point(bar.width, 0)
                                 source: bar
                                 gradient: Gradient {
-                                    GradientStop { position: 0.0; color: "#17a81a" }
-                                    GradientStop { id: grad; position: 0.5; color: Qt.lighter("#17a81a", 2) }
-                                    GradientStop { position: 1.0; color: "#17a81a" }
+                                    GradientStop { id: gradleft; position: 0.4; color: AppConstants.infoColor }
+                                    GradientStop { id: gradmid; position: 0.5; color: AppConstants.textColor }
+                                    GradientStop { id: gradright; position: 0.6; color: AppConstants.infoColor }
                                 }
                             }
                             LinearGradient {
@@ -230,18 +230,42 @@ Popup {
                                 end: Qt.point(0, bar.height)
                                 source: bar
                                 gradient: Gradient {
-                                    GradientStop { position: 0.0; color: Qt.rgba(0,0,0,0) }
-                                    GradientStop { position: 0.5; color: Qt.rgba(1,1,1,0.3) }
-                                    GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.05) }
+                                    GradientStop { position: 0.0; color: AppConstants.infoColor }
+                                    GradientStop { position: 0.1; color: "transparent" }
+                                    GradientStop { position: 0.9; color: "transparent" }
+                                    GradientStop { position: 1.0; color: AppConstants.infoColor }
                                 }
                             }
-                            SequentialAnimation  {
-                                PropertyAnimation { target: grad; property: "position"; from: 0.2; to: 0; duration: 2000 }
-                                PropertyAnimation { target: grad; property: "position"; from: 0; to: 0.2; duration: 2000 }
-                                PropertyAnimation { target: grad; property: "position"; from: 0.2; to: 0.8; duration: 3000 }
-                                PropertyAnimation { target: grad; property: "position"; from: 0.8; to: 1; duration: 2000 }
-                                PropertyAnimation { target: grad; property: "position"; from: 1; to: 0.8; duration: 2000 }
-                                PropertyAnimation { target: grad; property: "position"; from: 0.8; to: 0.2; duration: 3000 }
+                            ParallelAnimation  {
+                                id: gradMovement
+                                property int timeStep: 700
+                                SequentialAnimation  {
+                                    id: gradMovementL
+                                    PropertyAnimation { target: gradleft; property: "position"; from: 0; to: 0.2; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.2; to: 0.6; duration: gradMovement.timeStep*2 }
+                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.6; to: 0.8; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.8; to: 0.6; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.6; to: 0.2; duration: gradMovement.timeStep*2 }
+                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.2; to: 0; duration: gradMovement.timeStep }
+                                }
+                                SequentialAnimation  {
+                                    id: gradMovementM
+                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.1; to: 0.3; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.3; to: 0.7; duration: gradMovement.timeStep*2 }
+                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.7; to: 0.9; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.9; to: 0.7; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.7; to: 0.3; duration: gradMovement.timeStep*2 }
+                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.3; to: 0.1; duration: gradMovement.timeStep }
+                                }
+                                SequentialAnimation  {
+                                    id: gradMovementR
+                                    PropertyAnimation { target: gradright; property: "position"; from: 0.2; to: 0.4; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradright; property: "position"; from: 0.4; to: 0.8; duration: gradMovement.timeStep*2 }
+                                    PropertyAnimation { target: gradright; property: "position"; from: 0.8; to: 1; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradright; property: "position"; from: 1; to: 0.8; duration: gradMovement.timeStep }
+                                    PropertyAnimation { target: gradright; property: "position"; from: 0.8; to: 0.4; duration: gradMovement.timeStep*2 }
+                                    PropertyAnimation { target: gradright; property: "position"; from: 0.4; to: 0.2; duration: gradMovement.timeStep }
+                                }
                                 running: indeterminate
                                 loops: Animation.Infinite
                             }
