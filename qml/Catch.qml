@@ -55,7 +55,6 @@ AppPage {
         subtitle: "Downloading sensor data ..."
         indeterminate: true // false
         currentProgress: 100 // 0
-        visible: true
         Component.onCompleted: {
             // todo: start popup animations at this point,
             //       not on loader windowChanged() signal
