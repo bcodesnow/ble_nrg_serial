@@ -9,7 +9,7 @@
 #include <QDebug>
 
 #define PLOT_DATA 1
-#define VERBOSITY_LEVEL 0
+#define VERBOSITY_LEVEL 1
 #define ALLOW_WRITE_TO_FILE 1
 #define WRITE_BERNHARD_INFO_TO_LOG_FILE 1
 
@@ -46,6 +46,8 @@ signals:
 
     void paintDataListChanged();
     void updateAllPainters(QList<QObject*> datalist);
+
+    void invokeCreateGoogleFolder(QString name);
     void invokeGoogleUpload(QString filename, QByteArray data);
 
     void fileIndexChanged();
@@ -54,9 +56,8 @@ public:
     explicit LogFileHandler(QObject *parent = nullptr);
 
     void sortArray(QByteArray *arr, uint16_t wp);
-    QVector<QVariant> bytesToInt16(QByteArray arr);
-    QVector<QVariant> bytesToUint16(QByteArray arr);
-    QVector<QVariant> bytesToFloat32(QByteArray arr);
+    QVector<QVariant> bytesToInt16(QByteArray arr, uint16_t step = 0);
+    QVector<QVariant> bytesToFloat32(QByteArray arr, uint16_t step = 0);
 
 
     QString getHomeLocation();
@@ -70,7 +71,7 @@ public slots:
     void writeTypeToLogFil(QString ident, QByteArray* data, quint8 type, quint16 wp);
     void resetFileIndex(); // UNUSED TODO
 
-    void setCurrDir (QString username); //TODO Dominique
+    void setCurrDir (QString username, bool g_enabled); //TODO Dominique
     void setCurrCatchMode (QString mode);
 };
 

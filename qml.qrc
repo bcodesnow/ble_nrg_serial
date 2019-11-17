@@ -16,7 +16,6 @@
         <file>qml/DualAppPage.qml</file>
         <file>qml/SwipePages.qml</file>
         <file>qml/Graphs.qml</file>
-        <file>qml/ProgressPopup.qml</file>
         <file>qml/MultiPopup.qml</file>
         <file>qml/MultiPopupType.qml</file>
     </qresource>

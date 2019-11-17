@@ -25,6 +25,7 @@ NetworkManager::NetworkManager(LogFileHandler *logfile_handler, QObject *parent)
              this, SLOT(replyFinished(QNetworkReply *)));
 
     connect(m_logfile_handler_ptr, &LogFileHandler::invokeGoogleUpload, this, &NetworkManager::uploadCatchData);
+    connect(m_logfile_handler_ptr, &LogFileHandler::invokeCreateGoogleFolder, this, &NetworkManager::createNewFolderWithId);
 
     // connect(m_control, &QLowEnergyController::connected, this, &DeviceController::onConnected);
 }
@@ -91,7 +92,6 @@ void NetworkManager::createDriveFolder(QString name, QString uploadUrl)
     uploadUrl.append(drive_type_multi);
     QNetworkRequest request(uploadUrl);
 
-
     const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
 
     QHttpPart MetadataPart;
@@ -107,60 +107,21 @@ void NetworkManager::createDriveFolder(QString name, QString uploadUrl)
     request.setRawHeader("Content-Type","multipart/related; boundary=bound2");
     request.setRawHeader("Authorization", bearer.toUtf8());
 
-    qDebug()<<"Sending request:"<<request.rawHeaderList();
+#if (VERBOSITY_LEVEL >= 2)
+    qDebug()<<"NetworkManager::createDriveFolder"<<"Sending request:"<<request.rawHeaderList();
+#endif
 
     QNetworkReply *reply = m_networkHandler->post(request,multiPart);
 
     connect(reply, &QNetworkReply::finished, [reply](){
+#if (VERBOSITY_LEVEL >= 2)
         qDebug()<<"Folder upload request. Error? " << (reply->error() != QNetworkReply::NoError);
-        qDebug() << reply->readAll();
-
-        // todo: save id to m_curr_folder_id
-
+#else
+        Q_UNUSED(reply)
+#endif
     });
-}
 
-//void NetworkManager::uploadLocalFileHttpMulti(QString localPath, QString uploadUrl, QByteArray contentType, QString folderID)
-//{
-//    uploadUrl.append(drive_type_multi);
-//    QNetworkRequest request(uploadUrl);
-//    const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
-//    QFile *file = new QFile(localPath); // ":/qml/images/splash.png"
-//    if ( !file->open(QIODevice::ReadOnly) )
-//    {
-//        qDebug()<<"cannot open file";
-//        return;
-//    }
-//    QByteArray rawData = file->readAll();
-//    file->close();
-//    QHttpPart MetadataPart;
-//    MetadataPart.setRawHeader("Content-Type", "application/json; charset=UTF-8");
-//    QString body;
-//    if (folderID.isEmpty()) {
-//        body = "{\n" + tr("\"name\": \"%1\"\n").arg("myUpload") + tr("}");
-//    }
-//    else {
-//        body = "{\n" + tr("\"name\": \"%1\",\n").arg("myUpload")
-//                + tr("\"parents\": [\"%1\"]\n").arg(folderID)
-//                + tr("}");
-//    }
-//    MetadataPart.setBody(body.toUtf8());
-//    QHttpPart MediaPart;
-//    MediaPart.setRawHeader("Content-Type", contentType);
-//    MediaPart.setBody(rawData);
-//    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::RelatedType);
-//    multiPart->setBoundary("bound1");
-//    multiPart->append(MetadataPart);
-//    multiPart->append(MediaPart);
-//    request.setRawHeader("Content-Type","multipart/related; boundary=bound1");
-//    request.setRawHeader("Authorization", bearer.toUtf8());
-//    qDebug()<<"Sending request:"<<request.rawHeaderList();
-//    QNetworkReply *reply = m_networkHandler->post(request,multiPart);
-//    connect(reply, &QNetworkReply::finished, [reply](){
-//        qDebug()<<"File upload request. Error? " << (reply->error() != QNetworkReply::NoError);
-//        qDebug() << reply->readAll();
-//    });
-//}
+}
 
 void NetworkManager::uploadDataHttpMulti(QByteArray data, QString name, QString uploadUrl, QByteArray contentType, QString folderID)
 {
@@ -176,7 +137,7 @@ void NetworkManager::uploadDataHttpMulti(QByteArray data, QString name, QString 
         body = "{\n" + tr("\"name\": \"%1\"\n").arg(name) + tr("}");
     }
     else {
-        body = "{\n" + tr("\"name\": \"%1\",\n").arg("myUpload")
+        body = "{\n" + tr("\"name\": \"%1\",\n").arg(name)
                 + tr("\"parents\": [\"%1\"]\n").arg(folderID)
                 + tr("}");
     }
@@ -195,26 +156,39 @@ void NetworkManager::uploadDataHttpMulti(QByteArray data, QString name, QString 
     request.setRawHeader("Content-Type","multipart/related; boundary=bound1");
     request.setRawHeader("Authorization", bearer.toUtf8());
 
-    qDebug()<<"Sending request:"<<request.rawHeaderList();
+#if (VERBOSITY_LEVEL >= 2)
+        qDebug()<<"NetworkManager::uploadDataHttpMulti"<<"Sending request:"<<request.rawHeaderList();
+#endif
 
     QNetworkReply *reply = m_networkHandler->post(request,multiPart);
 
     connect(reply, &QNetworkReply::finished, [reply](){
+#if (VERBOSITY_LEVEL >= 2)
         qDebug()<<"File upload request. Error? " << (reply->error() != QNetworkReply::NoError);
         qDebug() << reply->readAll();
+#else
+        Q_UNUSED(reply)
+#endif
     });
 }
 
 void NetworkManager::readFilesHttp(QString downloadUrl, QString folderID)
 {
-    QNetworkRequest request(downloadUrl);
-    const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
-    QNetworkReply *reply = m_networkHandler->get(request);
+    if (folderID != "")
+    {
+        // read from folder
+    }
+    else
+    {
+        QNetworkRequest request(downloadUrl);
+        const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
+        QNetworkReply *reply = m_networkHandler->get(request);
 
-    connect(reply, &QNetworkReply::finished, [reply](){
-        qDebug()<<"Read filenames request. Error? " << (reply->error() != QNetworkReply::NoError);
-        qDebug() << reply->readAll();
-    });
+        connect(reply, &QNetworkReply::finished, [reply](){
+            qDebug()<<"Read filenames request. Error? " << (reply->error() != QNetworkReply::NoError);
+            qDebug() << reply->readAll();
+        });
+    }
 }
 
 uint8_t NetworkManager::getAuthorized()
@@ -222,23 +196,23 @@ uint8_t NetworkManager::getAuthorized()
     return m_authorized;
 }
 
-void NetworkManager::synchronizeData()
-{
-    authorize();
+//void NetworkManager::synchronizeData()
+//{
+//    authorize();
 
-    if (m_authorized == AUTH_SUCCESS)
-    {
-        // todo: qsettings and synchronization with drive-appdata
-        qDebug()<<"sending TEST request";
-        // uploadFileHttpMulti(":/qml/images/splash.png", drive_file_upload_url, "image/png", development_drive_folder_id);
-        //  uploadFileHttpMulti("/home/boergi/catch_balint/0_LEFT_AUDIO", drive_file_url, "text/plain");
-        // createDriveFolder("Catch_Data_Wearable",drive_file_upload_url);
-        readFilesHttp(file_metadata_url); // drives_url file_metadata_url
-    }
+//    if (m_authorized == AUTH_SUCCESS)
+//    {
+//        // todo: qsettings and synchronization with drive-appdata
+//        qDebug()<<"sending TEST request";
+//        // uploadFileHttpMulti(":/qml/images/splash.png", drive_file_upload_url, "image/png", development_drive_folder_id);
+//        //  uploadFileHttpMulti("/home/boergi/catch_balint/0_LEFT_AUDIO", drive_file_url, "text/plain");
+//        // createDriveFolder("Catch_Data_Wearable",drive_file_upload_url);
+//        readFilesHttp(file_metadata_url); // drives_url file_metadata_url
+//    }
 
 
 
-}
+//}
 
 void NetworkManager::uploadFinished(QNetworkReply *reply)
 {
@@ -283,7 +257,15 @@ void NetworkManager::authorizationGranted() {
 void NetworkManager::replyFinished(QNetworkReply *reply)
 {
     qDebug()<<"Network reply arrived. Error? " << (reply->error() != QNetworkReply::NoError);
-    qDebug() << reply->readAll();
+
+    QByteArray replyData = reply->readAll();
+    QList<QByteArray> replyList = replyData.split('\"');
+
+    if ( replyList.at(15).contains("folder"))
+    {
+        qDebug()<<"FOLDER ID"<<replyList.at(7);
+        m_curr_folder_id = replyList.at(7);
+    }
 }
 
 void NetworkManager::printNetworkReply(const QByteArray reply)
@@ -315,7 +297,35 @@ void NetworkManager::authenticationReply(QNetworkReply *reply, QAuthenticator *a
     qDebug()<<reply->readAll();
 }
 
-void NetworkManager::uploadCatchData(QString name, QByteArray data) {
-    qDebug()<<"uploadCatchData"<<name;
-    uploadDataHttpMulti(data, m_logfile_handler_ptr->getHomeLocation()+"/"+name, file_upload_url, "text/plain");
+void NetworkManager::uploadCatchData(QString filename, QByteArray data) {
+    if (m_authorized == AUTH_SUCCESS && m_uploadEnabled == true)
+    {
+#if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"Uploading data:"<<filename;
+#endif
+        //  uploadDataHttpMulti(data, m_logfile_handler_ptr->getHomeLocation()+"/"+path, file_upload_url, "text/plain");
+        uploadDataHttpMulti(data, filename, file_upload_url, "text/plain", m_curr_folder_id);
+    }
+    else {
+#if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"Uploading not enabled";
+#endif
+    }
+}
+
+void NetworkManager::createNewFolderWithId(QString name)
+{
+    if (m_authorized == AUTH_SUCCESS)
+    {
+#if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"Creating new drive folder:"<<name;
+#endif
+        m_curr_folder_id.clear();
+        createDriveFolder(name,file_upload_url);
+    }
+    else {
+#if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"Uploading not enabled";
+#endif
+    }
 }

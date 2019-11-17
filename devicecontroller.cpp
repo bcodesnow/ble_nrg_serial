@@ -257,7 +257,8 @@ void DeviceController::searchCharacteristic()
             {
 #if (VERBOSITY_LEVEL >= 2)
                 qDebug()<<"Characteristic UUID:"<<c.uuid();
-                printProperties(c.properties());
+                qDebug()<<"undefined reference: printProperties(c.properties())";
+               // printProperties(c.properties());
 #endif
                 if ( c.uuid() == QBluetoothUuid( BLE_UART_RX_CHAR) && ( c.properties() & QLowEnergyCharacteristic::WriteNoResponse || c.properties() & QLowEnergyCharacteristic::Write) )
                 {
@@ -753,7 +754,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             // this is not as bullet proof as hell, but it would work as long the messages are aligned within 100
             hc_helper_struct.hc_highest_index = tidx;
         }
-#if (VERBOSITY_LEVEL >= 1 )
+#if (VERBOSITY_LEVEL >= 3 )
         qDebug()<<"HC -> Received IDX" << data[0] << "Calculated IDX" << tidx << "  package size" << value.size()-1;
 #endif
         // THAT WAS A DIRTY BUG
@@ -761,7 +762,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
         hc_tmp_iba_struct.barr = value.right(value.size()-1);
         hc_tmp_iba_struct.received = 1;
 
-#if (VERBOSITY_LEVEL >= 1 )
+#if (VERBOSITY_LEVEL >= 3 )
         QByteArray testArr = value.right(value.size()-1);
         qDebug()<<"\n";
         qDebug()<<testArr;

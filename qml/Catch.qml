@@ -41,7 +41,6 @@ AppPage {
         id: catchConfirmPopup
         currentPopupType: MultiPopupType.type_catch
         onPopupConfirmed: {
-            console.log("Ball catched:", index)
             catchController.onCatchSuccessConfirmed( index )
             catchConfirmPopup.visible = false
             if (catchController.bleUplEnabled && (index != 3 ))
@@ -56,6 +55,11 @@ AppPage {
         subtitle: "Downloading sensor data ..."
         indeterminate: true // false
         currentProgress: 100 // 0
+        visible: true
+        Component.onCompleted: {
+            // todo: start popup animations at this point,
+            //       not on loader windowChanged() signal
+        }
     }
 
     Rectangle {
@@ -174,7 +178,7 @@ AppPage {
         anchors.topMargin: AppConstants.fieldMargin/2
         height: AppConstants.fieldHeight*1.3
         anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width - AppConstants.fieldMargin*2 - AppConstants.fieldHeight*2
+        width: parent.width - AppConstants.fieldMargin*2
         color: "transparent"
         radius: AppConstants.buttonRadius
         border.color: Qt.darker(AppConstants.textColor,3)
@@ -189,22 +193,16 @@ AppPage {
             enabled: pageRoot.devicesConnected && AppConstants.sessionPopupFinished
             state: "Start"
 
-            onStateChanged: {
-                //console.log("start stop button changed to:",state)
-            }
-
             states: [
                 State {
                     name: "Start"; when: (pageRoot.devicesMainState == "Stopped")
                     PropertyChanges { target: startImg; opacity: 1}
                     PropertyChanges { target: stopImg; opacity: 0}
-                    // PropertyChanges { target: startStopImg; source: "images/playbtn.png" }
                 },
                 State {
                     name: "Stop"; when: (pageRoot.devicesMainState != "Stopped" )
                     PropertyChanges { target: startImg; opacity: 0}
                     PropertyChanges { target: stopImg; opacity: 1}
-                    // PropertyChanges { target: startStopImg; source: "images/stopbtn.png" }
                 }
             ]
             transitions: [

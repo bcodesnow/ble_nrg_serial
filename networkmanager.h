@@ -15,18 +15,20 @@
 #define AUTH_UNAUTH  1U
 #define AUTH_SUCCESS 2U
 #define AUTH_FAILURE 3U
+#define AUTH_INACTIVE 4U
 
 class NetworkManager : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int authorized READ getAuthorized NOTIFY authorizedChanged)
+    Q_PROPERTY(bool enabled MEMBER m_uploadEnabled NOTIFY uploadEnabledChanged)
 private:
     LogFileHandler* m_logfile_handler_ptr;
 
     QNetworkReply *m_reply;
     QNetworkRequest m_request;
     uint8_t m_authorized = AUTH_UNAUTH;
-    bool m_uploadEnabled = false;
+    bool m_uploadEnabled;// = false;
 
     QOAuth2AuthorizationCodeFlow *m_googleAuth;
     QNetworkAccessManager *m_networkHandler;
@@ -61,7 +63,7 @@ private:
     const QString drive_type_multi = "?uploadType=multipart";
 
     // note: get folder id by using createDriveFolder(name, uploadUrl)
-    const QString development_drive_folder_id = "1eQo3DNOG7VmZtEwDnoX9migoQitqyIXL";
+   // const QString development_drive_folder_id = "1eQo3DNOG7VmZtEwDnoX9migoQitqyIXL";
 
     const char* googleDriveFile =
             "https://www.googleapis.com/drive/v2/files/%1";
@@ -78,36 +80,20 @@ private:
 public:
     NetworkManager(LogFileHandler* logfile_handler, QObject *parent = nullptr);
 
-    Q_INVOKABLE void authorize();
-
-
     void createDriveFolder(QString name, QString uploadUrl);
-
-
-//    void uploadLocalFileHttpMulti(QString localPath, QString uploadUrl,
-//                             QByteArray contentType, QString folderID);
-
     void uploadDataHttpMulti(QByteArray data, QString name, QString uploadUrl,
                              QByteArray contentType, QString folderID = "");
-
-
     void readFilesHttp (QString downloadUrl, QString folderID = "");
-
-
-
 
     uint8_t getAuthorized();
 
+    Q_INVOKABLE void authorize();
 
-    Q_INVOKABLE void synchronizeData();
 
-    //    void setRefToFileHandlerNM(LogFileHandler *reference)
-    //    {
-    //        m_refToFileHandlerNM = reference;
-    //    }
 
 signals:
     void authorizedChanged();
+    void uploadEnabledChanged();
 
 public slots:
 
@@ -124,6 +110,8 @@ public slots:
     void authenticationReply(QNetworkReply *reply, QAuthenticator *authenticator);
 
     void uploadCatchData(QString name, QByteArray data);
+
+    void createNewFolderWithId(QString name);
 
 
 };

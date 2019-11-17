@@ -108,6 +108,7 @@ Popup {
 
             property double startTime
             property int secondsElapsed
+            property bool animationsActive: false
             onVisibleChanged: {
                 if (visible)
                 {
@@ -205,6 +206,7 @@ Popup {
                             opacity: 0.2
                         }
                         contentItem: Item {
+                            clip: true
                             Rectangle {
                                 id: bar
                                 width: progressBar.visualPosition * parent.width
@@ -212,63 +214,97 @@ Popup {
                                 radius: progressBar.rad
                                 color: AppConstants.infoColor
                             }
-                            // fancy stuff
-                            LinearGradient {
-                                anchors.fill: bar
-                                start: Qt.point(0, 0)
-                                end: Qt.point(bar.width, 0)
-                                source: bar
-                                gradient: Gradient {
-                                    GradientStop { id: gradleft; position: 0.4; color: AppConstants.infoColor }
-                                    GradientStop { id: gradmid; position: 0.5; color: AppConstants.textColor }
-                                    GradientStop { id: gradright; position: 0.6; color: AppConstants.infoColor }
+
+                            Rectangle {
+                                id: animatedRect
+                                width: bar.width/10
+                                height: parent.height-2
+                                radius: progressBar.rad
+                                color: AppConstants.infoColor
+                                anchors.verticalCenter: bar.verticalCenter
+                                x: 0//bar.width
+
+                                LinearGradient {
+                                    anchors.fill: animatedRect
+                                    start: Qt.point(0, 0)
+                                    end: Qt.point(animatedRect.width, 0)
+                                    source: animatedRect
+                                    gradient: Gradient {
+                                        GradientStop { position: 0; color: AppConstants.infoColor }
+                                        GradientStop { position: 0.5; color: AppConstants.textColor }
+                                        GradientStop { position: 1; color: AppConstants.infoColor }
+                                    }
                                 }
-                            }
-                            LinearGradient {
-                                anchors.fill: bar
-                                start: Qt.point(0, 0)
-                                end: Qt.point(0, bar.height)
-                                source: bar
-                                gradient: Gradient {
-                                    GradientStop { position: 0.0; color: AppConstants.infoColor }
-                                    GradientStop { position: 0.1; color: "transparent" }
-                                    GradientStop { position: 0.9; color: "transparent" }
-                                    GradientStop { position: 1.0; color: AppConstants.infoColor }
-                                }
-                            }
-                            ParallelAnimation  {
-                                id: gradMovement
-                                property int timeStep: 700
+
                                 SequentialAnimation  {
-                                    id: gradMovementL
-                                    PropertyAnimation { target: gradleft; property: "position"; from: 0; to: 0.2; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.2; to: 0.6; duration: gradMovement.timeStep*2 }
-                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.6; to: 0.8; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.8; to: 0.6; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.6; to: 0.2; duration: gradMovement.timeStep*2 }
-                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.2; to: 0; duration: gradMovement.timeStep }
+                                    id: progressAnimation
+                                    running: progressPopupRoot.animationsActive
+                                    loops: Animation.Infinite
+                                    PropertyAnimation { target: animatedRect; property: "x"; from: 0; to: bar.width; duration: 5000 }
                                 }
-                                SequentialAnimation  {
-                                    id: gradMovementM
-                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.1; to: 0.3; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.3; to: 0.7; duration: gradMovement.timeStep*2 }
-                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.7; to: 0.9; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.9; to: 0.7; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.7; to: 0.3; duration: gradMovement.timeStep*2 }
-                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.3; to: 0.1; duration: gradMovement.timeStep }
-                                }
-                                SequentialAnimation  {
-                                    id: gradMovementR
-                                    PropertyAnimation { target: gradright; property: "position"; from: 0.2; to: 0.4; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradright; property: "position"; from: 0.4; to: 0.8; duration: gradMovement.timeStep*2 }
-                                    PropertyAnimation { target: gradright; property: "position"; from: 0.8; to: 1; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradright; property: "position"; from: 1; to: 0.8; duration: gradMovement.timeStep }
-                                    PropertyAnimation { target: gradright; property: "position"; from: 0.8; to: 0.4; duration: gradMovement.timeStep*2 }
-                                    PropertyAnimation { target: gradright; property: "position"; from: 0.4; to: 0.2; duration: gradMovement.timeStep }
-                                }
-                                running: indeterminate
-                                loops: Animation.Infinite
+
+
                             }
+
+                            //                            // fancy stuff
+                            //                            LinearGradient {
+                            //                                anchors.fill: bar
+                            //                                start: Qt.point(0, 0)
+                            //                                end: Qt.point(bar.width, 0)
+                            //                                source: bar
+                            //                                gradient: Gradient {
+                            //                                    GradientStop { id: gradleft; position: 0.4; color: AppConstants.infoColor }
+                            //                                    GradientStop { id: gradmid; position: 0.5; color: AppConstants.textColor }
+                            //                                    GradientStop { id: gradright; position: 0.6; color: AppConstants.infoColor }
+                            //                                }
+                            //                            }
+                            //                            LinearGradient {
+                            //                                anchors.fill: bar
+                            //                                start: Qt.point(0, 0)
+                            //                                end: Qt.point(0, bar.height)
+                            //                                source: bar
+                            //                                gradient: Gradient {
+                            //                                    GradientStop { position: 0.0; color: AppConstants.infoColor }
+                            //                                    GradientStop { position: 0.1; color: "transparent" }
+                            //                                    GradientStop { position: 0.9; color: "transparent" }
+                            //                                    GradientStop { position: 1.0; color: AppConstants.infoColor }
+                            //                                }
+                            //                            }
+
+                            //                            ParallelAnimation  {
+                            //                                id: gradMovement
+                            //                                property int timeStep: 700
+                            //                                SequentialAnimation  {
+                            //                                    id: gradMovementL
+                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0; to: 0.2; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.2; to: 0.6; duration: gradMovement.timeStep*2 }
+                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.6; to: 0.8; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.8; to: 0.6; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.6; to: 0.2; duration: gradMovement.timeStep*2 }
+                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.2; to: 0; duration: gradMovement.timeStep }
+                            //                                }
+                            //                                SequentialAnimation  {
+                            //                                    id: gradMovementM
+                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.1; to: 0.3; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.3; to: 0.7; duration: gradMovement.timeStep*2 }
+                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.7; to: 0.9; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.9; to: 0.7; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.7; to: 0.3; duration: gradMovement.timeStep*2 }
+                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.3; to: 0.1; duration: gradMovement.timeStep }
+                            //                                }
+                            //                                SequentialAnimation  {
+                            //                                    id: gradMovementR
+                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.2; to: 0.4; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.4; to: 0.8; duration: gradMovement.timeStep*2 }
+                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.8; to: 1; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 1; to: 0.8; duration: gradMovement.timeStep }
+                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.8; to: 0.4; duration: gradMovement.timeStep*2 }
+                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.4; to: 0.2; duration: gradMovement.timeStep }
+                            //                                }
+                            //                                running: indeterminate
+                            //                                loops: Animation.Infinite
+                            //                            }
+
                         }
                     } //!ProgressBar
                 } // !Rectangle
@@ -277,6 +313,18 @@ Popup {
                     Layout.preferredHeight: parent.height/12
                 } //!Rectangle
             } // !ColumnLayout
+            Connections {
+                target: popupLoader
+                onWindowChanged: {
+                    if (window)
+                    {
+                        progressPopupRoot.width = window.width
+                        progressPopupRoot.height = window.height
+                        if (indeterminate)
+                            progressPopupRoot.animationsActive = true
+                    }
+                }
+            }
         } // !Rectangle
     } // !Component
 
@@ -287,14 +335,6 @@ Popup {
             color: Qt.lighter( AppConstants.backgroundColor, 1.2 )//Qt.darker("white")
             opacity: maxOpacity
             radius: AppConstants.buttonRadius*2
-            // signal downloadConfirmed(bool catched)
-            //            onDownloadConfirmed: {
-            //                console.log("Ball catched:",catched)
-            //                catchController.startDownloadFromAllDevices()
-            //                fileHandler.confirm("Catch",catched)
-            //                multiPopup.visible = false
-            //                // show progressPopup
-            //            }
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 15
@@ -360,9 +400,7 @@ Popup {
                     opacity: 0.9
                     onClicked:
                     {
-                        console.log("Flop")
                         popupConfirmed(3)
-                        // catchController.sendStopToAllDevices() // is this right? -> no it isnt, we need to tell the device only in sd enabled mode something.. the something is work in progress
                         multiPopup.visible = false
                     }
                     Text {
@@ -446,22 +484,11 @@ Popup {
             property bool timesync: false
             property int textPadding: parent.width/20
             property int rowHeight: AppConstants.smallFontSize*2
-            //            onVisibleChanged: {
-            //                if (visible && !timesync)
-            //                {
-            //                    // i think we should just start the timesync from c++ as all the connections are ready--> moved to catch controller
-            //                    console.log("Starting time sync")
-            //                    if (catchController.devicesConnected) // prevent crash
-            //                        catchController.startTimesyncAllDevices()
-            //                    else console.log("Time sync failed")
-            //                }
-            //            }
 
             Connections {
                 target: catchController
                 onTimeSyncOfAllDevFinished:
                 {
-                    console.log("Time sync success:",success)
                     timesync = success
                 }
             }
@@ -736,9 +763,7 @@ Popup {
                         onCheckedChanged: {
                             if (checked && networkManager.authorized != 2)
                             {
-                                // authorize to google
                                 networkManager.authorize();
-                                console.log("Enabled google")
                             }
                         }
                         Image {
@@ -764,14 +789,13 @@ Popup {
                     pressedColor: AppConstants.infoColor
                     enabled: buttonEnabled
                     onClicked: {
-                        console.log("Accepted session settings")
-                        console.log("USER:",usernameInput.text)
-                        console.log("MODE:",catchModeCB.currentText)
-                        console.log("SD:",sdSwitch.checked,"BT:",btSwitch.checked,"G:",googleSwitch.checked)
                         catchController.setLoggingMedia(sdSwitch.checked,btSwitch.checked)
-                        fileHandler.setCurrDir(usernameInput.text)
+
+                        fileHandler.setCurrDir(usernameInput.text,googleSwitch.checked)
                         fileHandler.setCurrCatchMode(catchModeCB.currentText)
-                        // networkManager
+
+                        networkManager.enabled = googleSwitch.checked
+
                         AppConstants.sessionPopupFinished = true;
                         multiPopup.visible = false
                     }
@@ -802,7 +826,6 @@ Popup {
             Connections {
                 target: linuxInterface
                 Component.onCompleted: {
-                    console.log("linuxInterface completed")
                     multiPopup.modal = true
                 }
             }
@@ -1129,8 +1152,6 @@ Popup {
                 }
             }
 
-            // update width/height from loader
-            // this is somehow only neccessary for this popup type ...
             Connections {
                 target: popupLoader
                 onWindowChanged: {

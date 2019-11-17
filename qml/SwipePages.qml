@@ -46,7 +46,7 @@ Item {
         currentPopupType: MultiPopupType.type_password
     }
     //    MultiPopup {
-    //        // todo: fill list with adapters from c++ (only showing, no interaction)
+    //        // unused
     //        id: btAdapterPopup
     //        popupType: 3
     //    }
@@ -57,6 +57,11 @@ Item {
     MultiPopup {
         id: showTheDevilPopup
         currentPopupType: MultiPopupType.type_satan
+        Component.onCompleted: {
+            // todo: start popup animations at this point,
+            //       not on loader windowChanged() signal
+        }
+
         Connections {
             target: catchController
             onInvokeQmlError: {

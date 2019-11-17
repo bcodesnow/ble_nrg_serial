@@ -42,7 +42,7 @@ void LogFileHandler::sortArray(QByteArray *arr, uint16_t wp)
     arr->append(tmpArray);
 }
 
-QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray arr)
+QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray arr, uint16_t step)
 {
     int16_t tmp_int;
     QVector<QVariant> intvec;//(QVector<QVariant>(arr.size()/2));
@@ -57,21 +57,22 @@ QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray arr)
     return intvec;
 }
 
-QVector<QVariant> LogFileHandler::bytesToUint16(QByteArray arr)
-{
-    uint16_t tmp_uint;
-    QVector<QVariant> uintvec(QVector<QVariant>(arr.size()/2));
-    uintvec.clear();
-    for (int i=0; i<arr.size(); i+=2)
-    {
-        tmp_uint = static_cast<uint16_t>(static_cast<uint16_t>(arr[i+1]) << 8);
-        tmp_uint |= static_cast<uint16_t>( arr[i] ) & 0xFF;
-        uintvec.append(QVariant(tmp_uint));
-    }
-    return uintvec;
-}
+//QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray arr)
+//{
+//    int16_t tmp_int;
+//    QVector<QVariant> intvec;//(QVector<QVariant>(arr.size()/2));
+//    intvec.reserve(arr.size()/2);
 
-QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray arr)
+//    for (int i=0; i<arr.size(); i+=2)
+//    {
+//        tmp_int = static_cast<int16_t>(static_cast<int16_t>(arr[i+1]) << 8);
+//        tmp_int |= static_cast<int16_t>( arr[i] ) & 0xFF;
+//        intvec.append(QVariant(tmp_int));
+//    }
+//    return intvec;
+//}
+
+QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray arr, uint16_t step)
 {
     float tmp_float;
     QByteArray tmp_arr;
@@ -94,15 +95,15 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
 {
 
 #if (PLOT_DATA == 1)
-    #if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"writeTypeToLogFil"<<ident<<type<<wp<<data->size();
-    #endif
-    #else
-    #if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"writeTypeToLogFil disabled";
-    #endif
-        return;
-    #endif
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"writeTypeToLogFil"<<ident<<type<<wp<<data->size();
+#endif
+#else
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"writeTypeToLogFil disabled";
+#endif
+    return;
+#endif
 
     QElapsedTimer filetimer;
     filetimer.start();
@@ -112,47 +113,48 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     QString tmpLocation = m_fileLocation+m_currDir+"/";
     qDebug()<<"File Path: "<<tmpLocation;
     QString idx_str = tr("%1_%2_").arg(m_currFileIndex).arg(ident);
-    tmpLocation.append( idx_str );
+    //  tmpLocation.append( idx_str );
 
     // sort by writepointer
     if (type != TYPE_LOG && !data->isEmpty())
         sortArray(data, wp);
 
-    #if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"after sorting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-    #endif
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"after sorting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+#endif
     // Byte conversion
     switch (type)
     {
     case TYPE_AUD:
         dataVec = bytesToInt16(*data);
-        tmpLocation.append( QString("AUDIO") );
+        idx_str.append( QString("AUDIO") );
         break;
     case TYPE_GYR:
         dataVec = bytesToInt16(*data);
-        tmpLocation.append( QString("GYR") );
+        idx_str.append( QString("GYR") );
         break;
     case TYPE_ACC:
         dataVec = bytesToInt16(*data);
-        tmpLocation.append( QString("ACC") );
+        idx_str.append( QString("ACC") );
         break;
     case TYPE_PRS:
         dataVec = bytesToFloat32(*data);
-        tmpLocation.append( QString("PRS") );
+        idx_str.append( QString("PRS") );
         break;
     case TYPE_MAG:
         dataVec = bytesToInt16(*data);
-        tmpLocation.append( QString("MAG") );
+        idx_str.append( QString("MAG") );
         break;
     case TYPE_LOG:
-        tmpLocation.append( QString("LOG") );
+        idx_str.append( QString("LOG") );
         break;
     default:
         tmpLocation.append( QString("SOMEFILE") );
     }
-    #if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"after conversion:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-    #endif
+    tmpLocation.append(idx_str);
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"after conversion:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+#endif
     if (type != TYPE_LOG && !dataVec.isEmpty())
     {
         for (int i=0;i<m_paintDataList.size();i++)
@@ -174,6 +176,9 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     file.open(QIODevice::WriteOnly);
     file.write(*data);
     file.close();
+
+    // Google drive
+    invokeGoogleUpload(idx_str,*data);
 
 #if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"after saving:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
@@ -198,20 +203,25 @@ void LogFileHandler::resetFileIndex()
     emit fileIndexChanged();
 }
 
-void LogFileHandler::setCurrDir(QString username)
+void LogFileHandler::setCurrDir(QString username, bool g_enabled)
 {
+    QDir dir;
+
     if (username.isEmpty())
         m_currUser = "dev";
     else
         m_currUser = username;
-
     m_currDir = "catch_data_WD_" + m_currUser + "_" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
-    QDir dir;
+
+    if (g_enabled)
+        invokeCreateGoogleFolder(m_currDir);
+
     dir.setPath(m_fileLocation);
     dir.mkdir(m_currDir);
 #if ( VERBOSITY_LEVEL >= 0 )
     qInfo()<<"LogFileHandler::setCurrDir(QString username)"<< "\nCreated folder"<<m_currDir<<"in"<<m_fileLocation;
 #endif
+
 }
 
 void LogFileHandler::setCurrCatchMode(QString mode)

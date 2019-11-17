@@ -155,7 +155,7 @@ void DeviceInterface::sendCmdStart()
 void DeviceInterface::sendCmdSetLoggingMedia(bool savingTosdEnabled, bool bleUplEnabled)
 {
 #if ( VERBOSITY_LEVEL >= 2 )
-    qDebug()<<"Sending Set Logging Media"<<m_deviceIdx;
+   // qDebug()<<"Sending Set Logging Media"<<m_deviceIdx; // private member of DeviceInfo
 #endif
     QByteArray tba;
     tba.resize(3);
