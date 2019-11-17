@@ -3,6 +3,7 @@ import QtQuick.Extras 1.4
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 import QtGraphicalEffects 1.0
+import QtMultimedia 5.12
 import "."
 //import com.dev 1.0
 import Shared 1.0
@@ -11,24 +12,13 @@ AppPage {
     id: pageRoot
     property string devicesMainState : catchController.devicesMainState // why for the bloody hell is property alias not working for this case?! -> It can only refer to an object, or the property of an object, that is within the scope of the type within which the alias is declared.
     property bool devicesConnected : catchController.devicesConnected
+    errorMessage: devicesConnected ? (devicesMainState == "Error" ? "Error" : "") : "No devices connected."
+    infoMessage: devicesMainState != "Error" ? devicesMainState : ""
 
     Connections {
         target: catchController
         onMainStateOfAllDevicesChanged:
         {
-            switch(catchController.devicesMainState)
-            {
-            case "Unknown":
-                console.log("Unknown devices main state:", catchController.devicesMainState);
-                break;
-            case "Stopped":
-
-                break;
-            case "Running":
-                break;
-            case "Ready to Trigger":
-                break;
-            }
             pageRoot.devicesMainState = catchController.devicesMainState // this should not be needed .. but it does not work without it!! -> why member AND signal with transfer value? i think qml ... you in the ... right there
         }
         onAllWearablesAreWaitingForDownload:
@@ -40,16 +30,29 @@ AppPage {
     MultiPopup {
         id: catchConfirmPopup
         currentPopupType: MultiPopupType.type_catch
+        property int currentModeIndexCatch//: sessionSettingsPopup.currentModeIndex
+        Connections {
+            target: sessionSettingsPopup
+            onCurrentModeIndexChanged: {
+                catchConfirmPopup.currentModeIndexCatch = sessionSettingsPopup.currentModeIndex
+            }
+        }
+        onCurrentModeIndexCatchChanged: {
+             fileHandler.setCurrCatchMode(currentModeIndexCatch)
+        }
         onPopupConfirmed: {
             catchController.onCatchSuccessConfirmed( index )
             catchConfirmPopup.visible = false
             if (catchController.bleUplEnabled && (index != 3 ))
                 downloadProgressPopup.visible = true
         }
+        onVisibleChanged: {
+            if (visible) view.setCurrentIndex(1)
+        }
     }
     MultiPopup {
         id: downloadProgressPopup
-        currentPopupType: 1
+        currentPopupType: MultiPopupType.type_progress
         modal: false
         maintitle: "Wearable Data Download"
         subtitle: "Downloading sensor data ..."
@@ -59,13 +62,24 @@ AppPage {
             // todo: start popup animations at this point,
             //       not on loader windowChanged() signal
         }
+        Audio {
+            id: downlFinMusic
+            autoLoad: true
+            // autoPlay: true
+            audioRole: Audio.AlarmRole
+            source: "dlfin.mp3"
+            muted: false
+            volume: 0.5
+        }
+        onVisibleChanged: {
+            downlFinMusic.play()
+            console.log("play music:",downlFinMusic.duration)
+        }
     }
 
     Rectangle {
         id: viewContainer
         anchors.top: parent.top
-        // only BlueZ platform has address type selection
-        // connectionHandler.requiresAddressType ? addressTypeButton.top : searchButton.top
         anchors.topMargin: AppConstants.fieldMargin + messageHeight
         anchors.bottomMargin: AppConstants.fieldMargin
         anchors.horizontalCenter: parent.horizontalCenter
@@ -81,11 +95,7 @@ AppPage {
             verticalAlignment: Text.AlignVCenter
             color: AppConstants.textColor
             font.pixelSize: AppConstants.mediumFontSize
-            // text: qsTr(catchController.devicesMainState)
-            text:
-                if ( catchController.devicesMainState === "" )
-                    "Connect devices..."
-                else qsTr(catchController.devicesMainState)
+            text: "Connected devices"
             BottomLine {
                 height: 1;
                 width: parent.width
@@ -173,10 +183,12 @@ AppPage {
 
     Rectangle {
         id: buttonBar
-        anchors.top: viewContainer.bottom
-        anchors.topMargin: AppConstants.fieldMargin/2
-        height: AppConstants.fieldHeight*1.3
+        //        anchors.top: viewContainer.bottom
+        //        anchors.topMargin: AppConstants.fieldMargin/2
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: AppConstants.fieldMargin
+        height: AppConstants.fieldHeight*1.3
         width: parent.width - AppConstants.fieldMargin*2
         color: "transparent"
         radius: AppConstants.buttonRadius
@@ -206,7 +218,7 @@ AppPage {
             ]
             transitions: [
                 Transition {
-                    NumberAnimation { property: "opacity"; easing.type: Easing.InOutQuad; duration: 2500  }
+                    NumberAnimation { property: "opacity"; easing.type: Easing.InOutQuad; duration: 1000  }
                 }
             ]
 
@@ -255,8 +267,8 @@ AppPage {
                 }
             }
 
-            NumberAnimation { id: rotLeft; target: stopImg; property: "rotation"; from: 360; to: 0; duration: 2000; running: false }
-            NumberAnimation { id: rotRight; target: startImg; property: "rotation"; from: 0; to: 360; duration: 2000; running: false }
+            NumberAnimation { id: rotLeft; target: stopImg; property: "rotation"; from: 360; to: 0; duration: 1000; running: false }
+            NumberAnimation { id: rotRight; target: startImg; property: "rotation"; from: 0; to: 360; duration: 1000; running: false }
 
         } // !AppButton
     }

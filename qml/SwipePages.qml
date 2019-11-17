@@ -53,6 +53,7 @@ Item {
     MultiPopup {
         id: sessionSettingsPopup
         currentPopupType: MultiPopupType.type_session
+        property int currentModeIndex: 0
     }
     MultiPopup {
         id: showTheDevilPopup

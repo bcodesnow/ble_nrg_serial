@@ -48,7 +48,7 @@ QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray arr, uint16_t step)
     QVector<QVariant> intvec;//(QVector<QVariant>(arr.size()/2));
     intvec.reserve(arr.size()/2);
 
-    for (int i=0; i<arr.size(); i+=2)
+    for (int i=0; i<arr.size(); i+=(2*step))
     {
         tmp_int = static_cast<int16_t>(static_cast<int16_t>(arr[i+1]) << 8);
         tmp_int |= static_cast<int16_t>( arr[i] ) & 0xFF;
@@ -126,7 +126,7 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     switch (type)
     {
     case TYPE_AUD:
-        dataVec = bytesToInt16(*data);
+        dataVec = bytesToInt16(*data,2);
         idx_str.append( QString("AUDIO") );
         break;
     case TYPE_GYR:
@@ -163,6 +163,7 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
                     ((PaintData*)m_paintDataList.at(i))->getSide() == ident.at(0).toLatin1())
             {
                 m_paintDataList.at(i)->deleteLater();
+                delete m_paintDataList.at(i); // qml doesnt like this
                 m_paintDataList.replace(i,new PaintData(type, ident.at(0).toLatin1(), dataVec));
                 emit paintDataListChanged();
             }
@@ -225,27 +226,25 @@ void LogFileHandler::setCurrDir(QString username, bool g_enabled)
 
 }
 
-void LogFileHandler::setCurrCatchMode(QString mode)
+void LogFileHandler::setCurrCatchMode(int mode)
 {
-    m_currCatchMode = mode;
+    m_currCatchMode = m_catchModeList.at(mode);
+#if ( VERBOSITY_LEVEL >= 1 )
+    qDebug()<<"setCurrCatchMode(int mode)"<<m_currCatchMode;
+#endif
 }
-
-//void LogFileHandler::confirm (QString ident, bool bcatch)
-//{
-//    addToLogFil(ident, QString("SUCCESS"), QString(( bcatch ? "CATCH" : "DROP" )) );
-//}
 
 void LogFileHandler::finishLogFile()
 {
 #if ( WRITE_BERNHARD_INFO_TO_LOG_FILE == 1 )
     addToLogFil("Info","Username",m_currUser);
     addToLogFil("Info","CatchMode",m_currCatchMode);
-    addToLogFil("Info", QString("RecordingTime"), QString::number(2500)+" ms"); // todo use define from mci catch det
-    addToLogFil("Info", QString("freq_AUDIO"), QString::number(8000));
-    addToLogFil("Info", QString("freq_ACC"), QString::number(1000));
-    addToLogFil("Info", QString("freq_GYR"), QString::number(1000));
-    addToLogFil("Info", QString("freq_MAG"), QString::number(100));
-    addToLogFil("Info", QString("freq_PRS"), QString::number(100));
+    addToLogFil("Info", QString("RecordingTime"), QString::number(CD_TOTAL_BUFFERED_DATA_IN_MS)+" ms");
+    addToLogFil("Info", QString("freq_AUDIO"), QString::number(AUDIO_SAMPLING_FREQUENCY));
+    addToLogFil("Info", QString("freq_ACC"), QString::number(ACC_SAMPLING_FREQUENCY));
+    addToLogFil("Info", QString("freq_GYR"), QString::number(GYR_SAMPLING_FREQUENCY));
+    addToLogFil("Info", QString("freq_MAG"), QString::number(MAG_SAMPLING_FREQUENCY));
+    addToLogFil("Info", QString("freq_PRS"), QString::number(PRS_SAMPLING_FREQUENCY));
 #endif
 #ifdef ALLOW_WRITE_TO_FILE
     QByteArray ba; // get rid of this..

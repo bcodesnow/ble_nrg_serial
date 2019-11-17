@@ -140,26 +140,6 @@
 #define TS_CMD_SYNC_START                       5u
 #define TS_CMD_SYNC_FINISH                      6u
 
-
-// TODO BOERGI THIS BLOCK HAS NOTHING TO DO HERE is only specific to transmitted data.. move it to write file..
-#define TYPE_AUD 1u
-#define	TYPE_ACC 2u
-#define TYPE_GYR 3u
-#define TYPE_MAG 4u
-#define TYPE_PRS 5u
-#define TYPE_LOG 0xAA
-
-#define TYPE_COUNT 5 // different sensor types
-
-#define FREQ_AUD 8000
-#define FREQ_ACC 1000
-#define FREQ_GYR 1000
-#define FREQ_MAG 100
-#define FREQ_PRS 100
-// THIS BLOCK HAS NOTHING TO DO HERE
-
-
-
 /* ------------------------------------------------------------------- */
 
 #if USED_ON_MICRO==1

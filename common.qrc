@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>common/client_secret_914794792674-hkarun0t7ccuchh8om2n0a160rnsnbce.apps.googleusercontent.com.json</file>
+        <file>common/dlfin.mp3</file>
+        <file>common/dlfin.wav</file>
     </qresource>
 </RCC>

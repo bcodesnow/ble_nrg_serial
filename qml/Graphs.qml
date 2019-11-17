@@ -1,4 +1,4 @@
-import QtQuick 2.9
+import QtQuick 2.12
 
 import GraphPainterCpp 1.0
 
@@ -73,7 +73,8 @@ AppPage {
             onPaintDataListChanged: {
 
                 var painterItem
-                for (var i=0;i<fileHandler.paintDataList.length;i++)                {
+                for (var i=0;i<fileHandler.paintDataList.length;i++)
+                {
                     painterItem = graphGrid.itemAtIndex(i).children[1].children[0]
                     painterItem.graphData = fileHandler.paintDataList[i]
                 }

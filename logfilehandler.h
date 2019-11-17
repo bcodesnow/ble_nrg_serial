@@ -13,6 +13,8 @@
 #define ALLOW_WRITE_TO_FILE 1
 #define WRITE_BERNHARD_INFO_TO_LOG_FILE 1
 
+#include "mci_catch_detection.h"
+#include "ble_uart.h"
 #include <graphpainter.h>
 #include <paintdata.h>
 
@@ -26,6 +28,7 @@ class LogFileHandler : public QObject
     Q_PROPERTY(quint64 fileIndex MEMBER m_currFileIndex NOTIFY fileIndexChanged)
     Q_PROPERTY(QString lastPath MEMBER m_lastPath NOTIFY lastPathChanged)
     Q_PROPERTY(QVariant paintDataList READ getPaintDataList NOTIFY paintDataListChanged)
+    Q_PROPERTY(QStringList catchModes MEMBER m_catchModeList NOTIFY catchModeListChanged)
 
 private:
     quint64 m_currFileIndex;
@@ -36,6 +39,8 @@ private:
     QString m_currUser;
     QString m_currDir;
     QString m_currCatchMode;
+
+    QStringList m_catchModeList = {"Mixed","Standing","Running","Jumping","One hand"};
     QList<QObject*> m_paintDataList;
 
     quint64 m_fileIndex;
@@ -44,6 +49,7 @@ signals:
     void lastPathChanged(void);
     void idxChanged(quint64 tidx);
 
+    void catchModeListChanged();
     void paintDataListChanged();
     void updateAllPainters(QList<QObject*> datalist);
 
@@ -56,8 +62,8 @@ public:
     explicit LogFileHandler(QObject *parent = nullptr);
 
     void sortArray(QByteArray *arr, uint16_t wp);
-    QVector<QVariant> bytesToInt16(QByteArray arr, uint16_t step = 0);
-    QVector<QVariant> bytesToFloat32(QByteArray arr, uint16_t step = 0);
+    QVector<QVariant> bytesToInt16(QByteArray arr, uint16_t step = 1);
+    QVector<QVariant> bytesToFloat32(QByteArray arr, uint16_t step = 1);
 
 
     QString getHomeLocation();
@@ -72,7 +78,7 @@ public slots:
     void resetFileIndex(); // UNUSED TODO
 
     void setCurrDir (QString username, bool g_enabled); //TODO Dominique
-    void setCurrCatchMode (QString mode);
+    void setCurrCatchMode (int mode);
 };
 
 #endif // LOGFILEHANDLER_H

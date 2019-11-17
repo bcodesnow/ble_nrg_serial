@@ -202,7 +202,7 @@ void DeviceController::onCharacteristicRead(const QLowEnergyCharacteristic &c, c
 
 void DeviceController::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
-#if (VERBOSITY_LEVEL >= 1 )
+#if (VERBOSITY_LEVEL >= 2 )
     qInfo() << "Characteristic Written! - Payload: " << value;
 #endif
     const quint8 *data;
@@ -582,7 +582,7 @@ void DeviceController::bleUartSendCmdOk()
 void DeviceController::bleUartTx(const QByteArray &value)
 {
 
-#if (VERBOSITY_LEVEL >= 1 )
+#if (VERBOSITY_LEVEL >= 2 )
     qDebug()<<"bleUartTx(const QByteArray &value)"<<*value;
 #endif
     if (value.size())
@@ -614,7 +614,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
     if ( c.uuid() == ble_uart_receive )
     {
-#if (VERBOSITY_LEVEL >= 1 )
+#if (VERBOSITY_LEVEL >= 2 )
         qDebug()<<"BLE UART RX FIRST BYTE:"<<hex;
 #endif
         switch ( data[0] )
@@ -646,56 +646,33 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             //            break;
 
         case ALIVE:
-
             emit aliveArrived(value);
-
             break;
-
         case REPLY_START_HUGE_CHUNK:
-
             huge_chunk_start_t* hc_transfer_struct_ptr;
             hc_transfer_struct_ptr = (huge_chunk_start_t*) &data[1];
             hc_transfer_struct = *hc_transfer_struct_ptr;
             emit startHugeChunkArrived();
-
             break;
-
         case REPLY_NO_CHUNK_AVAILABLE:
-
             emit noChunkAvailableArrived();
-
             break;
-
         case CMD_SENSORDATA_AVAILABLE:
-
             qDebug()<<"Sensor Data avialable for download!";
             emit sensorDataAvailableArrived(m_ident_idx);
             bleUartSendCmdOk(); //todo, the catch controller also sends ok?!
-
-
             break;
-            //
-
         case TS_MSG:
-
             emit timeSyncMessageArrived(value);
-
             break;
-
         case CMD_START_HUGE_CHUNK_ACK_PROC:
-
             emit startHugeChunkAckProcArrived(value);
-
             break;
-
         case REPLY_MISSED_PACKAGE:
             qDebug()<<"missed arrived, calling slot";
             emit replyMissingPackageArrived(value);
-
             break;
-
         case DIAG_INFO:
-
             if (data[1] == DIAG_1_TYPE_LENGTH_TEST)
             {
                 qDebug()<<"MESS LEN:::"<<value.size();
@@ -704,11 +681,8 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             {
                 qDebug()<<"Unimplemented diag msg";
             }
-
             break;
-            //
         case CONN_PARAM_INFO:
-
             // i should have implemented all packages this way..
             conn_param_info_t* cp_ptr;
             cp_ptr = (conn_param_info_t*) &data[1];
@@ -861,9 +835,9 @@ void DeviceController::onStartHugeChunkArrived()
     hc_helper_struct.missed_pkg_cnt_to_request = 0;
     hc_helper_struct.last_received = false;
 
-    emit invokeAddToLogFile(m_ident_str, QString("Type"), QString::number(hc_transfer_struct.incoming_type));
+    emit invokeAddToLogFile(m_ident_str, QString("Type"), stateToString(hc_transfer_struct.incoming_type));
     emit invokeAddToLogFile(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
-    emit invokeAddToLogFile(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
+  //  emit invokeAddToLogFile(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
 
     sendStartOkHugeChunk();
 

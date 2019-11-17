@@ -72,9 +72,7 @@ public:
                     LogFileHandler* logfile_handler, QObject *parent = nullptr);
     ~CatchController(){} // todo we need to destroy this safely
 
-
     //bool sdEnabled() const;
-
 
     bool devicesConnected() const
     {

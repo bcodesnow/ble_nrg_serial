@@ -92,8 +92,8 @@ private:
     QTimer* m_nextRequestTimer;
     int m_nextRequest;
 
-//    quint8 m_progress;
-//    float m_transfSpeed;
+    //    quint8 m_progress;
+    //    float m_transfSpeed;
 
     QVector<huge_chunk_indexed_byterray_t> m_hc_vec; // huge chunk indexed list
     QList<quint16> m_hc_missed; // list of missed package ids
@@ -173,6 +173,26 @@ public:
     Q_ENUM(AddressType)
 
     void setIdentifier(QString str, quint8 idx); // make this only changeable through public member -> deviceInfo
+    QString stateToString(int state)
+    {
+        switch (state)
+        {
+        case TYPE_AUD:
+            return "AUDIO";
+        case TYPE_GYR:
+            return "GYR";
+        case TYPE_ACC:
+            return "ACC";
+        case TYPE_PRS:
+            return "PRS";
+        case TYPE_MAG:
+            return "MAG";
+        case TYPE_LOG:
+            return "LOG";
+        default:
+            return "SOMEFILE";
+        }
+    }
 
 
 signals:

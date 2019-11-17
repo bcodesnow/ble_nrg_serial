@@ -34,7 +34,7 @@ Popup {
             parent.height / 3
             break;
         case MultiPopupType.type_catch:
-            parent.height / 2
+            parent.height * 3/5
             break;
         case MultiPopupType.type_adapter:
             parent.height * 3/5
@@ -95,6 +95,7 @@ Popup {
         id: progressPopup
         Rectangle {
             id: progressPopupRoot
+            anchors.fill: parent
             color: Qt.lighter( AppConstants.backgroundColor )
             opacity: maxOpacity
             radius: AppConstants.buttonRadius*2
@@ -238,66 +239,6 @@ Popup {
 
 
                             }
-
-                            //                            // fancy stuff
-                            //                            LinearGradient {
-                            //                                anchors.fill: bar
-                            //                                start: Qt.point(0, 0)
-                            //                                end: Qt.point(bar.width, 0)
-                            //                                source: bar
-                            //                                gradient: Gradient {
-                            //                                    GradientStop { id: gradleft; position: 0.4; color: AppConstants.infoColor }
-                            //                                    GradientStop { id: gradmid; position: 0.5; color: AppConstants.textColor }
-                            //                                    GradientStop { id: gradright; position: 0.6; color: AppConstants.infoColor }
-                            //                                }
-                            //                            }
-                            //                            LinearGradient {
-                            //                                anchors.fill: bar
-                            //                                start: Qt.point(0, 0)
-                            //                                end: Qt.point(0, bar.height)
-                            //                                source: bar
-                            //                                gradient: Gradient {
-                            //                                    GradientStop { position: 0.0; color: AppConstants.infoColor }
-                            //                                    GradientStop { position: 0.1; color: "transparent" }
-                            //                                    GradientStop { position: 0.9; color: "transparent" }
-                            //                                    GradientStop { position: 1.0; color: AppConstants.infoColor }
-                            //                                }
-                            //                            }
-
-                            //                            ParallelAnimation  {
-                            //                                id: gradMovement
-                            //                                property int timeStep: 700
-                            //                                SequentialAnimation  {
-                            //                                    id: gradMovementL
-                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0; to: 0.2; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.2; to: 0.6; duration: gradMovement.timeStep*2 }
-                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.6; to: 0.8; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.8; to: 0.6; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.6; to: 0.2; duration: gradMovement.timeStep*2 }
-                            //                                    PropertyAnimation { target: gradleft; property: "position"; from: 0.2; to: 0; duration: gradMovement.timeStep }
-                            //                                }
-                            //                                SequentialAnimation  {
-                            //                                    id: gradMovementM
-                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.1; to: 0.3; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.3; to: 0.7; duration: gradMovement.timeStep*2 }
-                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.7; to: 0.9; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.9; to: 0.7; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.7; to: 0.3; duration: gradMovement.timeStep*2 }
-                            //                                    PropertyAnimation { target: gradmid; property: "position"; from: 0.3; to: 0.1; duration: gradMovement.timeStep }
-                            //                                }
-                            //                                SequentialAnimation  {
-                            //                                    id: gradMovementR
-                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.2; to: 0.4; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.4; to: 0.8; duration: gradMovement.timeStep*2 }
-                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.8; to: 1; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 1; to: 0.8; duration: gradMovement.timeStep }
-                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.8; to: 0.4; duration: gradMovement.timeStep*2 }
-                            //                                    PropertyAnimation { target: gradright; property: "position"; from: 0.4; to: 0.2; duration: gradMovement.timeStep }
-                            //                                }
-                            //                                running: indeterminate
-                            //                                loops: Animation.Infinite
-                            //                            }
-
                         }
                     } //!ProgressBar
                 } // !Rectangle
@@ -311,6 +252,7 @@ Popup {
                 onWindowChanged: {
                     if (window)
                     {
+                        console.log("debug set size from window")
                         progressPopupRoot.width = window.width
                         progressPopupRoot.height = window.height
                         if (indeterminate)
@@ -325,12 +267,46 @@ Popup {
         id: catchPopup
         Rectangle {
             id: catchPopupRoot
-            color: Qt.lighter( AppConstants.backgroundColor, 1.2 )//Qt.darker("white")
+            color: Qt.lighter( AppConstants.backgroundColor )
             opacity: maxOpacity
             radius: AppConstants.buttonRadius*2
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 15
+                TextEdit {
+                    Layout.preferredHeight: AppConstants.smallFontSize*2
+                    Layout.preferredWidth: parent.width
+                    text: "How was it catched?"
+                    font.pixelSize: AppConstants.smallFontSize
+                    font.bold: true
+                    color: AppConstants.textColor
+                    horizontalAlignment: TextEdit.AlignHCenter
+                    verticalAlignment: TextEdit.AlignVCenter
+                    readOnly: true
+                }
+                ComboBox {
+                    id: catchModeCB2
+                    Layout.preferredHeight: AppConstants.smallFontSize*2
+                    Layout.preferredWidth: multiPopup.width * 2/5
+                    Layout.alignment: Qt.AlignCenter
+                    font.pixelSize: AppConstants.smallTinyFontSize
+                    model: fileHandler.catchModes
+                    currentIndex: multiPopup.currentModeIndexCatch
+                    onCurrentIndexChanged: {
+                        multiPopup.currentModeIndexCatch = currentIndex
+                    }
+
+                    delegate: ItemDelegate {
+                        contentItem: Text {
+                            text: modelData
+                            color: hovered?AppConstants.infoColor:AppConstants.textColor
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
+                            font.pixelSize: AppConstants.smallTinyFontSize
+                            rightPadding: catchModeCB2.width
+                        }
+                    }
+                }
                 TextEdit {
                     Layout.preferredHeight: AppConstants.smallFontSize*2
                     Layout.preferredWidth: parent.width
@@ -559,7 +535,12 @@ Popup {
                         Layout.preferredWidth: multiPopup.width * 2/5
                         Layout.alignment: Qt.AlignLeft
                         font.pixelSize: AppConstants.smallTinyFontSize
-                        model: ["Standing","Running","Jumping","One hand"]
+                        model: fileHandler.catchModes//["Mixed","Standing","Running","Jumping","One hand"]
+                        currentIndex: currentModeIndex
+                        onCurrentIndexChanged: {
+                            currentModeIndex = currentIndex
+                        }
+
                         delegate: ItemDelegate {
                             contentItem: Text {
                                 text: modelData
@@ -785,7 +766,7 @@ Popup {
                         catchController.setLoggingMedia(sdSwitch.checked,btSwitch.checked)
 
                         fileHandler.setCurrDir(usernameInput.text,googleSwitch.checked)
-                        fileHandler.setCurrCatchMode(catchModeCB.currentText)
+                        fileHandler.setCurrCatchMode(catchModeCB.currentIndex)
 
                         networkManager.enabled = googleSwitch.checked
 
@@ -1005,8 +986,8 @@ Popup {
                 source: "images/devil_full.png"
                 fillMode: Image.PreserveAspectFit
                 sourceSize.width: 300
-
                 y: maxY
+
                 property int maxX: parent.width - satanDevil.width
                 property int maxY: parent.height - satanDevil.height
                 property int currentX: 0
@@ -1147,7 +1128,7 @@ Popup {
                 TextEdit {
                     id: errorText
                     anchors.centerIn: parent
-                    font.pixelSize: AppConstants.mediumFontSize
+                    font.pixelSize: AppConstants.smallFontSize
                     color: AppConstants.textColor
                     text: parent.errorMessage
                 }

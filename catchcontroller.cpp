@@ -130,7 +130,7 @@ void CatchController::onConnUpdateOfDevXfinished(bool success, int id)
     }
     else
     {
-        remaining_c = 0; // TODO -> thia is stupid...
+        remaining_c = 0; // TODO -> this is stupid...
         qDebug()<<"CC -->  FAILED! onConnUpdateOfDevXfinished"<<success<<id; // show the devil if its till unknown to the audience..
         emit invokeQmlError("CC -->  FAILED! onConnUpdateOfDevXfinished"+QString(success)+QString(" ")+QString::number(id));
     }
@@ -224,13 +224,14 @@ void CatchController::onDownloadOfDeviceXfinished(bool success, int id)
 {
     if ( !success )
     {
-        qWarning()<<"CC-DL --> onDownloadOfDeviceXfinished"<<success<<id; // show the devil they must have a look at it...
-        emit invokeQmlError("CC-DL --> onDownloadOfDeviceXfinished"+QString(success)+QString(" ")+QString::number(id)); // todo pass a string here to show what faield..
+        qWarning()<<"CC-DL --> onDownloadOfDeviceXfinished"<<success<<id;
+        emit invokeQmlError("CC-DL --> onDownloadOfDeviceXfinished"+QString(success)+QString(" ")+QString::number(id));
 
     }
     // todo -> modify this to differentiate by dev type, wearable or not../add this property to deviceinfo in deviceinterface
     if ( (id + 1) < m_device_list->size() )
-    {   // this relies on it that we started with 0 and continue upwards..
+    {
+        // this relies on it that we started with 0 and continue upwards..
         id_in_dl = id + 1;
         this->startDownloadOfDevX( id_in_dl );
     }

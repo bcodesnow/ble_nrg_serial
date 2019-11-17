@@ -12,7 +12,6 @@
 #include <QPainter>
 #include <QVariant>
 
-
 class GraphPainter : public QQuickPaintedItem
 {
     Q_OBJECT
