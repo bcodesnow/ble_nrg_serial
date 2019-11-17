@@ -15,7 +15,7 @@ Item {
     {
         opacity = 1.0
         view.currentIndex = 0;
-       // if (QML_OS_LINUX) passwordInputPopup.visible = true
+        // if (QML_OS_LINUX) passwordInputPopup.visible = true
     }
 
     Keys.onReleased: {
@@ -36,9 +36,9 @@ Item {
         }
     }
 
-//    Component.onCompleted: {
-//        passwordInputPopup.visible = true
-//    }
+    //    Component.onCompleted: {
+    //        passwordInputPopup.visible = true
+    //    }
 
     // global popups
     MultiPopup {
@@ -60,6 +60,7 @@ Item {
         Component.onCompleted: {
             // todo: start popup animations at this point,
             //       not on loader windowChanged() signal
+            // global property doesnt work for the bg-flames ...
         }
 
         Connections {
@@ -67,7 +68,7 @@ Item {
             onInvokeQmlError: {
                 showTheDevilPopup.maintitle = error
                 showTheDevilPopup.visible = true
-                console.log("Woops...",error)                
+                console.log("Woops...",error)
             }
         }
     }

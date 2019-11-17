@@ -1,16 +1,9 @@
 import QtQuick 2.12
-import QtQuick.Controls 2.12 //as QQC2
-//import QtQuick.Controls 1.4 //as QQC1
+import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-
-//import QtQuick 2.9
-//import QtQuick.Controls 2.2
-//import QtQuick.Layouts 1.3
-
 import QtGraphicalEffects 1.0
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Extras 1.4
-
 import QtQuick.Dialogs 1.2
 
 import "."
@@ -1136,19 +1129,27 @@ Popup {
                 visible: false
                 anchors.centerIn: parent
                 width: parent.width-AppConstants.fieldHeight
-                height: AppConstants.fieldHeight * 2
+                height: AppConstants.fieldHeight * 3
                 clip: true
-                ColumnLayout {
-                    anchors.fill: parent
 
-                    Text {
-                        Layout.alignment: Text.AlignHCenter
-                        height: AppConstants.fieldHeight
-                        text: maintitle
-                        font.pixelSize: AppConstants.mediumFontSize
-                        color: AppConstants.textColor
+                property int maxCharsPerLine: 30
+                property string errorMessage:splitLines(maintitle)
+
+                function splitLines(err_mesg) {
+                    var result = ""
+                    for (var i=0; i<err_mesg.length; i+=satanMessage.maxCharsPerLine)
+                    {
+                        result = result + err_mesg.slice(i, i+satanMessage.maxCharsPerLine) + "\n"
                     }
+                    return result
+                }
 
+                TextEdit {
+                    id: errorText
+                    anchors.centerIn: parent
+                    font.pixelSize: AppConstants.mediumFontSize
+                    color: AppConstants.textColor
+                    text: parent.errorMessage
                 }
             }
 

@@ -162,6 +162,7 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
             if (((PaintData*)m_paintDataList.at(i))->getType() == type &&
                     ((PaintData*)m_paintDataList.at(i))->getSide() == ident.at(0).toLatin1())
             {
+                m_paintDataList.at(i)->deleteLater();
                 m_paintDataList.replace(i,new PaintData(type, ident.at(0).toLatin1(), dataVec));
                 emit paintDataListChanged();
             }

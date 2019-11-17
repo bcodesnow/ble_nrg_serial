@@ -53,7 +53,7 @@ AppPage {
         modal: false
         maintitle: "Wearable Data Download"
         subtitle: "Downloading sensor data ..."
-        indeterminate: true // false
+        indeterminate: true // false8
         currentProgress: 100 // 0
         Component.onCompleted: {
             // todo: start popup animations at this point,
