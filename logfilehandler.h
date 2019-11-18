@@ -62,8 +62,9 @@ public:
     explicit LogFileHandler(QObject *parent = nullptr);
 
     void sortArray(QByteArray *arr, uint16_t wp);
-    QVector<QVariant> bytesToInt16(QByteArray arr, uint16_t step = 1);
-    QVector<QVariant> bytesToFloat32(QByteArray arr, uint16_t step = 1);
+    QVector<QVariant> bytesToInt16(QByteArray *arr, uint16_t step = 1);
+    QVector<QVariant> bytesTo3AxisInt16(QByteArray *arr, uint16_t step = 1);
+    QVector<QVariant> bytesToFloat32(QByteArray *arr, uint16_t step = 1);
 
 
     QString getHomeLocation();

@@ -41,6 +41,27 @@ void DeviceController::setIdentifier(QString str, quint8 idx)
     m_ident_idx = idx;
 }
 
+QString DeviceController::stateToString(int state)
+{
+    switch (state)
+    {
+    case TYPE_AUD:
+        return "AUDIO";
+    case TYPE_GYR:
+        return "GYR";
+    case TYPE_ACC:
+        return "ACC";
+    case TYPE_PRS:
+        return "PRS";
+    case TYPE_MAG:
+        return "MAG";
+    case TYPE_LOG:
+        return "LOG";
+    default:
+        return "SOMEFILE";
+    }
+}
+
 void DeviceController::connectToPeripheral(QBluetoothDeviceInfo *device)
 {
     m_currentDevice = device;
@@ -176,6 +197,8 @@ void DeviceController::disconnectService()
     }
     emit connectionAlive(false, m_ident_idx);
 }
+
+void DeviceController::printThreadId() { qDebug()<<"Thread id of device:"<<QThread::currentThreadId(); }
 
 void DeviceController::onCentralConnectionUpdated(const QLowEnergyConnectionParameters &newParameters)
 {

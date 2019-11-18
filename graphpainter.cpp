@@ -18,6 +18,9 @@ void GraphPainter::paint(QPainter *painter)
     if (ampVector.isEmpty() || timeVector.isEmpty()) {
         return;
     }
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"GraphPainter::paint()"<<m_name<<"time: "<<timeVector.size()<<"amp: "<<ampVector.size();
+#endif
 
     // values needed for drawing
     bool paintAxisMid = false;
@@ -203,4 +206,15 @@ void GraphPainter::paint(QPainter *painter)
         // Draw!
         painter->drawPath(path);
     }
+}
+
+void GraphPainter::setName(QString name)
+{
+    m_name = name;
+    emit nameChanged();
+}
+
+QString GraphPainter::getName()
+{
+    return m_name;
 }

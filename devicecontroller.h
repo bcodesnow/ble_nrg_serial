@@ -3,7 +3,7 @@
 
 #define VERBOSITY_LEVEL 0
 #define PRINT_THROUGHPUT 1
-#define WAIT_X_MS_BETWEEN_CHUNKS 250
+#define WAIT_X_MS_BETWEEN_CHUNKS 10
 #define CHANGE_CONN_PARAM_OF_OTHER_DEVICES 0
 
 #include "logfilehandler.h"
@@ -173,26 +173,7 @@ public:
     Q_ENUM(AddressType)
 
     void setIdentifier(QString str, quint8 idx); // make this only changeable through public member -> deviceInfo
-    QString stateToString(int state)
-    {
-        switch (state)
-        {
-        case TYPE_AUD:
-            return "AUDIO";
-        case TYPE_GYR:
-            return "GYR";
-        case TYPE_ACC:
-            return "ACC";
-        case TYPE_PRS:
-            return "PRS";
-        case TYPE_MAG:
-            return "MAG";
-        case TYPE_LOG:
-            return "LOG";
-        default:
-            return "SOMEFILE";
-        }
-    }
+    QString stateToString(int state);
 
 
 signals:
@@ -234,7 +215,7 @@ public slots:
     void initializeDevice(QBluetoothHostInfo* hostInfo, QBluetoothDeviceInfo* deviceInfo);
     void disconnectService();
 
-    void printThreadId() { qDebug()<<"Thread id of device:"<<QThread::currentThreadId(); }
+    void printThreadId();
 
     void startConnModeChangeProcedure(quint8 mode);
     void startDownloadAllDataProcedure( quint8 catchSuccess );

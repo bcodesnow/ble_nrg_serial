@@ -42,46 +42,52 @@ void LogFileHandler::sortArray(QByteArray *arr, uint16_t wp)
     arr->append(tmpArray);
 }
 
-QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray arr, uint16_t step)
+QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray *arr, uint16_t step)
 {
     int16_t tmp_int;
-    QVector<QVariant> intvec;//(QVector<QVariant>(arr.size()/2));
-    intvec.reserve(arr.size()/2);
+    QVector<QVariant> intvec;
+    intvec.reserve(arr->size()/2);  // todo: adjust this
 
-    for (int i=0; i<arr.size(); i+=(2*step))
+    for (int i=0; i<arr->size(); i+=(2*step))
     {
-        tmp_int = static_cast<int16_t>(static_cast<int16_t>(arr[i+1]) << 8);
-        tmp_int |= static_cast<int16_t>( arr[i] ) & 0xFF;
+        tmp_int = static_cast<int16_t>(static_cast<int16_t>(arr->at(i+1)) << 8);
+        tmp_int |= static_cast<int16_t>( arr->at(i) ) & 0xFF;
         intvec.append(QVariant(tmp_int));
     }
     return intvec;
 }
 
-//QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray arr)
-//{
-//    int16_t tmp_int;
-//    QVector<QVariant> intvec;//(QVector<QVariant>(arr.size()/2));
-//    intvec.reserve(arr.size()/2);
+QVector<QVariant> LogFileHandler::bytesTo3AxisInt16(QByteArray *arr, uint16_t step)
+{
+    int16_t tmp_int;
+    QVector<QVariant> intvec;
+    intvec.reserve(arr->size()/2); // todo: adjust this
 
-//    for (int i=0; i<arr.size(); i+=2)
-//    {
-//        tmp_int = static_cast<int16_t>(static_cast<int16_t>(arr[i+1]) << 8);
-//        tmp_int |= static_cast<int16_t>( arr[i] ) & 0xFF;
-//        intvec.append(QVariant(tmp_int));
-//    }
-//    return intvec;
-//}
+    for (int i=0; i<arr->size(); i+=(6*step))
+    {
+        tmp_int = static_cast<int16_t>(static_cast<int16_t>(arr->at(i+1)) << 8);
+        tmp_int |= static_cast<int16_t>( arr->at(i) ) & 0xFF;
+        intvec.append(QVariant(tmp_int));
+        tmp_int = static_cast<int16_t>(static_cast<int16_t>(arr->at(i+3)) << 8);
+        tmp_int |= static_cast<int16_t>( arr->at(i+2) ) & 0xFF;
+        intvec.append(QVariant(tmp_int));
+        tmp_int = static_cast<int16_t>(static_cast<int16_t>(arr->at(i+5)) << 8);
+        tmp_int |= static_cast<int16_t>( arr->at(i+4) ) & 0xFF;
+        intvec.append(QVariant(tmp_int));
+    }
+    return intvec;
+}
 
-QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray arr, uint16_t step)
+QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray *arr, uint16_t step)
 {
     float tmp_float;
     QByteArray tmp_arr;
     QVector<QVariant> floatvec;//(QVector<QVariant>(arr.size()/4));
-    floatvec.reserve(arr.size()/4);
+    floatvec.reserve(arr->size()/4);
 
-    for (int i=0;i<arr.size();i=i+4)
+    for (int i=0;i<arr->size();i+=(4*step))
     {
-        tmp_arr = arr.mid(i,4);
+        tmp_arr = arr->mid(i,4);
         QDataStream stream(tmp_arr);
         stream.setFloatingPointPrecision(QDataStream::SinglePrecision); // for float (4-bytes / 32-bits)
         stream.setByteOrder(QDataStream::LittleEndian);
@@ -93,56 +99,48 @@ QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray arr, uint16_t step)
 
 void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 type, quint16 wp)
 {
-
-#if (PLOT_DATA == 1)
 #if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"writeTypeToLogFil"<<ident<<type<<wp<<data->size();
-#endif
-#else
-#if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"writeTypeToLogFil disabled";
-#endif
-    return;
+    QElapsedTimer debug_timer;
+    debug_timer.start();
 #endif
 
-    QElapsedTimer filetimer;
-    filetimer.start();
-
-    QVector<QVariant> dataVec(QVector<QVariant>(0));
     // get target location
     QString tmpLocation = m_fileLocation+m_currDir+"/";
     qDebug()<<"File Path: "<<tmpLocation;
     QString idx_str = tr("%1_%2_").arg(m_currFileIndex).arg(ident);
-    //  tmpLocation.append( idx_str );
 
     // sort by writepointer
     if (type != TYPE_LOG && !data->isEmpty())
         sortArray(data, wp);
 
 #if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"after sorting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+    qDebug()<<"after sorting:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
+
+#if (PLOT_DATA == 1)
+    QVector<QVariant> dataVec(QVector<QVariant>(0));
     // Byte conversion
     switch (type)
     {
     case TYPE_AUD:
-        dataVec = bytesToInt16(*data,2);
+        dataVec = bytesToInt16(data,50);
         idx_str.append( QString("AUDIO") );
         break;
     case TYPE_GYR:
-        dataVec = bytesToInt16(*data);
+        dataVec = bytesTo3AxisInt16(data,20);
         idx_str.append( QString("GYR") );
         break;
     case TYPE_ACC:
-        dataVec = bytesToInt16(*data);
+        dataVec = bytesTo3AxisInt16(data,20);
         idx_str.append( QString("ACC") );
         break;
     case TYPE_PRS:
-        dataVec = bytesToFloat32(*data);
+        dataVec = bytesToFloat32(data);
         idx_str.append( QString("PRS") );
         break;
     case TYPE_MAG:
-        dataVec = bytesToInt16(*data);
+        dataVec = bytesToInt16(data,2);
         idx_str.append( QString("MAG") );
         break;
     case TYPE_LOG:
@@ -152,8 +150,9 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
         tmpLocation.append( QString("SOMEFILE") );
     }
     tmpLocation.append(idx_str);
+
 #if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"after conversion:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+    qDebug()<<"after conversion:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
     if (type != TYPE_LOG && !dataVec.isEmpty())
     {
@@ -169,8 +168,9 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
         }
     }
 #if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"after painting:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+    qDebug()<<"after painting:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
+#endif // (PLOT_DATA == 1)
 
     // save as text
     QFile file(tmpLocation);
@@ -182,11 +182,7 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     invokeGoogleUpload(idx_str,*data);
 
 #if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"after saving:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-#endif
-
-#if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"writeTypeToLogFil took:"<<QString::number(static_cast<double>(filetimer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
+    qDebug()<<"writeTypeToLogFil took:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
 }
 

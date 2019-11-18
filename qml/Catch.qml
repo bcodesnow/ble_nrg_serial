@@ -13,7 +13,7 @@ AppPage {
     property string devicesMainState : catchController.devicesMainState // why for the bloody hell is property alias not working for this case?! -> It can only refer to an object, or the property of an object, that is within the scope of the type within which the alias is declared.
     property bool devicesConnected : catchController.devicesConnected
     errorMessage: devicesConnected ? (devicesMainState == "Error" ? "Error" : "") : "No devices connected."
-    infoMessage: devicesMainState != "Error" ? devicesMainState : ""
+    infoMessage: devicesMainState != "Error" ? "Index: "+fileHandler.fileIndex+"\tState: "+devicesMainState : ""
 
     Connections {
         target: catchController

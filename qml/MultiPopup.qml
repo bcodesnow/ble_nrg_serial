@@ -216,7 +216,7 @@ Popup {
                                 radius: progressBar.rad
                                 color: AppConstants.infoColor
                                 anchors.verticalCenter: bar.verticalCenter
-                                x: 0//bar.width
+                                x: -width
 
                                 LinearGradient {
                                     anchors.fill: animatedRect
@@ -234,7 +234,7 @@ Popup {
                                     id: progressAnimation
                                     running: progressPopupRoot.animationsActive
                                     loops: Animation.Infinite
-                                    PropertyAnimation { target: animatedRect; property: "x"; from: 0; to: bar.width; duration: 5000 }
+                                    PropertyAnimation { target: animatedRect; property: "x"; from: -animatedRect.width; to: bar.width; duration: 5000 }
                                 }
 
 
