@@ -476,7 +476,10 @@ void DeviceController::writeReceivedChunkToFile (uint16_t tmp_write_pointer, uin
 {
     if (m_last_hc_payload_ptr != nullptr)
     {
+#if ( VERBOSITY_LEVEL >= 3)
+        qDebug()<<"Calling Delete on that old array. m_last_hc_payload_ptr->~QByteArray()";
         m_last_hc_payload_ptr->~QByteArray();
+#endif
     }
     m_last_hc_payload_ptr = new QByteArray();
 
@@ -547,7 +550,7 @@ bool DeviceController::bleUartSendCmdWithResp(const QByteArray &value, quint16 t
 
     if (m_cmdTimer->isActive())
     {
-        qWarning()<<"!!! bleUartSendCmdWithResp() -- Resend needed!"<<cmd_resp_struct.last_cmd;
+        qWarning()<<"!!! bleUartSendCmdWithResp() -- CMD Resend needed!"<<cmd_resp_struct.last_cmd;
         m_bleUartSendCmdWithRespBacklogRetries = 3;
         m_bleUartSendCmdWithRespBacklog.append( new QByteArray (value) );
         m_bleUartSendCmdWithRespBacklogTimer->start();
@@ -629,7 +632,6 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
     const quint8 *data = reinterpret_cast<const quint8 *>(value.constData());
     static const QBluetoothUuid ble_uart_receive = QBluetoothUuid(BLE_UART_TX_CHAR); // TX CHAR OF THE SERVER
 
-    static uint64_t rxPoolPkgCount = 0;
     uint16_t tidx;
     huge_chunk_indexed_byterray_t hc_tmp_iba_struct; // todo -> there are some very bad namings..
 
@@ -648,53 +650,51 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             qDebug()<<"CMD OK Received..!"<<m_ident_idx;
 #endif
             break;
+            //
         case TRIGGERED:
-
             //inform the other device
             emit requestDispatchToOtherDevices(value, m_ident_idx);
             //ble_uart_send_cmd_ok(); // Should we also ACK this to the device?!
             emit triggeredArrived(value); // TODO this is handled by the deviceinterface
             this->bleUartSendCmdOk();
-
             break;
-
-            //        case DATA_SAVED_TO_SD:
-
-            //            // todo!!!
-            //            // confirm if it was a catch or drop -> we should give it to a class "above" -> catch controller
-            //            qDebug()<<"Writing data to SD finished, waiting for confimation!";
-            //            // send CMD_WRITE_CATCH_SUCC
-            //            //setInfo("Waiting for Confirmation!");
-
-            //            break;
-
+            //
         case ALIVE:
             emit aliveArrived(value);
             break;
+            //
         case REPLY_START_HUGE_CHUNK:
             huge_chunk_start_t* hc_transfer_struct_ptr;
             hc_transfer_struct_ptr = (huge_chunk_start_t*) &data[1];
             hc_transfer_struct = *hc_transfer_struct_ptr;
             emit startHugeChunkArrived();
             break;
+            //
         case REPLY_NO_CHUNK_AVAILABLE:
             emit noChunkAvailableArrived();
             break;
+            //
         case CMD_SENSORDATA_AVAILABLE:
             qDebug()<<"Sensor Data avialable for download!";
             emit sensorDataAvailableArrived(m_ident_idx);
             bleUartSendCmdOk(); //todo, the catch controller also sends ok?!
             break;
+            //
         case TS_MSG:
             emit timeSyncMessageArrived(value);
             break;
+            //
         case CMD_START_HUGE_CHUNK_ACK_PROC:
             emit startHugeChunkAckProcArrived(value);
             break;
+            //
         case REPLY_MISSED_PACKAGE:
-            qDebug()<<"missed arrived, calling slot";
+#if (VERBOSITY_LEVEL >= 2)
+            qDebug()<<"Missed Package arrived, calling slot..";
+#endif
             emit replyMissingPackageArrived(value);
             break;
+            //
         case DIAG_INFO:
             if (data[1] == DIAG_1_TYPE_LENGTH_TEST)
             {
@@ -705,6 +705,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
                 qDebug()<<"Unimplemented diag msg";
             }
             break;
+            //
         case CONN_PARAM_INFO:
             // i should have implemented all packages this way..
             conn_param_info_t* cp_ptr;
@@ -712,8 +713,6 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             m_dev_conn_param_info = *cp_ptr;
             bleUartSendCmdOk();
             emit connParamInfoArrived();
-            //            m_cmdTimer->stop();
-
             break;
             //
         default:
@@ -721,7 +720,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             break; //technically not needed
         }
 
-        // todo if cmd id -> send ack.. this could save us from some headache
+        // todo if cmd id -> >= <= send ack.. this could save us from some headache
     }
 
     else //(c.uuid() != QBluetoothUuid(BLE_UART_TX_CHAR)) -> One of the TX_POOL Characteristics
@@ -772,7 +771,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
             // We might show the devil
             qWarning()<<"HC -> Received idx too high, would leak out of the vector and crash the system!";
         }
-        if (tidx > hc_helper_struct.last_idx++)
+        if (tidx != hc_helper_struct.last_idx++)
         {
             qDebug()<<"HC -> Skipped !!! "<<hc_helper_struct.last_idx+1;
             hc_helper_struct.skipped = true;
@@ -813,14 +812,16 @@ void DeviceController::sendRequestMissingPackage()
 
 void DeviceController::onReplyMissingPackageArrived(QByteArray value)
 {
-    qDebug()<<"Missed Package arrived";
+#if (VERBOSITY_LEVEL >= 2)
+    qDebug()<<"Missed Package arrived with id: "<<hc_helper_struct.missed_in_request;
     m_cmdTimer->stop();
+#endif
 
     huge_chunk_indexed_byterray_t tmp;
     tmp.barr.append( value.right(value.size() - 1) );
     tmp.received = 1;
     m_hc_vec.replace( hc_helper_struct.missed_in_request , tmp );
-    qDebug()<<"Missed in Request"<<hc_helper_struct.missed_in_request;
+
 
     if (m_hc_missed.size())
     {
@@ -875,7 +876,7 @@ void DeviceController::onStartHugeChunkAckProcArrived(QByteArray value)
 #if (VERBOSITY_LEVEL >= 3)
     qDebug()<<"onStartHugeChunkAckProcArrived : started!";
 #endif
-    if ( hc_helper_struct.skipped | !hc_helper_struct.last_received )
+    if ( hc_helper_struct.skipped || !hc_helper_struct.last_received )
     {
 #if (VERBOSITY_LEVEL >= 3)
         qDebug()<<"onStartHugeChunkAckProcArrived : arrived_package_count != incoming_package_count!";
@@ -993,7 +994,6 @@ void DeviceController::onBleUartSendCmdWithRespTimerExpired()
     {
         QByteArray tba;
         tba.append(*m_bleUartSendCmdWithRespBacklog.last());
-        qDebug()<<"COPIED:"<<tba;
         if ( bleUartSendCmdWithResp(tba) )
         {
             qWarning()<<"Resend Failed!";
@@ -1009,12 +1009,8 @@ void DeviceController::onBleUartSendCmdWithRespTimerExpired()
         }
         else
         {
-            qDebug()<<"Successfully resent!!";
-            qDebug()<<"BARR SIZE BEFOR"<<                m_bleUartSendCmdWithRespBacklog.size();
-
             m_bleUartSendCmdWithRespBacklog.last()->~QByteArray();
             m_bleUartSendCmdWithRespBacklog.pop_back();
-            qDebug()<<"BARR SIZE AFTER"<<                m_bleUartSendCmdWithRespBacklog.size();
 
         }
 

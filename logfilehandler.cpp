@@ -38,9 +38,10 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
 
 void LogFileHandler::sortArray(QByteArray *arr, uint16_t wp)
 {
-    QByteArray tmpArray = arr->left(wp);
-    arr->remove(0,wp);
-    arr->append(tmpArray);
+// THERE IS THE SECOND DIRTY BUG!! the write pointer means an index of the array of struct! ie: { u16 u16 u16 }[0] .. { u16 u16 u16 }[1] .. { u16 u16 u16 }[0] ..
+//    QByteArray tmpArray = arr->left(wp);
+//    arr->remove(0,wp);
+//    arr->append(tmpArray);
 }
 
 QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray *arr, uint16_t step)
