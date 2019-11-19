@@ -33,6 +33,7 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
     m_paintDataList.append(new PaintData(TYPE_MAG, QString("R").at(0).toLatin1(), QVector<QVariant>(0)));
     m_paintDataList.append(new PaintData(TYPE_PRS, QString("L").at(0).toLatin1(), QVector<QVariant>(0)));
     m_paintDataList.append(new PaintData(TYPE_PRS, QString("R").at(0).toLatin1(), QVector<QVariant>(0)));
+
 }
 
 void LogFileHandler::sortArray(QByteArray *arr, uint16_t wp)
@@ -252,6 +253,7 @@ void LogFileHandler::finishLogFile()
 void LogFileHandler::incrementFileIndex()
 {
     m_currFileIndex++;
+    emit fileIndexChanged();
 }
 
 QString LogFileHandler::getHomeLocation()

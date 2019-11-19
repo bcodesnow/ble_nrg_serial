@@ -80,6 +80,7 @@ public slots:
 
     void setCurrDir (QString username, bool g_enabled); //TODO Dominique
     void setCurrCatchMode (int mode);
+
 };
 
 #endif // LOGFILEHANDLER_H

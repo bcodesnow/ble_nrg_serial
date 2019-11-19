@@ -21,7 +21,7 @@ class PaintData : public QObject
     Q_PROPERTY(char paintSide READ getSide NOTIFY sideChanged)
     //
 public:
-    PaintData(QObject *parent);
+    PaintData();
     ~PaintData();
     PaintData(uint8_t type, char side, QVector<QVariant> data);
 

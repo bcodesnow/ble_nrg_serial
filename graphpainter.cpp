@@ -18,7 +18,7 @@ void GraphPainter::paint(QPainter *painter)
     if (ampVector.isEmpty() || timeVector.isEmpty()) {
         return;
     }
-#if (VERBOSITY_LEVEL >= 1)
+#if (VERBOSITY_LEVEL >= 2)
     qDebug()<<"GraphPainter::paint()"<<m_name<<"time: "<<timeVector.size()<<"amp: "<<ampVector.size();
 #endif
 

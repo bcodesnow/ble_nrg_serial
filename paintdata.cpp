@@ -5,9 +5,8 @@
 
 //}
 
-PaintData::PaintData(QObject *parent)
+PaintData::PaintData()
 {
-    Q_UNUSED(parent)
     m_name = "undefined";
 }
 
