@@ -107,41 +107,38 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     debug_timer.start();
 #endif
 
+#if (PLOT_DATA == 1)
+    QVector<QVariant> dataVec(QVector<QVariant>(0));
     // get target location
     QString tmpLocation = m_fileLocation+m_currDir+"/";
     qDebug()<<"File Path: "<<tmpLocation;
     QString idx_str = tr("%1_%2_").arg(m_currFileIndex).arg(ident);
 
-    // sort by writepointer
-    if (type != TYPE_LOG && !data->isEmpty())
-        sortArray(data, wp);
-
-#if (VERBOSITY_LEVEL >= 1)
-    qDebug()<<"after sorting:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-#endif
-
-#if (PLOT_DATA == 1)
-    QVector<QVariant> dataVec(QVector<QVariant>(0));
     // Byte conversion
     switch (type)
     {
     case TYPE_AUD:
+        sortArray(data, wp*2);
         dataVec = bytesToInt16(data,50);
         idx_str.append( QString("AUDIO") );
         break;
     case TYPE_GYR:
+        sortArray(data, wp*2*3);
         dataVec = bytesTo3AxisInt16(data,20);
         idx_str.append( QString("GYR") );
         break;
     case TYPE_ACC:
+        sortArray(data, wp*2*3);
         dataVec = bytesTo3AxisInt16(data,20);
         idx_str.append( QString("ACC") );
         break;
     case TYPE_PRS:
+        sortArray(data, wp*4);
         dataVec = bytesToFloat32(data);
         idx_str.append( QString("PRS") );
         break;
     case TYPE_MAG:
+        sortArray(data, wp*2*3);
         dataVec = bytesToInt16(data,2);
         idx_str.append( QString("MAG") );
         break;
@@ -156,6 +153,7 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
 #if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"after conversion:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
+
     if (type != TYPE_LOG && !dataVec.isEmpty())
     {
         for (int i=0;i<m_paintDataList.size();i++)

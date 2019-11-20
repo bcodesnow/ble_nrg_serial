@@ -1,10 +1,11 @@
 #ifndef DEVICEHANDLER_H
 #define DEVICEHANDLER_H
 
-#define VERBOSITY_LEVEL 5
-#define PRINT_THROUGHPUT 1
-#define WAIT_X_MS_BETWEEN_CHUNKS 10
-#define CHANGE_CONN_PARAM_OF_OTHER_DEVICES 0
+#define VERBOSITY_LEVEL                     5
+#define PRINT_THROUGHPUT                    1
+#define WAIT_X_MS_BETWEEN_CHUNKS            10
+#define CHANGE_CONN_PARAM_OF_OTHER_DEVICES  0
+#define LOG_TRANSF_DATA_TO_FIL              0
 
 #include "logfilehandler.h"
 #include "timesynchandler.h"
@@ -20,15 +21,16 @@
 
 #define HUGE_CHUNK_IN_PROCESS       (1u<<1u)
 #define CONN_PARAMS_IN_CHANGE       (1u<<3u)
-#define CONN_MODE_CHANGE_DELAY 2000
+#define CONN_MODE_CHANGE_DELAY      2000
 
-#define NEXT_REQ_SEND_SENS_DATA  1u
-#define NEXT_REQ_SEND_START      2u
+#define NEXT_REQ_SEND_SENS_DATA     1u
+#define NEXT_REQ_SEND_START         2u
 
 class DeviceInfo;
 class TimeSyncHandler;
 
 extern QString stateToString(uint16_t tmp);
+extern QString typeToString(int tmp);
 extern QString intToHexDebug(int x);
 
 struct huge_chunk_indexed_byterray_t
@@ -58,7 +60,6 @@ struct cmd_resp_struct_t
 class DeviceController : public QObject
 {
     Q_OBJECT
-    //Q_PROPERTY(bool writeValid READ getWriteValid NOTIFY writeValidChanged)
 
 private:
     const QString BLE_UART_RX_CHAR = "{d773f2e2-b19e-11e2-9e96-0800200c9a66}";
@@ -162,6 +163,8 @@ private:
     void hugeChunkDownloadFinished();
 
     friend  QString stateToString(uint16_t tmp);
+    friend  QString typeToString(int tmp);
+
 
 public:
     DeviceController(int idx, QString identifier, QObject *parent = nullptr);
@@ -173,7 +176,6 @@ public:
     Q_ENUM(AddressType)
 
     void setIdentifier(QString str, quint8 idx); // make this only changeable through public member -> deviceInfo
-    QString stateToString(int state);
 
 
 signals:

@@ -41,27 +41,6 @@ void DeviceController::setIdentifier(QString str, quint8 idx)
     m_ident_idx = idx;
 }
 
-QString DeviceController::stateToString(int state)
-{
-    switch (state)
-    {
-    case TYPE_AUD:
-        return "AUDIO";
-    case TYPE_GYR:
-        return "GYR";
-    case TYPE_ACC:
-        return "ACC";
-    case TYPE_PRS:
-        return "PRS";
-    case TYPE_MAG:
-        return "MAG";
-    case TYPE_LOG:
-        return "LOG";
-    default:
-        return "SOMEFILE";
-    }
-}
-
 void DeviceController::connectToPeripheral(QBluetoothDeviceInfo *device)
 {
     m_currentDevice = device;
@@ -859,9 +838,11 @@ void DeviceController::onStartHugeChunkArrived()
     hc_helper_struct.missed_pkg_cnt_to_request = 0;
     hc_helper_struct.last_received = false;
 
-    emit invokeAddToLogFile(m_ident_str, QString("Type"), stateToString(hc_transfer_struct.incoming_type));
+    emit invokeAddToLogFile(m_ident_str, QString("Type"), typeToString(hc_transfer_struct.incoming_type));
+#if (LOG_TRANSF_DATA_TO_FIL == 1)
     emit invokeAddToLogFile(m_ident_str, QString("ByteCountToReceive"), QString::number(hc_transfer_struct.incoming_byte_count));
-  //  emit invokeAddToLogFile(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
+    emit invokeAddToLogFile(m_ident_str, QString("WritePointer"), QString::number(hc_transfer_struct.write_pointer));
+#endif
 
     sendStartOkHugeChunk();
 

@@ -334,10 +334,11 @@ void CatchController::onMainStateOfDevXChanged(quint16 state, int idx)
     }
     if ( !notTheSame )
     {
-        // emit mainStateOfAllDevicesChanged(stateToString(state));
         m_devicesMainState = stateToString(state);
         emit mainStateOfAllDevicesChanged();
+#if (VERBOSITY_LEVEL >= 1)
         qDebug()<<"MainStateOfAllDevicesChanged";
+#endif
     }
 }
 

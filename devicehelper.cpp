@@ -1,64 +1,6 @@
 #include "devicecontroller.h"
 #include "mci_catch_detection.h"
 
-// TODO: this is critical to add ts() message again -> this starts time sync.. we should also set the connections prior to syncing
-//void DeviceController::sendCMDStringFromTerminal(const QString &str)
-//{
-    //    if (!connectionAlive())
-    //    {
-    //        qCritical()<<"Shit is fkd up";
-    //        return;
-    //    }
-
-    //    QByteArray tba;
-    //    if ( str == QString("get_state()"))
-    //    {
-    //        tba.resize(1);
-    //        tba[0] = GET_STATE;
-    //        qInfo()<<"Fetching State";
-    //    }
-    //    else if ( str == QString("start()"))
-    //    {
-    //        tba.resize(1);
-    //        tba[0] = START;
-    //        qInfo()<<"Sending Start";
-    //    }
-    //    else if ( str == QString("stop()"))
-    //    {
-    //        tba.resize(1);
-    //        tba[0] = STOP;
-    //        qInfo()<<"Sending Stop";
-    //    }
-
-    ////    else if (str == "confirm(1)" )
-    ////    {
-    ////        tba.resize(2);
-    ////        tba[0] = WRITE_CATCH_SUCCESS;
-    ////        tba[1] = 1;
-    ////        qInfo()<<"Sending Catch Configrm";
-    ////    }
-
-    ////    else if (str == "confirm(0)" )
-    ////    {
-    ////        tba.resize(0);
-    ////        tba[0] = WRITE_CATCH_SUCCESS;
-    ////        tba[1] = 0;
-    ////        qInfo()<<"Sending Catch Confrim";
-    ////    }
-    //    else if (str == "ts()" )
-    //    {
-    //        m_refToTimeStampler->start_time_sync(m_ident_idx);
-    //        qInfo()<<"TimeSync in Test..";
-    //    }
-    //    else
-    //    {
-    //        qCritical()<<"Unknown Command!";
-    //    }
-
-    //    if (tba.size())
-    //        m_service->writeCharacteristic(m_writeCharacteristic, tba, QLowEnergyService::WriteWithResponse); /*  m_writeMode */
-//}
-
 QString stateToString(uint16_t tmp)
 {
     switch (tmp)
@@ -85,6 +27,30 @@ QString stateToString(uint16_t tmp)
         return QString("Unknown");
     }
 }
+
+QString typeToString (int type)
+{
+    {
+        switch (type)
+        {
+        case TYPE_AUD:
+            return "AUDIO";
+        case TYPE_GYR:
+            return "GYR";
+        case TYPE_ACC:
+            return "ACC";
+        case TYPE_PRS:
+            return "PRS";
+        case TYPE_MAG:
+            return "MAG";
+        case TYPE_LOG:
+            return "LOG";
+        default:
+            return "SOMEFILE";
+        }
+    }
+}
+
 
 QString intToHexDebug(int x)
 {

@@ -28,7 +28,7 @@ class LogFileHandler : public QObject
     Q_PROPERTY(quint64 fileIndex MEMBER m_currFileIndex NOTIFY fileIndexChanged)
     Q_PROPERTY(QString lastPath MEMBER m_lastPath NOTIFY lastPathChanged)
     Q_PROPERTY(QVariant paintDataList READ getPaintDataList NOTIFY paintDataListChanged)
-    Q_PROPERTY(QStringList catchModes MEMBER m_catchModeList NOTIFY catchModeListChanged)
+    Q_PROPERTY(QStringList currentModeIndexCatch MEMBER m_catchModeList NOTIFY catchModeListChanged) // Dominik TODO: as its name also says.. it should be in the catchController..
 
 private:
     quint64 m_currFileIndex;

@@ -1,12 +1,13 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Controls 2.12 as QQC
 import QtQuick.Layouts 1.12
 import QtGraphicalEffects 1.0
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Extras 1.4
 import QtQuick.Dialogs 1.2
-
 import "."
+
 Popup {
     id: multiPopup
     anchors.centerIn: parent
@@ -57,7 +58,7 @@ Popup {
     property bool indeterminate: false
     property double maxOpacity: 0.90
 
-    signal popupConfirmed(int index)
+    signal popupConfirmed(int arg1, int arg2)
 
     enter: Transition {
         NumberAnimation { property: "opacity"; from: 0.0; to: maxOpacity; duration: 500}
@@ -272,7 +273,7 @@ Popup {
             radius: AppConstants.buttonRadius*2
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 15
+                anchors.margins: 10
                 TextEdit {
                     Layout.preferredHeight: AppConstants.smallFontSize*2
                     Layout.preferredWidth: parent.width
@@ -284,29 +285,43 @@ Popup {
                     verticalAlignment: TextEdit.AlignVCenter
                     readOnly: true
                 }
-                ComboBox {
-                    id: catchModeCB2
-                    Layout.preferredHeight: AppConstants.smallFontSize*2
-                    Layout.preferredWidth: multiPopup.width * 2/5
+                //
+                QQC.Tumbler {
+                    id: catchModeTumbler
+                    Layout.preferredHeight: multiPopup.height * 1/6
+                    Layout.preferredWidth: multiPopup.width * 3/4
                     Layout.alignment: Qt.AlignCenter
-                    font.pixelSize: AppConstants.smallTinyFontSize
-                    model: fileHandler.catchModes
-                    currentIndex: multiPopup.currentModeIndexCatch
-                    onCurrentIndexChanged: {
-                        multiPopup.currentModeIndexCatch = currentIndex
+                    visibleItemCount: 3
+                    model: fileHandler.currentModeIndexCatch
+
+                    delegate: Text {
+                            text: modelData
+                            opacity: 1.0 - Math.abs(Tumbler.displacement) / (Tumbler.tumbler.visibleItemCount / 2)
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: AppConstants.smallFontSize
+                            color: AppConstants.textColor
+                        }
+
+
+                    Rectangle {
+                        anchors.horizontalCenter: catchModeTumbler.horizontalCenter
+                        y: catchModeTumbler.height * 0.35
+                        width: 60
+                        height: 1
+                        color: AppConstants.infoColor
                     }
 
-                    delegate: ItemDelegate {
-                        contentItem: Text {
-                            text: modelData
-                            color: hovered?AppConstants.infoColor:AppConstants.textColor
-                            verticalAlignment: Text.AlignVCenter
-                            horizontalAlignment: Text.AlignLeft
-                            font.pixelSize: AppConstants.smallTinyFontSize
-                            rightPadding: catchModeCB2.width
-                        }
+                    Rectangle {
+                        anchors.horizontalCenter: catchModeTumbler.horizontalCenter
+                        y: catchModeTumbler.height * 0.65
+                        width: 60
+                        height: 1
+                        color: AppConstants.infoColor
                     }
+
                 }
+                //
                 TextEdit {
                     Layout.preferredHeight: AppConstants.smallFontSize*2
                     Layout.preferredWidth: parent.width
@@ -327,7 +342,7 @@ Popup {
                     border.color: AppConstants.infoColor
                     opacity: 0.9
                     onClicked: {
-                        popupConfirmed(1)
+                        popupConfirmed(1, catchModeTumbler.currentIndex)
                     }
                     Text {
                         anchors.centerIn: parent
@@ -348,7 +363,8 @@ Popup {
                     opacity: 0.9
                     onClicked:
                     {
-                        popupConfirmed(2)
+
+                        popupConfirmed(2, catchModeTumbler.currentIndex)
                     }
                     Text {
                         anchors.centerIn: parent
@@ -369,7 +385,7 @@ Popup {
                     opacity: 0.9
                     onClicked:
                     {
-                        popupConfirmed(3)
+                        popupConfirmed(3, catchModeTumbler.currentIndex)
                         multiPopup.visible = false
                     }
                     Text {
@@ -514,42 +530,6 @@ Popup {
                             focus: true
                             leftPadding: 5
                             rightPadding: 5
-                        }
-                    }
-                } // !RowLayout
-                RowLayout {
-                    id: catchModeSetting
-                    Text {
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight
-                        Layout.preferredWidth: multiPopup.width/2
-                        text: "Catch mode:"
-                        font.pixelSize: AppConstants.smallFontSize
-                        color: AppConstants.textColor
-                        verticalAlignment: TextEdit.AlignVCenter
-                        horizontalAlignment: TextEdit.AlignRight
-                        rightPadding: sessionPopupRoot.textPadding
-                    }
-                    ComboBox {
-                        id: catchModeCB
-                        Layout.preferredHeight: sessionPopupRoot.rowHeight
-                        Layout.preferredWidth: multiPopup.width * 2/5
-                        Layout.alignment: Qt.AlignLeft
-                        font.pixelSize: AppConstants.smallTinyFontSize
-                        model: fileHandler.catchModes//["Mixed","Standing","Running","Jumping","One hand"]
-                        currentIndex: currentModeIndex
-                        onCurrentIndexChanged: {
-                            currentModeIndex = currentIndex
-                        }
-
-                        delegate: ItemDelegate {
-                            contentItem: Text {
-                                text: modelData
-                                color: hovered?AppConstants.infoColor:AppConstants.textColor
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignLeft
-                                font.pixelSize: AppConstants.smallTinyFontSize
-                                rightPadding: catchModeCB.width
-                            }
                         }
                     }
                 } // !RowLayout
@@ -766,8 +746,6 @@ Popup {
                         catchController.setLoggingMedia(sdSwitch.checked,btSwitch.checked)
 
                         fileHandler.setCurrDir(usernameInput.text,googleSwitch.checked)
-                        fileHandler.setCurrCatchMode(catchModeCB.currentIndex)
-
                         networkManager.enabled = googleSwitch.checked
 
                         AppConstants.sessionPopupFinished = true;

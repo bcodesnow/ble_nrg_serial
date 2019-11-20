@@ -30,24 +30,16 @@ AppPage {
     MultiPopup {
         id: catchConfirmPopup
         currentPopupType: MultiPopupType.type_catch
-        property int currentModeIndexCatch//: sessionSettingsPopup.currentModeIndex
-        Connections {
-            target: sessionSettingsPopup
-            onCurrentModeIndexChanged: {
-                catchConfirmPopup.currentModeIndexCatch = sessionSettingsPopup.currentModeIndex
-            }
-        }
-        onCurrentModeIndexCatchChanged: {
-             fileHandler.setCurrCatchMode(currentModeIndexCatch)
-        }
         onPopupConfirmed: {
-            catchController.onCatchSuccessConfirmed( index )
-            catchConfirmPopup.visible = false
+            catchController.onCatchSuccessConfirmed( arg1 );
+            fileHandler.setCurrCatchMode( arg2 );
+            catchConfirmPopup.visible = false;
             if (catchController.bleUplEnabled && (index != 3 ))
-                downloadProgressPopup.visible = true
+                downloadProgressPopup.visible = true;
         }
         onVisibleChanged: {
-            if (visible) view.setCurrentIndex(1)
+            if (visible)
+                view.setCurrentIndex(1);
         }
     }
     MultiPopup {
