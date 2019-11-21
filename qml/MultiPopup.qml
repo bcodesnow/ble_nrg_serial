@@ -35,13 +35,13 @@ Popup {
             parent.height / 3
             break;
         case MultiPopupType.type_catch:
-            parent.height * 3/5
+            parent.height * 7/10
             break;
         case MultiPopupType.type_adapter:
             parent.height * 3/5
             break;
         case MultiPopupType.type_session:
-            parent.height * 4/5
+            parent.height * 3/5
             break;
         case MultiPopupType.type_password:
             parent.height / 3
@@ -273,10 +273,11 @@ Popup {
             radius: AppConstants.buttonRadius*2
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: 30
                 TextEdit {
-                    Layout.preferredHeight: AppConstants.smallFontSize*2
+                    Layout.preferredHeight: AppConstants.smallFontSize
                     Layout.preferredWidth: parent.width
+                    Layout.alignment: Qt.AlignCenter
                     text: "How was it catched?"
                     font.pixelSize: AppConstants.smallFontSize
                     font.bold: true
@@ -288,26 +289,46 @@ Popup {
                 //
                 QQC.Tumbler {
                     id: catchModeTumbler
-                    Layout.preferredHeight: multiPopup.height * 1/6
+                    Layout.preferredHeight: AppConstants.fieldHeight * 2
                     Layout.preferredWidth: multiPopup.width * 3/4
                     Layout.alignment: Qt.AlignCenter
                     visibleItemCount: 3
+                    focus: true
+
                     model: fileHandler.currentModeIndexCatch
 
+                    Component.onCompleted: catchModeTumbler.forceActiveFocus()
+
+                    Keys.onUpPressed: {
+                        var tmpIndex = currentIndex
+                        if (++tmpIndex >= fileHandler.currentModeIndexCatch.length)
+                            currentIndex = 0
+                        else currentIndex++
+                    }
+
+                    Keys.onDownPressed: {
+                        var tmpIndex = currentIndex
+                        if (--tmpIndex < 0)
+                            currentIndex = fileHandler.currentModeIndexCatch.length - 1
+                        else currentIndex--
+                    }
+
+
+
                     delegate: Text {
-                            text: modelData
-                            opacity: 1.0 - Math.abs(Tumbler.displacement) / (Tumbler.tumbler.visibleItemCount / 2)
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: AppConstants.smallFontSize
-                            color: AppConstants.textColor
-                        }
+                        text: modelData
+                        opacity: 1.0 - Math.abs(Tumbler.displacement) / (Tumbler.tumbler.visibleItemCount / 2)
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: AppConstants.smallFontSize
+                        color: AppConstants.textColor
+                    }
 
 
                     Rectangle {
                         anchors.horizontalCenter: catchModeTumbler.horizontalCenter
                         y: catchModeTumbler.height * 0.35
-                        width: 60
+                        width: catchModeTumbler.width/2
                         height: 1
                         color: AppConstants.infoColor
                     }
@@ -315,7 +336,7 @@ Popup {
                     Rectangle {
                         anchors.horizontalCenter: catchModeTumbler.horizontalCenter
                         y: catchModeTumbler.height * 0.65
-                        width: 60
+                        width: catchModeTumbler.width/2
                         height: 1
                         color: AppConstants.infoColor
                     }
@@ -323,7 +344,7 @@ Popup {
                 }
                 //
                 TextEdit {
-                    Layout.preferredHeight: AppConstants.smallFontSize*2
+                    Layout.preferredHeight: AppConstants.smallFontSize
                     Layout.preferredWidth: parent.width
                     text: "Catch or Drop?"
                     font.pixelSize: AppConstants.smallFontSize
@@ -363,7 +384,6 @@ Popup {
                     opacity: 0.9
                     onClicked:
                     {
-
                         popupConfirmed(2, catchModeTumbler.currentIndex)
                     }
                     Text {
@@ -376,7 +396,7 @@ Popup {
                 }
                 AppButton {
                     id: flopButton
-                    Layout.preferredHeight: dropButton.height*2/3
+                    Layout.preferredHeight: AppConstants.fieldHeight*2/3
                     Layout.preferredWidth: dropButton.width*2/3
                     Layout.alignment: Qt.AlignCenter
                     blinkingColor: AppConstants.textColor

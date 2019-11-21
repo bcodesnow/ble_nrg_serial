@@ -24,6 +24,7 @@ AppPage {
         onAllWearablesAreWaitingForDownload:
         {
             catchConfirmPopup.visible = true
+            view.setCurrentIndex(1)
         }
     }
 

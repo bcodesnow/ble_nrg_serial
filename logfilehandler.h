@@ -9,7 +9,7 @@
 #include <QDebug>
 
 #define PLOT_DATA 1
-#define VERBOSITY_LEVEL 5
+#define VERBOSITY_LEVEL 2
 #define ALLOW_WRITE_TO_FILE 1
 #define WRITE_BERNHARD_INFO_TO_LOG_FILE 1
 

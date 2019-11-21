@@ -1,7 +1,7 @@
 #ifndef DEVICEHANDLER_H
 #define DEVICEHANDLER_H
 
-#define VERBOSITY_LEVEL                     5
+#define VERBOSITY_LEVEL                     2
 #define PRINT_THROUGHPUT                    1
 #define WAIT_X_MS_BETWEEN_CHUNKS            10
 #define CHANGE_CONN_PARAM_OF_OTHER_DEVICES  0

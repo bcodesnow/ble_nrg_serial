@@ -157,7 +157,7 @@ void NetworkManager::uploadDataHttpMulti(QByteArray data, QString name, QString 
     request.setRawHeader("Authorization", bearer.toUtf8());
 
 #if (VERBOSITY_LEVEL >= 2)
-        qDebug()<<"NetworkManager::uploadDataHttpMulti"<<"Sending request:"<<request.rawHeaderList();
+    qDebug()<<"NetworkManager::uploadDataHttpMulti"<<"Sending request:"<<request.rawHeaderList();
 #endif
 
     QNetworkReply *reply = m_networkHandler->post(request,multiPart);
@@ -196,24 +196,6 @@ uint8_t NetworkManager::getAuthorized()
     return m_authorized;
 }
 
-//void NetworkManager::synchronizeData()
-//{
-//    authorize();
-
-//    if (m_authorized == AUTH_SUCCESS)
-//    {
-//        // todo: qsettings and synchronization with drive-appdata
-//        qDebug()<<"sending TEST request";
-//        // uploadFileHttpMulti(":/qml/images/splash.png", drive_file_upload_url, "image/png", development_drive_folder_id);
-//        //  uploadFileHttpMulti("/home/boergi/catch_balint/0_LEFT_AUDIO", drive_file_url, "text/plain");
-//        // createDriveFolder("Catch_Data_Wearable",drive_file_upload_url);
-//        readFilesHttp(file_metadata_url); // drives_url file_metadata_url
-//    }
-
-
-
-//}
-
 void NetworkManager::uploadFinished(QNetworkReply *reply)
 {
     qDebug()<<"NetworkManager: Upload finished"<<reply->url();
@@ -251,13 +233,16 @@ void NetworkManager::stateChanged(QAbstractOAuth::Status state)
 }
 
 void NetworkManager::authorizationGranted() {
-    qDebug() << "Authorization granted. Expires at:" << m_googleAuth->expirationAt().toString();
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug() << "Google authorization granted. Expires at:" << m_googleAuth->expirationAt().toString();
+#endif
 }
 
 void NetworkManager::replyFinished(QNetworkReply *reply)
 {
+#if (VERBOSITY_LEVEL >= 1)
     qDebug()<<"Network reply arrived. Error? " << (reply->error() != QNetworkReply::NoError);
-
+#endif
     QByteArray replyData = reply->readAll();
     QList<QByteArray> replyList = replyData.split('\"');
 
@@ -270,9 +255,6 @@ void NetworkManager::replyFinished(QNetworkReply *reply)
 
 void NetworkManager::printNetworkReply(const QByteArray reply)
 {
-    qDebug()<<"OAuth reply arrived.";
-    qDebug()<<reply;
-
     const QByteArray accesstoken = "access_token";
     const QByteArray expiresin = "expires_in";
 
@@ -287,14 +269,21 @@ void NetworkManager::printNetworkReply(const QByteArray reply)
 
     m_accessExpirationIn = tmpExpiration.toInt();
 
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"OAuth reply arrived. Access Token:"<<m_currentAccessToken<<"Expiration:"<<m_accessExpirationIn;
+    qDebug()<<"Full reply:"<<endl<<reply;
+#endif
 }
 
 void NetworkManager::authenticationReply(QNetworkReply *reply, QAuthenticator *authenticator) {
+    // unused?
+#if (VERBOSITY_LEVEL >= 2)
     qDebug()<<"Authentication reply arrived. Error? " << (reply->error() != QNetworkReply::NoError);
     qDebug()<<"auth user:"<<authenticator->user();
     qDebug()<<"auth password:"<<authenticator->password();
     qDebug()<<"auth realm:"<<authenticator->realm();
     qDebug()<<reply->readAll();
+#endif
 }
 
 void NetworkManager::uploadCatchData(QString filename, QByteArray data) {
