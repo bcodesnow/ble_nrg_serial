@@ -490,6 +490,11 @@ Popup {
             property int textPadding: parent.width/20
             property int rowHeight: AppConstants.smallFontSize*2
 
+            MouseArea {
+                anchors.fill: parent
+                onClicked: forceActiveFocus()
+            }
+
             Connections {
                 target: catchController
                 onTimeSyncOfAllDevFinished:
@@ -772,9 +777,10 @@ Popup {
                         multiPopup.visible = false
                     }
                     property bool buttonEnabled:
-                        (usernameInput.acceptableInput && sessionPopupRoot.timesync &&
+                        ( usernameInput.acceptableInput &&  sessionPopupRoot.timesync &&
                          (sdSwitch.checked || btSwitch.checked) &&
-                         (googleSwitch.checked && (networkManager.authorized === 2) || !googleSwitch.checked))
+                         ( ( googleSwitch.checked && (networkManager.authorized === 2) ) || !googleSwitch.checked)
+                         )
                         || devMode
 
                     Text {

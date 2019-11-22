@@ -9,6 +9,7 @@ QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
+
 # You can also make your code fail to compile if you use deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
@@ -48,6 +49,7 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+
 HEADERS += \
     adapterinfo.h \
     devicecontroller.h \
@@ -84,3 +86,44 @@ contains(ANDROID_TARGET_ARCH,armeabi-v7a) {
     ANDROID_PACKAGE_SOURCE_DIR = \
         $$PWD/android
 }
+
+versionAtLeast(QT_VERSION, "5.14.0") {
+    ANDROID_EXTRA_LIBS += \
+        $$PWD/arm/libcrypto_1_1.so \
+        $$PWD/arm/libssl_1_1.so \
+        $$PWD/arm64/libcrypto_1_1.so \
+        $$PWD/arm64/libssl_1_1.so \
+        $$PWD/x86/libcrypto_1_1.so \
+        $$PWD/x86/libssl_1_1.so \
+        $$PWD/x86_64/libcrypto_1_1.so \
+        $$PWD/x86_64/libssl_1_1.so
+}
+else {
+    equals(ANDROID_TARGET_ARCH,armeabi-v7a) {
+        ANDROID_EXTRA_LIBS += \
+            $$PWD/arm/libcrypto_1_1.so \
+            $$PWD/arm/libssl_1_1.so
+    }
+
+    equals(ANDROID_TARGET_ARCH,arm64-v8a) {
+        ANDROID_EXTRA_LIBS += \
+            $$PWD/arm64/libcrypto_1_1.so \
+            $$PWD/arm64/libssl_1_1.so
+    }
+
+    equals(ANDROID_TARGET_ARCH,x86) {
+        ANDROID_EXTRA_LIBS += \
+            $$PWD/x86/libcrypto_1_1.so \
+            $$PWD/x86/libssl_1_1.so
+    }
+
+    equals(ANDROID_TARGET_ARCH,x86_64) {
+        ANDROID_EXTRA_LIBS += \
+            $$PWD/x86_64/libcrypto_1_1.so \
+            $$PWD/x86_64/libssl_1_1.so
+    }
+}
+
+
+
+

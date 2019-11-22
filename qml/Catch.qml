@@ -35,7 +35,7 @@ AppPage {
             catchController.onCatchSuccessConfirmed( arg1 );
             fileHandler.setCurrCatchMode( arg2 );
             catchConfirmPopup.visible = false;
-            if (catchController.bleUplEnabled && (index != 3 ))
+            if (catchController.bleUplEnabled && (arg1 != 3 ))
                 downloadProgressPopup.visible = true;
         }
         onVisibleChanged: {
