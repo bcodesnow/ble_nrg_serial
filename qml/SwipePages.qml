@@ -1,4 +1,5 @@
 import QtQuick 2.9
+import QtMultimedia 5.12
 import QtQuick.Controls 2.2
 import "."
 
@@ -71,6 +72,19 @@ Item {
                 showTheDevilPopup.visible = true
                 console.log("Woops...",error)
             }
+        }
+
+        Audio {
+            id: devilMusic
+            autoLoad: true
+            // autoPlay: true
+            audioRole: Audio.AlarmRole
+            source: "/common/devil.mp3"
+            muted: false
+            volume: 1
+        }
+        onVisibleChanged: {
+            devilMusic.play()
         }
     }
 

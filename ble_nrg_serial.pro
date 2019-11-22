@@ -1,4 +1,4 @@
-QT += quick quickwidgets qml bluetooth quickcontrols2 network networkauth
+QT += quick quickwidgets qml bluetooth quickcontrols2 network networkauth multimedia
 CONFIG += c++11
 QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
 #QMAKE_CXXFLAGS += "-Wno-old-style-cast"

@@ -60,9 +60,9 @@ AppPage {
             autoLoad: true
             // autoPlay: true
             audioRole: Audio.AlarmRole
-            source: "dlfin.mp3"
+            source: "/common/dlfin.mp3"
             muted: false
-            volume: 0.5
+            volume: 1
         }
         onVisibleChanged: {
             downlFinMusic.play()
