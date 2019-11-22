@@ -1,14 +1,7 @@
-#ifndef DEVICEHANDLER_H
-#define DEVICEHANDLER_H
+#ifndef DEVICECONTROLLER_H
+#define DEVICECONTROLLER_H
 
-#define VERBOSITY_LEVEL                     0
-#define PRINT_THROUGHPUT                    1
-#define WAIT_X_MS_BETWEEN_CHUNKS            25
-#define CHANGE_CONN_PARAM_OF_OTHER_DEVICES  0
-#define LOG_TRANSF_DATA_TO_FIL              0
-
-#include "logfilehandler.h"
-#include "timesynchandler.h"
+#include "global.h"
 #include <QElapsedTimer>
 #include <QDateTime>
 #include <QVector>
@@ -18,6 +11,8 @@
 #include <QBluetoothDeviceInfo>
 #include <QThread>
 #include <QBluetoothHostInfo>
+#include "ble_uart.h"
+#include "ble_uart_types.h"
 
 #define HUGE_CHUNK_IN_PROCESS       (1u<<1u)
 #define CONN_PARAMS_IN_CHANGE       (1u<<3u)
@@ -26,7 +21,7 @@
 #define NEXT_REQ_SEND_SENS_DATA     1u
 #define NEXT_REQ_SEND_START         2u
 
-class DeviceInfo;
+//class DeviceInfo;
 class TimeSyncHandler;
 
 extern QString stateToString(uint16_t tmp);
@@ -247,4 +242,4 @@ private slots:
 
 };
 
-#endif // DEVICEHANDLER_H
+#endif // DEVICECONTROLLER_H

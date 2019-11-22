@@ -1,11 +1,9 @@
 #ifndef CATCHCONTROLLER_H
 #define CATCHCONTROLLER_H
 
+#include "global.h"
 #include <QObject>
 #include <QTimer>
-#include <timesynchandler.h>
-#include <logfilehandler.h>
-#include <deviceinterface.h>
 
 #define START_TS_FROM_CC 1
 
@@ -16,11 +14,9 @@
 
 #define NEXT_REQ_START_TS 1u
 
-
+class DeviceInterface;
 class LogFileHandler;
 class TimeSyncHandler;
-class DeviceInterface;
-
 // this class should be known to both devicehandlers, and he should also know both of them.. should act as middleman, in timesync, appmainstate, sd turn onof etc things.
 
 class CatchController : public QObject

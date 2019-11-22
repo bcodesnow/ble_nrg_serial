@@ -37,6 +37,8 @@ public:
     Q_INVOKABLE void messageFromQml(const QString &str, const QString &clr, const qint8 &fmt)
     {
         Q_UNUSED(str)
+        Q_UNUSED(clr)
+        Q_UNUSED(fmt)
     }
 
     static void fakeHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)

@@ -1,7 +1,6 @@
-#ifndef TIMESTAMPLER_H
-#define TIMESTAMPLER_H
+#ifndef TIMESYNCHANDLER_H
+#define TIMESYNCHANDLER_H
 
-#include "deviceinterface.h"
 #include "ble_uart.h"
 
 #include <QTimer>
@@ -79,4 +78,4 @@ public slots:
     void timeout_timer_expired();
 };
 
-#endif // TIMESTAMPLER_H
+#endif // TIMESYNCHANDLER_H

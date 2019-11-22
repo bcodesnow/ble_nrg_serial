@@ -128,6 +128,7 @@ void DeviceInterface::onAliveArrived(QByteArray value)
 
 void DeviceInterface::onConnectionAliveChanged(bool isItAlive, int deviceIdx)
 {
+    Q_UNUSED(deviceIdx)
     this->setConnectionAlive(isItAlive);
 }
 

@@ -1,5 +1,5 @@
-#ifndef __BLE_UART_TYPES_H
-#define __BLE_UART_TYPES_H
+#ifndef BLE_UART_TYPES_H
+#define BLE_UART_TYPES_H
 
 #include "stdint.h"
 

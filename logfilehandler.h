@@ -1,17 +1,13 @@
 #ifndef LOGFILEHANDLER_H
 #define LOGFILEHANDLER_H
 
+#include "global.h"
 #include <QObject>
 #include <QDataStream>
 #include <QVariant>
 #include <QDateTime>
 #include <QDir>
 #include <QDebug>
-
-#define PLOT_DATA 1
-#define VERBOSITY_LEVEL 0
-#define ALLOW_WRITE_TO_FILE 1
-#define WRITE_BERNHARD_INFO_TO_LOG_FILE 1
 
 #include "mci_catch_detection.h"
 #include "ble_uart.h"
@@ -50,13 +46,15 @@ signals:
     void idxChanged(quint64 tidx);
 
     void catchModeListChanged();
-    void paintDataListChanged();
+    void paintDataListElementChanged(quint32 elementIndex);
     void updateAllPainters(QList<QObject*> datalist);
 
     void invokeCreateGoogleFolder(QString name);
     void invokeGoogleUpload(QString filename, QByteArray data);
 
     void fileIndexChanged();
+
+    void paintDataListChanged();
 
 public:
     explicit LogFileHandler(QObject *parent = nullptr);

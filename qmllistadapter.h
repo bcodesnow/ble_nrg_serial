@@ -7,6 +7,8 @@
 #include <QHash>
 #include "deviceinterface.h"
 
+// TODO: CLeanup and comment!
+
 class QmlListAdapter : public QAbstractListModel
 {
     Q_OBJECT
@@ -37,10 +39,6 @@ private:
 //    static DeviceInterface* interface(QQmlListProperty<DeviceInterface>*, int);
 
     QList<DeviceInterface*>* m_deviceInterfaces;
-
-    QList<QObject*> a;
-
-    QList<DeviceInterface*> b;
 
 
 signals:

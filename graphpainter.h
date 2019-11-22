@@ -54,8 +54,8 @@ signals:
     void parentChanged();
     void nameChanged();
 
-public slots:
-    void onGraphDataChanged();
+//public slots:
+//    void onGraphDataChanged();
 
 };
 

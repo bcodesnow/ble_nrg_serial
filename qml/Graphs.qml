@@ -69,14 +69,22 @@ AppPage {
 
         Connections {
             target: fileHandler
-            onPaintDataListChanged: {
-                console.log("!! - !! -- onPaintDataListChanged")
-                var painterItem
-                for (var i=0;i<fileHandler.paintDataList.length;i++)
-                {
-                    painterItem = graphGrid.itemAtIndex(i).children[1].children[0]
-                    painterItem.graphData = fileHandler.paintDataList[i];
-                }
+            onPaintDataListElementChanged: {
+                console.log("!! - !! -- onPaintDataListChanged" + elementIndex)
+
+                var painterItem = graphGrid.itemAtIndex(elementIndex).children[1].children[0];
+                painterItem.graphData = fileHandler.paintDataList[elementIndex];
+                painterItem.update();
+
+//                var painterItem
+//                for (var i=0;i<fileHandler.paintDataList.length;i++)
+//                {
+//                    console.log("!! - !! -- i"+i)
+
+//                    painterItem = graphGrid.itemAtIndex(i).children[1].children[0]
+//                    painterItem.graphData = fileHandler.paintDataList[i]; //do this maybe only on the index you update currently
+//                    painterItem.update();
+//                }
             }
 
 //            onUpdateAllPainters: {

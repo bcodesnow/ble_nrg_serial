@@ -1,5 +1,5 @@
-#ifndef __catch_det_
-#define __catch_det_
+#ifndef CATCH_DET_H
+#define CATCH_DET_H
 
 #include "stdint.h"
 

@@ -1,19 +1,13 @@
 #ifndef DEVICEINTERFACE_H
 #define DEVICEINTERFACE_H
 
+#include "global.h"
 #include <QObject>
 #include <QThread>
 #include <QBluetoothHostInfo>
-#include <devicecontroller.h>
-#include "catchcontroller.h"
-#include "timesynchandler.h"
-#include "logfilehandler.h"
-#include "deviceinfo.h"
-#include "bluetoothbaseclass.h"
-#include "ble_uart_types.h"
 
 class DeviceController;
-class TimeSyncHandler;
+//class TimeSyncHandler;
 class LogFileHandler;
 class CatchController;
 

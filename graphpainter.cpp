@@ -3,7 +3,7 @@
 GraphPainter::GraphPainter(QQuickItem *parent) :
     QQuickPaintedItem(parent)
 {
-    connect(this, &GraphPainter::graphDataChanged, this, &GraphPainter::onGraphDataChanged);
+    //connect(this, &GraphPainter::graphDataChanged, this, &GraphPainter::onGraphDataChanged);
 }
 
 void GraphPainter::paint(QPainter *painter)
@@ -220,9 +220,9 @@ QString GraphPainter::getName()
     return m_name;
 }
 
-void GraphPainter::onGraphDataChanged()
-{
-    this->update();
-    qDebug()<<"updated"<<m_name;
-}
+//void GraphPainter::onGraphDataChanged()
+//{
+//    this->update();
+//    qDebug()<<"updated"<<m_name;
+//}
 

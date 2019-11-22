@@ -163,7 +163,7 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
             {
                 delete m_paintDataList.at(i);
                 m_paintDataList.replace(i,new PaintData(type, ident.at(0).toLatin1(), dataVec));
-                emit paintDataListChanged();
+                emit paintDataListElementChanged(i);
                 qDebug()<<"!!! emitting.. ";
             }
         }

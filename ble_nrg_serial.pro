@@ -57,6 +57,7 @@ HEADERS += \
     bluetoothbaseclass.h \
     deviceinfo.h \
     deviceinterface.h \
+    global.h \
     graphpainter.h \
     linuxterminalinterface.h \
     mci_catch_detection.h \
