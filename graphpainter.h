@@ -1,7 +1,7 @@
 #ifndef GRAPHPAINTER_H
 #define GRAPHPAINTER_H
 
-#include "logfilehandler.h"
+//#include "logfilehandler.h"
 #include "paintdata.h"
 
 #include <QObject>
@@ -48,12 +48,14 @@ public:
 
     QString getName(void);
 
+
 signals:
-    void graphDataChanged(QString graphName);
+    void graphDataChanged();
     void parentChanged();
     void nameChanged();
 
 public slots:
+    void onGraphDataChanged();
 
 };
 

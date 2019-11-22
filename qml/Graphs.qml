@@ -1,5 +1,4 @@
 import QtQuick 2.12
-
 import GraphPainterCpp 1.0
 
 AppPage {
@@ -71,22 +70,22 @@ AppPage {
         Connections {
             target: fileHandler
             onPaintDataListChanged: {
-
+                console.log("!! - !! -- onPaintDataListChanged")
                 var painterItem
                 for (var i=0;i<fileHandler.paintDataList.length;i++)
                 {
                     painterItem = graphGrid.itemAtIndex(i).children[1].children[0]
-                    painterItem.graphData = fileHandler.paintDataList[i]
+                    painterItem.graphData = fileHandler.paintDataList[i];
                 }
             }
 
-            onUpdateAllPainters: {
-                var painterItem
-                for (var i=0;i<datalist.length;i++)                {
-                    painterItem = graphGrid.itemAtIndex(i).children[1].children[0]
-                    painterItem.graphData = datalist[i]
-                }
-            }
+//            onUpdateAllPainters: {
+//                var painterItem
+//                for (var i=0;i<datalist.length;i++)                {
+//                    painterItem = graphGrid.itemAtIndex(i).children[1].children[0]
+//                    painterItem.graphData = datalist[i]
+//                }
+//            }
         } //! Connections
     } // !GridView
 }

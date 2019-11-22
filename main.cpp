@@ -7,7 +7,7 @@
 #include <QtMessageHandler>
 #include <QtGlobal>
 #include <QScreen>
-#include <QSoundEffect>
+
 #include <QMediaPlayer>
 #include "connectionhandler.h"
 #include "terminaltoqmlb.h"
@@ -19,7 +19,7 @@
 #include "graphpainter.h"
 #include "deviceinterface.h"
 #include "qmllistadapter.h"
-#include <QtMultimedia/QSound>
+
 #if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
 #include "linuxterminalinterface.h"
 #endif
@@ -28,12 +28,18 @@
 
 int main(int argc, char *argv[])
 {
-
-    //QLoggingCategory::setFilterRules(QStringLiteral("qt.bluetooth* = true"));
-
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
+
+    //QLoggingCategory::setFilterRules(QStringLiteral("qt.bluetooth* = true"));
+#if ( BEEP_ON_START == 1 )
+    QMediaPlayer* player = new QMediaPlayer;
+    player->setMedia(QUrl("qrc:/common/start.mp3"));
+    player->setVolume(100);
+    player->play();
+#endif
+
 
     qmlRegisterType<GraphPainter>("GraphPainterCpp",1,0,"GraphPainterCpp");
     qRegisterMetaType<DeviceInfo::DeviceType>("DeviceType");
@@ -80,13 +86,6 @@ int main(int argc, char *argv[])
     QQuickStyle::setStyle("Material");
 
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
-
-#if ( BEEP_ON_START == 1 )
-    QMediaPlayer* player = new QMediaPlayer;
-    player->setMedia(QUrl("qrc:/common/start.mp3"));
-    player->setVolume(100);
-    player->play();
-#endif
 
     return app.exec();
 }

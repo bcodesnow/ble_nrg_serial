@@ -6,6 +6,7 @@ import QtGraphicalEffects 1.0
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Extras 1.4
 import QtQuick.Dialogs 1.2
+import QtMultimedia 5.12
 import "."
 
 Popup {
@@ -138,7 +139,18 @@ Popup {
                 target: catchController
                 onDownloadOfAllDevFinished: {
                     multiPopup.visible = false
+                    downlFinMusic.play()
                 }
+
+            }
+            Audio {
+                id: downlFinMusic
+                autoLoad: true
+                // autoPlay: true
+                audioRole: Audio.AlarmRole
+                source: "/common/dlfin.mp3"
+                muted: false
+                volume: 1
             }
 
             ColumnLayout {

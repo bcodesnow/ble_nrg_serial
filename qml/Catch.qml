@@ -4,9 +4,10 @@ import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 import QtGraphicalEffects 1.0
 import QtMultimedia 5.12
+import Shared 1.0
 import "."
 //import com.dev 1.0
-import Shared 1.0
+
 
 AppPage {
     id: pageRoot
@@ -55,19 +56,7 @@ AppPage {
             // todo: start popup animations at this point,
             //       not on loader windowChanged() signal
         }
-        Audio {
-            id: downlFinMusic
-            autoLoad: true
-            // autoPlay: true
-            audioRole: Audio.AlarmRole
-            source: "/common/dlfin.mp3"
-            muted: false
-            volume: 1
-        }
-        onVisibleChanged: {
-            downlFinMusic.play()
-            console.log("play music:",downlFinMusic.duration)
-        }
+
     }
 
     Rectangle {

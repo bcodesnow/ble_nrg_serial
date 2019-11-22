@@ -10,10 +10,7 @@ DeviceInterface::DeviceInterface (TimeSyncHandler* ts_handler, CatchController* 
     m_logfile_handler_ptr(logfile_handler),
     m_catch_controller_ptr(catch_controller)
 {
-//m_textTimer.setInterval(500);
-//connect(&m_textTimer, &QTimer::timeout, this, &DeviceInterface::onTextTimerTrig);
-//m_textTimer.setSingleShot(false);
-//m_textTimer.start();
+
 }
 
 

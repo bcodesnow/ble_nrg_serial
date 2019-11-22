@@ -37,12 +37,8 @@ private:
     LogFileHandler* m_logfile_handler_ptr;
     TimeSyncHandler* m_timesync_handler_ptr;
     CatchController* m_catch_controller_ptr;
-    //QString m_deviceAddress;
 
     alive_msg_t alive_msg;
-
-    //uint32_t rec_ts;
-    QTimer m_textTimer;
 
 public:
     DeviceInterface(TimeSyncHandler* ts_handler, CatchController* catch_controller,
