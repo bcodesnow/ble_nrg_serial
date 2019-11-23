@@ -145,9 +145,6 @@ Popup {
             }
             Audio {
                 id: downlFinMusic
-                autoLoad: true
-                // autoPlay: true
-                audioRole: Audio.AlarmRole
                 source: "/common/dlfin.mp3"
                 muted: false
                 volume: 1
@@ -1130,7 +1127,7 @@ Popup {
                 clip: true
 
                 property int maxCharsPerLine: 30
-                property string errorMessage:splitLines(maintitle)
+                property string errorMessage: splitLines(maintitle)
 
                 function splitLines(err_mesg) {
                     var result = ""
@@ -1141,13 +1138,51 @@ Popup {
                     return result
                 }
 
+                onVisibleChanged: {
+                    if (visible)
+                    {
+                        maxCharsPerLine = satanMessage.width/errorText.font.pixelSize - 2
+                    }
+                }
+
                 TextEdit {
                     id: errorText
                     anchors.centerIn: parent
+                    horizontalAlignment: TextEdit.AlignHCenter
+                    verticalAlignment: TextEdit.AlignVCenter
+                    wrapMode: TextEdit.Wrap
                     font.pixelSize: AppConstants.smallFontSize
                     color: AppConstants.textColor
                     text: parent.errorMessage
+                    topPadding: font.pixelSize
                 }
+
+                TextMetrics {
+                    id:     errorTextMetrics
+                    font:   errorText.font
+                    text:   errorText.text
+                    onTightBoundingRectChanged: {
+                        if (satanMessage.visible)
+                        {
+                            if (errorTextMetrics.tightBoundingRect.width < satanMessage.width)
+                                satanMessage.width = errorTextMetrics.tightBoundingRect.width
+                            satanMessage.height = errorTextMetrics.tightBoundingRect.height * errorText.lineCount * 1.1
+                        }
+                    }
+                }
+            } // !Rectangle
+
+            Audio {
+                id: devilMusic
+                source: "/common/devil.mp3"
+                muted: false
+                volume: 1
+                onStopped: {
+                    if (satanPopupRoot.visible) satanMessage.visible = false
+                }
+            }
+            onVisibleChanged: {
+                if (visible) devilMusic.play()
             }
 
             Connections {

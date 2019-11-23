@@ -59,6 +59,7 @@ Item {
     MultiPopup {
         id: showTheDevilPopup
         currentPopupType: MultiPopupType.type_satan
+        visible: true
         Component.onCompleted: {
             // todo: start popup animations at this point,
             //       not on loader windowChanged() signal
@@ -74,18 +75,16 @@ Item {
             }
         }
 
-        Audio {
-            id: devilMusic
-            autoLoad: true
-            // autoPlay: true
-            audioRole: Audio.AlarmRole
-            source: "/common/devil.mp3"
-            muted: false
-            volume: 1
-        }
-        onVisibleChanged: {
-            devilMusic.play()
-        }
+//        Audio {
+//            id: devilMusic
+//            autoLoad: true
+//            source: "/common/devil.mp3"
+//            muted: false
+//            volume: 1
+//        }
+//        onVisibleChanged: {
+//           if (visible) devilMusic.play()
+//        }
     }
 
     BluetoothAlarmDialog {
