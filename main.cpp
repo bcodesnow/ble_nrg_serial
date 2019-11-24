@@ -60,7 +60,8 @@ int main(int argc, char *argv[])
 
     ConnectionHandler connection_handler; // keeps track of local ble interface
 
-    NetworkManager* ntwMngr = new NetworkManager(log_file_handler);
+    NetworkManager* ntwMngr = new NetworkManager();
+    ntwMngr->initNetworkManager(log_file_handler);
 
     DeviceFinder device_finder(ladapter, &connection_handler, time_sync_handler,catch_controller,log_file_handler);
     qDebug()<<"MainThread ID"<<QThread::currentThreadId();

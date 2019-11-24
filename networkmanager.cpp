@@ -1,14 +1,48 @@
 #include "networkmanager.h"
 
-//NetworkManager::NetworkManager(QObject *parent) : QObject(parent)
-//{
-
-//}
-
-NetworkManager::NetworkManager(LogFileHandler *logfile_handler, QObject *parent) :
-    QObject(parent),
-    m_logfile_handler_ptr(logfile_handler)
+void NetworkManager::processAllJobs()
 {
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"processAllJobs()";
+#endif
+    m_upload_state = WORKING_ON_JOBS;
+    while (m_job_queue.size() > 0) {
+        auto tmp_job = m_job_queue.dequeue();
+#if (VERBOSITY_LEVEL >= 1)
+        qDebug()<<"processAllJobs(): uploading"<<tmp_job.filename<<tmp_job.data->size()<<"type:"<<(tmp_job.data->isEmpty() ? "folder" : "file");
+#endif
+        if (tmp_job.data->isEmpty())
+        {
+            createDriveFolder(tmp_job.filename, file_upload_url);
+        }
+        else {
+            uploadDataHttpMulti(tmp_job.data, tmp_job.filename, file_upload_url, "text/plain", m_curr_folder_id);
+        }
+#if (VERBOSITY_LEVEL >= 2)
+        qDebug()<<"processAllJobs(): finished"<<tmp_job.filename<<", delete data pointer";
+#endif
+        delete tmp_job.data;
+    }
+    m_upload_state = WAITING_FOR_JOBS;
+    emit allJobsFinished();
+}
+
+NetworkManager::NetworkManager()
+{
+
+}
+
+NetworkManager::~NetworkManager()
+{
+    delete m_googleAuth;
+    delete m_networkHandler;
+    delete m_logfile_handler_ptr;
+}
+
+void NetworkManager::initNetworkManager(LogFileHandler *logfile_handler_ptr)
+{
+    m_logfile_handler_ptr = logfile_handler_ptr;
+
     m_googleAuth = new QOAuth2AuthorizationCodeFlow();
     m_googleAuth->setScope(drive_file_scope);
     m_networkHandler = new QNetworkAccessManager();
@@ -18,17 +52,38 @@ NetworkManager::NetworkManager(LogFileHandler *logfile_handler, QObject *parent)
     connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::granted,
             this, &NetworkManager::authorizationGranted);
     connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::statusChanged,
-            this, &NetworkManager::stateChanged);
+            this, &NetworkManager::oauthStateChanged);
     connect( m_networkHandler, &QNetworkAccessManager::authenticationRequired,
              this, &NetworkManager::authenticationReply);
     connect( m_networkHandler, SIGNAL(finished(QNetworkReply *)),
              this, SLOT(replyFinished(QNetworkReply *)));
 
-    connect(m_logfile_handler_ptr, &LogFileHandler::invokeGoogleUpload, this, &NetworkManager::uploadCatchData);
-    connect(m_logfile_handler_ptr, &LogFileHandler::invokeCreateGoogleFolder, this, &NetworkManager::createNewFolderWithId);
-
-    // connect(m_control, &QLowEnergyController::connected, this, &DeviceController::onConnected);
+    connect(m_logfile_handler_ptr, &LogFileHandler::invokeGoogleUpload, this, &NetworkManager::addUploadJob);
 }
+
+//NetworkManager::NetworkManager(LogFileHandler *logfile_handler, QObject *parent) :
+//    QObject(parent),
+//    m_logfile_handler_ptr(logfile_handler)
+//{
+//    m_googleAuth = new QOAuth2AuthorizationCodeFlow();
+//    m_googleAuth->setScope(drive_file_scope);
+//    m_networkHandler = new QNetworkAccessManager();
+
+//    connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser,
+//            &QDesktopServices::openUrl);
+//    connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::granted,
+//            this, &NetworkManager::authorizationGranted);
+//    connect(m_googleAuth, &QOAuth2AuthorizationCodeFlow::statusChanged,
+//            this, &NetworkManager::stateChanged);
+//    connect( m_networkHandler, &QNetworkAccessManager::authenticationRequired,
+//             this, &NetworkManager::authenticationReply);
+//    connect( m_networkHandler, SIGNAL(finished(QNetworkReply *)),
+//             this, SLOT(replyFinished(QNetworkReply *)));
+
+//    connect(m_logfile_handler_ptr, &LogFileHandler::invokeGoogleUpload, this, &NetworkManager::uploadCatchData);
+//    connect(m_logfile_handler_ptr, &LogFileHandler::invokeCreateGoogleFolder, this, &NetworkManager::createNewFolderWithId);
+
+//}
 
 void NetworkManager::authorize()
 {
@@ -89,6 +144,9 @@ void NetworkManager::authorize()
 
 void NetworkManager::createDriveFolder(QString name, QString uploadUrl)
 {
+#if (VERBOSITY_LEVEL >= 1)
+            qDebug()<<"createDriveFolder():"<<name;
+#endif
     uploadUrl.append(drive_type_multi);
     QNetworkRequest request(uploadUrl);
 
@@ -123,8 +181,11 @@ void NetworkManager::createDriveFolder(QString name, QString uploadUrl)
 
 }
 
-void NetworkManager::uploadDataHttpMulti(QByteArray data, QString name, QString uploadUrl, QByteArray contentType, QString folderID)
+void NetworkManager::uploadDataHttpMulti(QByteArray *data, QString name, QString uploadUrl, QByteArray contentType, QString folderID)
 {
+#if (VERBOSITY_LEVEL >= 1)
+            qDebug()<<"uploadDataHttpMulti():"<<name<<data->size();
+#endif
     uploadUrl.append(drive_type_multi);
     QNetworkRequest request(uploadUrl);
 
@@ -146,7 +207,7 @@ void NetworkManager::uploadDataHttpMulti(QByteArray data, QString name, QString 
 
     QHttpPart MediaPart;
     MediaPart.setRawHeader("Content-Type", contentType);
-    MediaPart.setBody(data);
+    MediaPart.setBody(*data);
 
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::RelatedType);
     multiPart->setBoundary("bound1");
@@ -201,11 +262,12 @@ void NetworkManager::uploadFinished(QNetworkReply *reply)
     qDebug()<<"NetworkManager: Upload finished"<<reply->url();
 }
 
-void NetworkManager::stateChanged(QAbstractOAuth::Status state)
+void NetworkManager::oauthStateChanged(QAbstractOAuth::Status state)
 {
     if (state == QAbstractOAuth::Status::Granted) {
         qDebug()<<"State changed to: Granted";
         m_authorized = AUTH_SUCCESS;
+        m_upload_state = WAITING_FOR_JOBS;
         emit authorizedChanged();
         if (m_oauthReplyHandler->isListening())
         {
@@ -286,35 +348,76 @@ void NetworkManager::authenticationReply(QNetworkReply *reply, QAuthenticator *a
 #endif
 }
 
-void NetworkManager::uploadCatchData(QString filename, QByteArray data) {
-    if (m_authorized == AUTH_SUCCESS && m_uploadEnabled == true)
-    {
-#if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"Uploading data:"<<filename;
-#endif
-        //  uploadDataHttpMulti(data, m_logfile_handler_ptr->getHomeLocation()+"/"+path, file_upload_url, "text/plain");
-        uploadDataHttpMulti(data, filename, file_upload_url, "text/plain", m_curr_folder_id);
-    }
-    else {
-#if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"Uploading not enabled";
-#endif
-    }
-}
-
-void NetworkManager::createNewFolderWithId(QString name)
+void NetworkManager::addUploadJob(QString filename, QByteArray *data)
 {
-    if (m_authorized == AUTH_SUCCESS)
+    if (m_authorized != AUTH_SUCCESS)
     {
+        qDebug()<<"addUploadJob(): Error: called upload slot when not authorized";
+        return;
+    }
+
+    if (data->isEmpty())
+    {
+        // data is empty, so it is assumed that it is a new folder request
 #if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"Creating new drive folder:"<<name;
+        qDebug()<<"addUploadJob(): Creating folder"<<filename;
 #endif
         m_curr_folder_id.clear();
-        createDriveFolder(name,file_upload_url);
+        m_job_queue.enqueue({ filename, data });
+        if (m_upload_state == WAITING_FOR_JOBS)
+        {
+            processAllJobs();
+        }
     }
-    else {
+    else
+    {
 #if (VERBOSITY_LEVEL >= 1)
-        qDebug()<<"Uploading not enabled";
+        qDebug()<<"addUploadJob(): Uploading file"<<filename;
 #endif
+        if (m_curr_folder_id.isEmpty())
+        {
+            qDebug()<<"addUploadJob(): Error: create google drive folder before uploading";
+            return;
+        }
+        m_job_queue.enqueue({ filename, data });
+
+        if (m_upload_state == WAITING_FOR_JOBS)
+        {
+            processAllJobs();
+        }
     }
+    return;
 }
+
+//void NetworkManager::uploadCatchData(QString filename, QByteArray data) {
+//    if (m_authorized == AUTH_SUCCESS && m_uploadEnabled == true)
+//    {
+//#if (VERBOSITY_LEVEL >= 1)
+//        qDebug()<<"Uploading data:"<<filename;
+//#endif
+//        //  uploadDataHttpMulti(data, m_logfile_handler_ptr->getHomeLocation()+"/"+path, file_upload_url, "text/plain");
+//        uploadDataHttpMulti(data, filename, file_upload_url, "text/plain", m_curr_folder_id);
+//    }
+//    else {
+//#if (VERBOSITY_LEVEL >= 1)
+//        qDebug()<<"Uploading not enabled";
+//#endif
+//    }
+//}
+
+//void NetworkManager::createNewFolderWithId(QString name)
+//{
+//    if (m_authorized == AUTH_SUCCESS)
+//    {
+//#if (VERBOSITY_LEVEL >= 1)
+//        qDebug()<<"createNewFolderWithId(): Creating new drive folder:"<<name;
+//#endif
+//        m_curr_folder_id.clear();
+//        createDriveFolder(name, file_upload_url);
+//    }
+//    else {
+//#if (VERBOSITY_LEVEL >= 1)
+//        qDebug()<<"createNewFolderWithId(): Error: not authorized when creating new folder";
+//#endif
+//    }
+//}

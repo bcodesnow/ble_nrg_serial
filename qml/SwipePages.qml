@@ -46,15 +46,9 @@ Item {
         id: passwordInputPopup
         currentPopupType: MultiPopupType.type_password
     }
-    //    MultiPopup {
-    //        // unused
-    //        id: btAdapterPopup
-    //        popupType: 3
-    //    }
     MultiPopup {
         id: sessionSettingsPopup
         currentPopupType: MultiPopupType.type_session
-       // property int currentModeIndex: 0
     }
     MultiPopup {
         id: showTheDevilPopup
@@ -73,17 +67,6 @@ Item {
                 console.log("Woops...",error)
             }
         }
-
-//        Audio {
-//            id: devilMusic
-//            autoLoad: true
-//            source: "/common/devil.mp3"
-//            muted: false
-//            volume: 1
-//        }
-//        onVisibleChanged: {
-//           if (visible) devilMusic.play()
-//        }
     }
 
     BluetoothAlarmDialog {

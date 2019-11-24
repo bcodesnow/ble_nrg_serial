@@ -38,10 +38,10 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
 
 void LogFileHandler::sortArray(QByteArray *arr, uint16_t wp)
 {
-// THERE IS THE SECOND DIRTY BUG!! the write pointer means an index of the array of struct! ie: { u16 u16 u16 }[0] .. { u16 u16 u16 }[1] .. { u16 u16 u16 }[0] ..
-//    QByteArray tmpArray = arr->left(wp);
-//    arr->remove(0,wp);
-//    arr->append(tmpArray);
+    // THERE IS THE SECOND DIRTY BUG!! the write pointer means an index of the array of struct! ie: { u16 u16 u16 }[0] .. { u16 u16 u16 }[1] .. { u16 u16 u16 }[0] ..
+    //    QByteArray tmpArray = arr->left(wp);
+    //    arr->remove(0,wp);
+    //    arr->append(tmpArray);
 }
 
 QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray *arr, uint16_t step)
@@ -101,18 +101,20 @@ QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray *arr, uint16_t step)
 
 void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 type, quint16 wp)
 {
-#if (VERBOSITY_LEVEL >= 1)
+#if (VERBOSITY_LEVEL >= 2)
     qDebug()<<"writeTypeToLogFil"<<ident<<type<<wp<<data->size();
     QElapsedTimer debug_timer;
     debug_timer.start();
 #endif
 
-#if (PLOT_DATA == 1)
     QVector<QVariant> dataVec(QVector<QVariant>(0));
     // get target location
     QString tmpLocation = m_fileLocation+m_currDir+"/";
-    qDebug()<<"File Path: "<<tmpLocation;
     QString idx_str = tr("%1_%2_").arg(m_currFileIndex).arg(ident);
+
+#if (VERBOSITY_LEVEL >= 1)
+    qDebug()<<"File Path: "<<tmpLocation;
+#endif
 
     // Byte conversion
     switch (type)
@@ -150,7 +152,7 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     }
     tmpLocation.append(idx_str);
 
-#if (VERBOSITY_LEVEL >= 1)
+#if (VERBOSITY_LEVEL >= 2)
     qDebug()<<"after conversion:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
 
@@ -168,10 +170,10 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
             }
         }
     }
-#if (VERBOSITY_LEVEL >= 1)
+#if (VERBOSITY_LEVEL >= 2)
     qDebug()<<"after painting:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
-#endif // (PLOT_DATA == 1)
+
 
     // save as text
     QFile file(tmpLocation);
@@ -179,10 +181,12 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     file.write(*data);
     file.close();
 
-    // Google drive
-    invokeGoogleUpload(idx_str,*data);
+    // File to google drive
+    if (m_googleEnabled)
+        invokeGoogleUpload(idx_str,new QByteArray(*data));
 
-#if (VERBOSITY_LEVEL >= 1)
+
+#if (VERBOSITY_LEVEL >= 2)
     qDebug()<<"writeTypeToLogFil took:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
 #endif
 }
@@ -201,25 +205,30 @@ void LogFileHandler::resetFileIndex()
     emit fileIndexChanged();
 }
 
-void LogFileHandler::setCurrDir(QString username, bool g_enabled)
+void LogFileHandler::setCurrDir(QString username)
 {
+#if ( VERBOSITY_LEVEL >= 1 )
+    qInfo()<<"LogFileHandler::setCurrDir()";
+#endif
     QDir dir;
 
     if (username.isEmpty())
         m_currUser = "dev";
     else
         m_currUser = username;
+
     m_currDir = "catch_data_WD_" + m_currUser + "_" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
 
-    if (g_enabled)
-        invokeCreateGoogleFolder(m_currDir);
+    if (m_googleEnabled)
+        invokeGoogleUpload(m_currDir, new QByteArray());
+
+
 
     dir.setPath(m_fileLocation);
     dir.mkdir(m_currDir);
-#if ( VERBOSITY_LEVEL >= 0 )
-    qInfo()<<"LogFileHandler::setCurrDir(QString username)"<< "\nCreated folder"<<m_currDir<<"in"<<m_fileLocation;
+#if ( VERBOSITY_LEVEL >= 1 )
+    qInfo()<<"LogFileHandler::setCurrDir()"<< "\nCreated folder"<<m_currDir<<"in"<<m_fileLocation;
 #endif
-
 }
 
 void LogFileHandler::setCurrCatchMode(int mode)

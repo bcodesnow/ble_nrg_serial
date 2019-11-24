@@ -771,18 +771,15 @@ Popup {
                     enabled: buttonEnabled
                     onClicked: {
                         catchController.setLoggingMedia(sdSwitch.checked,btSwitch.checked)
-
-                        fileHandler.setCurrDir(usernameInput.text,googleSwitch.checked)
-                        networkManager.enabled = googleSwitch.checked
-
+                        fileHandler.googleEnabled = googleSwitch.checked
+                        fileHandler.setCurrDir(usernameInput.text)
                         AppConstants.sessionPopupFinished = true;
                         multiPopup.visible = false
                     }
                     property bool buttonEnabled:
                         ( usernameInput.acceptableInput &&  sessionPopupRoot.timesync &&
                          (sdSwitch.checked || btSwitch.checked) &&
-                         ( ( googleSwitch.checked && (networkManager.authorized === 2) ) || !googleSwitch.checked)
-                         )
+                         ( ( googleSwitch.checked && (networkManager.authorized === 2) ) || !googleSwitch.checked) )
                         || devMode
 
                     Text {

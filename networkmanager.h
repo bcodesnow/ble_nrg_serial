@@ -12,23 +12,32 @@
 
 #include <QNetworkAccessManager>
 
-#define AUTH_UNAUTH  1U
-#define AUTH_SUCCESS 2U
-#define AUTH_FAILURE 3U
-#define AUTH_INACTIVE 4U
+#include <QQueue>
+
+#define WAITING_FOR_JOBS    (1<<0)
+#define WORKING_ON_JOBS     (1<<1)
+
+#define AUTH_UNAUTH         1U
+#define AUTH_SUCCESS        2U
+#define AUTH_FAILURE        3U
 
 class NetworkManager : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int authorized READ getAuthorized NOTIFY authorizedChanged)
-    Q_PROPERTY(bool enabled MEMBER m_uploadEnabled NOTIFY uploadEnabledChanged)
+
 private:
+    struct UploadJob {
+        QString filename;
+        QByteArray *data;
+    };
+
     LogFileHandler* m_logfile_handler_ptr;
 
-    QNetworkReply *m_reply;
-    QNetworkRequest m_request;
+    QQueue<UploadJob> m_job_queue;
+
+    quint32 m_upload_state = 0;
     uint8_t m_authorized = AUTH_UNAUTH;
-    bool m_uploadEnabled;
 
     QOAuth2AuthorizationCodeFlow *m_googleAuth;
     QNetworkAccessManager *m_networkHandler;
@@ -43,8 +52,7 @@ private:
     QUrl m_uploadUrl;
     QByteArray m_currentAccessToken;
     const QString bearer_format = QStringLiteral("Bearer %1");
-    int m_accessExpirationIn; // todo
-
+    int m_accessExpirationIn; // todo -> request new authorization after 1 hour, same with timesync
     // access_token expires_in scope token_type
 
     const QString drive_scope = "https://www.googleapis.com/auth/drive";
@@ -73,11 +81,16 @@ private:
     const char* googlekOAuthScope =
             "https://www.googleapis.com/auth/drive.readonly";
 
+    void processAllJobs();
+
 public:
-    NetworkManager(LogFileHandler* logfile_handler, QObject *parent = nullptr);
+    NetworkManager();
+    ~NetworkManager();
+
+    void initNetworkManager(LogFileHandler* logfile_handler_ptr);
 
     void createDriveFolder(QString name, QString uploadUrl);
-    void uploadDataHttpMulti(QByteArray data, QString name, QString uploadUrl,
+    void uploadDataHttpMulti(QByteArray *data, QString name, QString uploadUrl,
                              QByteArray contentType, QString folderID = "");
     void readFilesHttp (QString downloadUrl, QString folderID = "");
 
@@ -85,23 +98,23 @@ public:
 
     Q_INVOKABLE void authorize();
 
-
 signals:
     void authorizedChanged();
-    void uploadEnabledChanged();
+    void allJobsFinished(); // currently unused
 
 public slots:
 
     void uploadFinished(QNetworkReply *reply);
-    void stateChanged(QAbstractOAuth::Status state);
+    void oauthStateChanged(QAbstractOAuth::Status state);
     void authorizationGranted();
     void replyFinished(QNetworkReply *reply);
     void printNetworkReply (const QByteArray reply);
     void authenticationReply(QNetworkReply *reply, QAuthenticator *authenticator);
-    void uploadCatchData(QString name, QByteArray data);
-    void createNewFolderWithId(QString name);
+    // void uploadCatchData(QString name, QByteArray data);
+    // void createNewFolderWithId(QString name);
+
+    void addUploadJob(QString filename, QByteArray *data);
 
 };
-
 
 #endif // NETWORKMANAGER_H

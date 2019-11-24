@@ -14,6 +14,7 @@
 #include <graphpainter.h>
 #include <paintdata.h>
 
+
 #define SEP_CHAR " : "
 #define LINE_END ";\n"
 
@@ -24,7 +25,8 @@ class LogFileHandler : public QObject
     Q_PROPERTY(quint64 fileIndex MEMBER m_currFileIndex NOTIFY fileIndexChanged)
     Q_PROPERTY(QString lastPath MEMBER m_lastPath NOTIFY lastPathChanged)
     Q_PROPERTY(QVariant paintDataList READ getPaintDataList NOTIFY paintDataListChanged)
-    Q_PROPERTY(QStringList currentModeIndexCatch MEMBER m_catchModeList NOTIFY catchModeListChanged) // Dominik TODO: as its name also says.. it should be in the catchController..
+    Q_PROPERTY(QStringList currentModeIndexCatch MEMBER m_catchModeList NOTIFY catchModeListChanged) // todo: move to catchcontroller
+    Q_PROPERTY(bool googleEnabled MEMBER m_googleEnabled NOTIFY googleEnabledChanged) // todo: move to catchcontroller
 
 private:
     quint64 m_currFileIndex;
@@ -35,9 +37,11 @@ private:
     QString m_currUser;
     QString m_currDir;
     QString m_currCatchMode;
+    bool m_googleEnabled; // todo: move to catchcontroller
 
-    QStringList m_catchModeList = {"Mixed","Standing","Running","Jumping","One hand"};
+    QStringList m_catchModeList = {"Mixed","Standing","Running","Jumping","One hand"}; // todo: move to catchcontroller
     QList<QObject*> m_paintDataList;
+
 
     quint64 m_fileIndex;
 
@@ -50,11 +54,13 @@ signals:
     void updateAllPainters(QList<QObject*> datalist);
 
     void invokeCreateGoogleFolder(QString name);
-    void invokeGoogleUpload(QString filename, QByteArray data);
+    void invokeGoogleUpload(QString filename, QByteArray *data);
 
     void fileIndexChanged();
 
     void paintDataListChanged();
+
+    void googleEnabledChanged();
 
 public:
     explicit LogFileHandler(QObject *parent = nullptr);
@@ -76,7 +82,7 @@ public slots:
     void writeTypeToLogFil(QString ident, QByteArray* data, quint8 type, quint16 wp);
     void resetFileIndex(); // UNUSED TODO
 
-    void setCurrDir (QString username, bool g_enabled); //TODO Dominique
+    void setCurrDir (QString username);
     void setCurrCatchMode (int mode);
 
 };
