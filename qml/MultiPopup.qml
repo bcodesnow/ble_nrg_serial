@@ -582,7 +582,7 @@ Popup {
 
                         Image {
                             id: sdImage
-                            source: "images/baseline_sd_storage_white_18dp.png"
+                            source: "images/sd_storage.png"
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.left: parent.left
                             width: height*1.1
@@ -727,6 +727,13 @@ Popup {
                         Layout.preferredWidth: 50
                         Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.alignment: Qt.AlignCenter
+
+                        property color authColor: if (networkManager.authorized === 1)
+                                                      "yellow"
+                                                  else if (networkManager.authorized === 2)
+                                                      AppConstants.infoColor
+                                                  else if (networkManager.authorized === 3)
+                                                      "red"
                         indicator:
                             Rectangle {
                             implicitHeight: AppConstants.smallTinyFontSize
@@ -736,7 +743,7 @@ Popup {
                             x: googleSwitch.leftPadding
                             y: parent.height / 2 - height / 2
                             radius: height/2
-                            color: googleSwitch.checked ? AppConstants.infoColor : "gray"
+                            color: googleSwitch.checked ? parent.authColor : "gray"
                             border.color: googleSwitch.checked ? Qt.lighter(AppConstants.infoColor) : AppConstants.backgroundColor
                             Rectangle {
                                 x: googleSwitch.checked ? maxX : 0
@@ -753,20 +760,6 @@ Popup {
                             {
                                 networkManager.authorize();
                             }
-                        }
-                        Image {
-                            id: authImage
-                            anchors.left: parent.right
-                            anchors.leftMargin: AppConstants.fieldMargin
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: if (networkManager.authorized === 1)
-                                        "images/lock_toopen_w.png"
-                                    else if (networkManager.authorized === 2)
-                                        "images/lock_opened_w.png"
-                                    else if (networkManager.authorized === 3)
-                                        "images/lock_not_w.png"
-                            width: height
-                            height: AppConstants.mediumFontSize
                         }
                     }
                 } // !RowLayout

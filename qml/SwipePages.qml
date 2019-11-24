@@ -54,12 +54,11 @@ Item {
     MultiPopup {
         id: sessionSettingsPopup
         currentPopupType: MultiPopupType.type_session
-        property int currentModeIndex: 0
+       // property int currentModeIndex: 0
     }
     MultiPopup {
         id: showTheDevilPopup
         currentPopupType: MultiPopupType.type_satan
-        visible: true
         Component.onCompleted: {
             // todo: start popup animations at this point,
             //       not on loader windowChanged() signal
