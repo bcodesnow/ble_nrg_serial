@@ -727,13 +727,14 @@ Popup {
                         Layout.preferredWidth: 50
                         Layout.preferredHeight: sessionPopupRoot.rowHeight
                         Layout.alignment: Qt.AlignCenter
+                        enabled: sessionPopupRoot.timesync
 
                         property color authColor: if (networkManager.authorized === 1)
                                                       "yellow"
                                                   else if (networkManager.authorized === 2)
                                                       AppConstants.infoColor
                                                   else if (networkManager.authorized === 3)
-                                                      "red"
+                                                      AppConstants.errorColor
                         indicator:
                             Rectangle {
                             implicitHeight: AppConstants.smallTinyFontSize

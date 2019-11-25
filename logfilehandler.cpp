@@ -38,10 +38,9 @@ LogFileHandler::LogFileHandler(QObject *parent) : QObject(parent),
 
 void LogFileHandler::sortArray(QByteArray *arr, uint16_t wp)
 {
-    // THERE IS THE SECOND DIRTY BUG!! the write pointer means an index of the array of struct! ie: { u16 u16 u16 }[0] .. { u16 u16 u16 }[1] .. { u16 u16 u16 }[0] ..
-    //    QByteArray tmpArray = arr->left(wp);
-    //    arr->remove(0,wp);
-    //    arr->append(tmpArray);
+    QByteArray tmpArray = arr->left(wp);
+    arr->remove(0,wp);
+    arr->append(tmpArray);
 }
 
 QVector<QVariant> LogFileHandler::bytesToInt16(QByteArray *arr, uint16_t step)
@@ -102,7 +101,6 @@ QVector<QVariant> LogFileHandler::bytesToFloat32(QByteArray *arr, uint16_t step)
 void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 type, quint16 wp)
 {
 #if (VERBOSITY_LEVEL >= 2)
-    qDebug()<<"writeTypeToLogFil"<<ident<<type<<wp<<data->size();
     QElapsedTimer debug_timer;
     debug_timer.start();
 #endif
@@ -121,26 +119,31 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     {
     case TYPE_AUD:
         sortArray(data, wp*2);
-        dataVec = bytesToInt16(data,50);
+        // sortArray(data, wp); // aquired test data
+        dataVec = bytesToInt16(data,20);
         idx_str.append( QString("AUDIO") );
         break;
     case TYPE_GYR:
         sortArray(data, wp*2*3);
+        // sortArray(data, wp*3); // aquired test data
         dataVec = bytesTo3AxisInt16(data,20);
         idx_str.append( QString("GYR") );
         break;
     case TYPE_ACC:
         sortArray(data, wp*2*3);
+        // sortArray(data, wp*3); // aquired test data
         dataVec = bytesTo3AxisInt16(data,20);
         idx_str.append( QString("ACC") );
         break;
     case TYPE_PRS:
         sortArray(data, wp*4);
+        // sortArray(data, wp); // aquired test data
         dataVec = bytesToFloat32(data);
         idx_str.append( QString("PRS") );
         break;
     case TYPE_MAG:
         sortArray(data, wp*2*3);
+        // sortArray(data, wp*3); // aquired test data
         dataVec = bytesToInt16(data,2);
         idx_str.append( QString("MAG") );
         break;
@@ -152,10 +155,6 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
     }
     tmpLocation.append(idx_str);
 
-#if (VERBOSITY_LEVEL >= 2)
-    qDebug()<<"after conversion:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-#endif
-
     if (type != TYPE_LOG && !dataVec.isEmpty())
     {
         for (int i=0;i<m_paintDataList.size();i++)
@@ -166,14 +165,9 @@ void LogFileHandler::writeTypeToLogFil(QString ident, QByteArray* data, quint8 t
                 delete m_paintDataList.at(i);
                 m_paintDataList.replace(i,new PaintData(type, ident.at(0).toLatin1(), dataVec));
                 emit paintDataListElementChanged(i);
-                qDebug()<<"!!! emitting.. ";
             }
         }
     }
-#if (VERBOSITY_LEVEL >= 2)
-    qDebug()<<"after painting:"<<QString::number(static_cast<double>(debug_timer.nsecsElapsed())/1000000, 'f', 2)<<"ms";
-#endif
-
 
     // save as text
     QFile file(tmpLocation);

@@ -204,7 +204,7 @@ void DeviceController::onCharacteristicRead(const QLowEnergyCharacteristic &c, c
 
 void DeviceController::onCharacteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &value)
 {
-#if (VERBOSITY_LEVEL >= 2 )
+#if (VERBOSITY_LEVEL >= 3 )
     qInfo() << "Characteristic Written! - Payload: " << value;
 #endif
     const quint8 *data;
@@ -457,8 +457,8 @@ void DeviceController::writeReceivedChunkToFile (uint16_t tmp_write_pointer, uin
     {
 #if ( VERBOSITY_LEVEL >= 3)
         qDebug()<<"Calling Delete on that old array. m_last_hc_payload_ptr->~QByteArray()";
-        m_last_hc_payload_ptr->~QByteArray();
 #endif
+        m_last_hc_payload_ptr->~QByteArray();
     }
     m_last_hc_payload_ptr = new QByteArray();
 
@@ -587,7 +587,7 @@ void DeviceController::bleUartSendCmdOk()
 void DeviceController::bleUartTx(const QByteArray &value)
 {
 
-#if (VERBOSITY_LEVEL >= 2 )
+#if (VERBOSITY_LEVEL >= 3 )
     qDebug()<<"bleUartTx(const QByteArray &value)"<<*value;
 #endif
     if (value.size())
@@ -618,7 +618,7 @@ void DeviceController::bleUartRx(const QLowEnergyCharacteristic &c, const QByteA
 
     if ( c.uuid() == ble_uart_receive )
     {
-#if (VERBOSITY_LEVEL >= 2 )
+#if (VERBOSITY_LEVEL >= 3 )
         qDebug()<<"BLE UART RX FIRST BYTE:"<<hex;
 #endif
         switch ( data[0] )

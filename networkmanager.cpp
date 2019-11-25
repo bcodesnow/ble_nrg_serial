@@ -16,7 +16,7 @@ void NetworkManager::processAllJobs()
             createDriveFolder(tmp_job.filename, file_upload_url);
         }
         else {
-            uploadDataHttpMulti(tmp_job.data, tmp_job.filename, file_upload_url, "text/plain", m_curr_folder_id);
+            uploadDataHttpMulti(tmp_job.data, tmp_job.filename, file_upload_url, content_type_txt, m_curr_folder_id);
         }
 #if (VERBOSITY_LEVEL >= 2)
         qDebug()<<"processAllJobs(): finished"<<tmp_job.filename<<", delete data pointer";
@@ -155,7 +155,7 @@ void NetworkManager::createDriveFolder(QString name, QString uploadUrl)
     QHttpPart MetadataPart;
     MetadataPart.setRawHeader("Content-Type", "application/json; charset=UTF-8");
     QString body = "{\n" + tr("\"name\": \"%1\",\n").arg(name)
-            + tr("\"mimeType\": \"%1\"\n").arg("application/vnd.google-apps.folder") + tr("}");
+            + tr("\"mimeType\": \"%1\"\n").arg(QString(content_type_folder)) + tr("}"); // "application/vnd.google-apps.folder"
     MetadataPart.setBody(body.toUtf8());
 
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::RelatedType);
@@ -183,7 +183,7 @@ void NetworkManager::createDriveFolder(QString name, QString uploadUrl)
 
 void NetworkManager::uploadDataHttpMulti(QByteArray *data, QString name, QString uploadUrl, QByteArray contentType, QString folderID)
 {
-#if (VERBOSITY_LEVEL >= 1)
+#if (VERBOSITY_LEVEL >= 2)
             qDebug()<<"uploadDataHttpMulti():"<<name<<data->size();
 #endif
     uploadUrl.append(drive_type_multi);
@@ -231,25 +231,6 @@ void NetworkManager::uploadDataHttpMulti(QByteArray *data, QString name, QString
         Q_UNUSED(reply)
 #endif
     });
-}
-
-void NetworkManager::readFilesHttp(QString downloadUrl, QString folderID)
-{
-    if (folderID != "")
-    {
-        // read from folder
-    }
-    else
-    {
-        QNetworkRequest request(downloadUrl);
-        const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
-        QNetworkReply *reply = m_networkHandler->get(request);
-
-        connect(reply, &QNetworkReply::finished, [reply](){
-            qDebug()<<"Read filenames request. Error? " << (reply->error() != QNetworkReply::NoError);
-            qDebug() << reply->readAll();
-        });
-    }
 }
 
 uint8_t NetworkManager::getAuthorized()
@@ -353,6 +334,7 @@ void NetworkManager::addUploadJob(QString filename, QByteArray *data)
     if (m_authorized != AUTH_SUCCESS)
     {
         qDebug()<<"addUploadJob(): Error: called upload slot when not authorized";
+        emit uploadError("Called upload slot when not authorized");
         return;
     }
 
@@ -377,6 +359,7 @@ void NetworkManager::addUploadJob(QString filename, QByteArray *data)
         if (m_curr_folder_id.isEmpty())
         {
             qDebug()<<"addUploadJob(): Error: create google drive folder before uploading";
+            uploadError("Create google drive folder before uploading");
             return;
         }
         m_job_queue.enqueue({ filename, data });
@@ -419,5 +402,24 @@ void NetworkManager::addUploadJob(QString filename, QByteArray *data)
 //#if (VERBOSITY_LEVEL >= 1)
 //        qDebug()<<"createNewFolderWithId(): Error: not authorized when creating new folder";
 //#endif
+//    }
+//}
+
+//void NetworkManager::readFilesHttp(QString downloadUrl, QString folderID)
+//{
+//    if (folderID != "")
+//    {
+//        // read from folder
+//    }
+//    else
+//    {
+//        QNetworkRequest request(downloadUrl);
+//        const QString bearer = bearer_format.arg(QString(m_currentAccessToken));
+//        QNetworkReply *reply = m_networkHandler->get(request);
+
+//        connect(reply, &QNetworkReply::finished, [reply](){
+//            qDebug()<<"Read filenames request. Error? " << (reply->error() != QNetworkReply::NoError);
+//            qDebug() << reply->readAll();
+//        });
 //    }
 //}

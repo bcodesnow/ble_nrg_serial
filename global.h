@@ -10,7 +10,7 @@
 #include "ble_uart_types.h"
 #include "deviceinterface.h"
 
-#define VERBOSITY_LEVEL                     1
+#define VERBOSITY_LEVEL                     0
 #define PRINT_THROUGHPUT                    1
 #define WAIT_X_MS_BETWEEN_CHUNKS            250
 #define CHANGE_CONN_PARAM_OF_OTHER_DEVICES  0

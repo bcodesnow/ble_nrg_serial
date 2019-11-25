@@ -51,37 +51,35 @@ private:
     uint16_t m_port;
     QUrl m_uploadUrl;
     QByteArray m_currentAccessToken;
-    const QString bearer_format = QStringLiteral("Bearer %1");
     int m_accessExpirationIn; // todo -> request new authorization after 1 hour, same with timesync
     // access_token expires_in scope token_type
 
-    const QString drive_scope = "https://www.googleapis.com/auth/drive";
+    const QString bearer_format = QStringLiteral("Bearer %1");
     const QString drive_file_scope = "https://www.googleapis.com/auth/drive.file";
-    const QString drive_appdata_scope = "https://www.googleapis.com/auth/drive.appdata";
-
     const QString file_upload_url = "https://www.googleapis.com/upload/drive/v3/files";
-    const QString file_metadata_url = "https://www.googleapis.com/drive/v3/files";
-    const QString drives_url = "https://www.googleapis.com/drive/v3/drives";
-
     const QByteArray content_type_folder = "application/vnd.google-apps.folder";
-    const QByteArray content_type_image = "image/png";
     const QByteArray content_type_txt = "text/plain";
-
     const QString drive_type_multi = "?uploadType=multipart";
 
+    void processAllJobs();
+
+    // unused constis
+    const QString drive_scope = "https://www.googleapis.com/auth/drive";
+    const QString drive_appdata_scope = "https://www.googleapis.com/auth/drive.appdata";
+    const QString file_metadata_url = "https://www.googleapis.com/drive/v3/files";
+    const QString drives_url = "https://www.googleapis.com/drive/v3/drives";
+    const QByteArray content_type_image = "image/png";
     const char* googleDriveFile =
             "https://www.googleapis.com/drive/v2/files/%1";
     const char* googleDriveChanges =
             "https://www.googleapis.com/drive/v2/changes";
     const char* googleOAuthUserInfoEndpoint =
             "https://www.googleapis.com/oauth2/v1/userinfo";
-    const char* googlekOAuthEndpoint = "https://accounts.google.com/o/oauth2/auth";
-    const char* googlekOAuthTokenEndpoint =
+    const char* googleOAuthEndpoint = "https://accounts.google.com/o/oauth2/auth";
+    const char* googleOAuthTokenEndpoint =
             "https://accounts.google.com/o/oauth2/token";
-    const char* googlekOAuthScope =
+    const char* googleOAuthScope =
             "https://www.googleapis.com/auth/drive.readonly";
-
-    void processAllJobs();
 
 public:
     NetworkManager();
@@ -92,7 +90,7 @@ public:
     void createDriveFolder(QString name, QString uploadUrl);
     void uploadDataHttpMulti(QByteArray *data, QString name, QString uploadUrl,
                              QByteArray contentType, QString folderID = "");
-    void readFilesHttp (QString downloadUrl, QString folderID = "");
+   // void readFilesHttp (QString downloadUrl, QString folderID = "");
 
     uint8_t getAuthorized();
 
@@ -101,6 +99,7 @@ public:
 signals:
     void authorizedChanged();
     void allJobsFinished(); // currently unused
+    void uploadError(QString error);
 
 public slots:
 

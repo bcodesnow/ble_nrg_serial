@@ -18,7 +18,7 @@ void TimeSyncHandler::slot_time_sync_msg_sent(int idx)
 {
     // toDo m_last_msg_ts is only relevant if we are mesuring...
     // toDo check if idx is in sync;
-#if (VERBOSITY_LEVEL >= 2)
+#if (VERBOSITY_LEVEL >= 3)
     qInfo()<<"TS: Sync Msg. Sent!"<<"";
 #endif
 #if ( USE_CHAR_WRITTEN_CALLBACK == 1 )
@@ -98,7 +98,7 @@ void TimeSyncHandler::send_compensated_time_sync_msg()
 
     m_timeout_timer.start();
 
-#if ( VERBOSITY_LEVEL >= 2 )
+#if ( VERBOSITY_LEVEL >= 3 )
     qDebug()<<"TS: send_compensated_time_sync_msg() -> "<<tstamp;
     qDebug()<<"TS: Amount of Compensation -> "<<( m_travelling_time_acceptance_trsh / 2 );
 #endif
@@ -110,7 +110,7 @@ void TimeSyncHandler::calculate_compensation()
     quint32 max = *std::max_element(travelling_times.constBegin(), travelling_times.constEnd());
     quint32 avg = std::accumulate(travelling_times.constBegin(), travelling_times.constEnd(), 0) / travelling_times.size() ;
 
-#if (VERBOSITY_LEVEL >= 2)
+#if (VERBOSITY_LEVEL >= 3)
     qInfo()<<"TS: Travelling Times Calculated: ";
     qInfo()<<"TS: Minimum: "<<min;
     qInfo()<<"TS: Maximum: "<<max;
@@ -129,7 +129,7 @@ void TimeSyncHandler::calculate_compensation()
     max = *std::max_element(travelling_times.constBegin(), travelling_times.constEnd());
     avg = std::accumulate(travelling_times.constBegin(), travelling_times.constEnd(), 0) / travelling_times.size() ;
 
-    #if (VERBOSITY_LEVEL >= 2)
+    #if (VERBOSITY_LEVEL >= 3)
         qInfo()<<"TS: Travelling Times Calculated: ";
         qInfo()<<"TS: Minimum: "<<min;
         qInfo()<<"TS: Maximum: "<<max;
