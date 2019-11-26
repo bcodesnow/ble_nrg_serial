@@ -53,7 +53,7 @@ Popup {
         }
 
     property int currentPopupType: 0
-    property string maintitle: "Main Title"
+    property string maintitle: "Average text with default character length Average text with default character length Average text with default character length"//"Main Title"
     property string subtitle: "Sub Title"
     property int currentProgress: 100
     property bool indeterminate: false
@@ -1119,7 +1119,6 @@ Popup {
 
                 property int maxCharsPerLine: 30
                 property string errorMessage: splitLines(maintitle)
-
                 function splitLines(err_mesg) {
                     var result = ""
                     for (var i=0; i<err_mesg.length; i+=satanMessage.maxCharsPerLine)
@@ -1132,13 +1131,13 @@ Popup {
                 onVisibleChanged: {
                     if (visible)
                     {
-                        maxCharsPerLine = satanMessage.width/errorText.font.pixelSize - 2
+                        maxCharsPerLine = satanMessage.width/(errorText.font.pixelSize/2)
                     }
                 }
 
                 TextEdit {
                     id: errorText
-                    anchors.centerIn: parent
+                    anchors.fill: parent
                     horizontalAlignment: TextEdit.AlignHCenter
                     verticalAlignment: TextEdit.AlignVCenter
                     wrapMode: TextEdit.Wrap
@@ -1155,8 +1154,6 @@ Popup {
                     onTightBoundingRectChanged: {
                         if (satanMessage.visible)
                         {
-                            if (errorTextMetrics.tightBoundingRect.width < satanMessage.width)
-                                satanMessage.width = errorTextMetrics.tightBoundingRect.width
                             satanMessage.height = errorTextMetrics.tightBoundingRect.height * errorText.lineCount * 1.1
                         }
                     }
